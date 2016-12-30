@@ -44,7 +44,7 @@ def find_packages(where='.', lib_prefix='', exclude=()):
 
 setup(
     name='pyDots',
-    version="1.0.16319",
+    version="1.0.16366",
     description='Dot-access to python dicts like Javascript',
     long_description=long_desc,
     author='Kyle Lahnakoski',
