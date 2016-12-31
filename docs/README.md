@@ -1,32 +1,22 @@
 
-Consistent dicts, lists and Nones
-=================================
-
-This library is solves Python's lack of consistency (lack of closure) under the dot (`.`)
-and slice `[::]` operators. The most significant differences involve dealing
-with `None`, missing property names, and missing items.
+Classes for Processing Data
+===========================
 
 There are two major families of objects in Object Oriented programming. The
 first, are ***Actors***: characterized by a number of useful instance methods
 and some state bundled into a package. The second are ***Data***: Primarily
 a set of properties, with only (de)serialization functions, or algebraic
-operators defined. Boto has many examples of these *Data* classes,
-[here is one](https://github.com/boto/boto/blob/4b8269562e663f090403e57ba1a3a471b6e0aa0e/boto/ec2/networkinterface.py).
+operators defined. 
 
-The problem with *Data* objects is they have an useless distinction between
-attributes and properties. This prevents us from using the dot (`.`) operator for
-dereferencing, forcing us to use the verbose `getattr()` for parametric
-dereferencing. It also prevents the use of query operators over these objects.
+*Data* objects in Python do not require attributes, only properties. Therefore, we can conveniently use attribute access to mean the same as item access: `a["x"]==a.x` Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Data access is only the beginning. 
+
+Focusing on just *data* objects; We want a succinct way of transforming data. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. This library provides the consistent base for a high level data manipulation algebra. 
 
 
-Data replaces dict
---------------------
+`Data` replaces Python's `dict`
+-------------------------------
 
-`Data` is used to declare an instance of an anonymous type, and has good
-features for manipulating JSON. Anonymous types are necessary when
-writing sophisticated list comprehensions, or queries, and to keep them
-readable. In many ways, `dict()` can act as an anonymous type, but it does
-not have the features listed here.
+`Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, and to keep them succinct. In many ways, `dict` can act as an anonymous type, but it does not have the features listed here.
 
  1. `a.b == a["b"]`
  2. missing property names are handled gracefully, which is beneficial when being used in
@@ -70,39 +60,116 @@ a == {"b": {"c": [1, 42]}}
  8. property names are coerced to unicode - it appears Python's
  object.getattribute() is called with str() even when using `from __future__
  import unicode_literals`
- 9. by allowing dot notation, the IDE does tab completion, plus my spelling
- mistakes get found at "compile time"
 
-### Examples in the wild ###
+##Mapping Leaves
 
-`Data` is a common pattern in many frameworks even though it goes by
-different names and slightly different variations, some examples are:
+The implications of allowing `a["b.c"] == a.b.c` opens up two different Data
+forms: *standard form* and *leaf form*
 
- * [PEP 0505] calls this ["safe navigation"](https://www.python.org/dev/peps/pep-0505/)
- * `jinja2.environment.Environment.getattr()` to allow convenient dot notation
- * `argparse.Environment()` - code performs `setattr(e, name, value)` on
-  instances of Environment to provide dot(`.`) accessors
- * `collections.namedtuple()` - gives attribute names to tuple indices
-  effectively providing <code>a.b</code> rather than <code>a["b"]</code>
-     offered by dicts
- * [configman's DotDict](https://github.com/mozilla/configman/blob/master/configman/dotdict.py)
-  allows dot notation, and path setting
- * [Fabric's _AttributeDict](https://github.com/fabric/fabric/blob/19f5cffaada0f6f6132cd06742acd34e65cf1977/fabric/utils.py#L216)
-  allows dot notation
- * C# Linq requires anonymous types to avoid large amounts of boilerplate code.
- * D3 has many of these conventions ["The function's return value is
-  then used to set each element's attribute. A null value will remove the
-  specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
+###Standard Form
 
-### Notes ###
- * More on missing values: [http://www.np.org/NA-overview.html](http://www.np.org/NA-overview.html)
-it only considers the legitimate-field-with-missing-value (Statistical Null)
-and does not look at field-does-not-exist-in-this-context (Database Null)
- * [Motivation for a 'mutable named tuple'](http://www.saltycrane.com/blog/2012/08/python-data-object-motivated-desire-mutable-namedtuple-default-values/)
-(aka anonymous class)
+The `[]` operator in `Data` has been overridden to assume dots (`.`) represent
+paths rather than literal string values; but, the internal representation of
+`Data` is the same as `dict`; the property names are treated as black box
+strings. `[]` just provides convenience.
 
-Null is the new None
---------------------
+When wrapping `dict`, the property names are **NOT** interpreted as paths;
+property names can include dots (`.`).
+
+```python
+	>>> from pyDots import wrap
+	>>> a = wrap({"b.c": 42})
+	>>> a.keys()
+	set(['b.c'])
+
+	>>> a["b.c"]
+	Null    # because b.c path does not exist
+
+	>>> a["b\.c"]
+	42      # escaping the dot (`.`) makes it literal
+```
+
+###Leaf form
+
+Leaf form is used in some JSON, or YAML, configuration files. Here is an
+example from my ElasticSearch configuration:
+
+**YAML**
+
+```yaml
+	discovery.zen.ping.multicast.enabled: true
+```
+
+**JSON**
+
+```javascript
+	{"discovery.zen.ping.multicast.enabled": true}
+```
+
+Both are intended to represent the deeply nested JSON
+
+```javascript
+	{"discovery": {"zen": {"ping": {"multicast": {"enabled": true}}}}}
+```
+
+Upon importing such files, it is good practice to convert it to standard form
+immediately:
+
+```python
+	config = wrap_leaves(config)
+```
+
+`wrap_leaves()` assumes any dots found in JSON names are referring to paths
+into objects, not a literal dots.
+
+When accepting input from other automations and users, your property names
+can potentially contain dots; which must be properly escaped to produce the
+JSON you are expecting. Specifically, this happens with URLs:
+
+**BAD** - dots in url are interpreted as paths
+
+```python
+	>>> from pyDots import wrap, literal_field, Data
+	>>>
+	>>> def update(summary, url, count):
+	...     summary[url] += count
+	...
+	>>> s = Data()
+	>>> update(s, "example.html", 3)
+	>>> print s
+
+	Data({u'example': {'html': 3}})
+```
+
+**GOOD** - Notice the added `literal_field()` wrapping
+
+```python
+	>>> def update(summary, url, count):
+	...     summary[literal_field(url)] += count
+	...
+	>>> s = Data()
+	>>> update(s, "example.html", 3)
+	>>> print s
+
+	Data({u'example.html': 3})
+```
+
+You can produce leaf form by iterating over all leaves. This is good for
+simplifying iteration over deep inner object structures.
+
+```python
+	>>> from pyDots import wrap
+	>>> a = wrap({"b": {"c": 42}})
+	>>> for k, v in a.leaves():
+	...     print k + ": " + unicode(v)
+
+	b.c: 42
+```
+
+
+
+`Null` replaces Python's `None`
+-------------------------------
 
 In many applications the meaning of None (or null) is always in the context of
 a known type: Each type has a list of expected properties, and if an instance
@@ -111,14 +178,13 @@ is missing one of those properties we set it to None. Let us call it this the
 
 Another interpretation for None (or null), is that the instance simply does not
 have that property: Asking for the physical height of poem is nonsense, and
-we return None/null to indicate this. Databases use `null` in this way to
-simultaneously deal with multiple (sub)types and keep records in fewer tables
-to minimize query complexity. Call this version of None the "*Out of Context*"
-definition.
+we return None/null to indicate this. Databases use `NULL` in this way to
+allow tables to hold records of multiple (sub)types and minimize query complexity. 
+Call this version of None the "*Out of Context*" definition.
 
 Python, and the *pythonic way*, and many of its libraries, assume None is a
 *Missing Value*. This assumption results in an excess of exception handling
-and edge-case detection code when processing a multitude of types with a single
+and decision code when processing a multitude of types with a single
 method, or when dealing with unknown future polymorphic types, or working with
 one of many ephemeral 'types' that only have meaning in a few lines of a method.
 
@@ -187,7 +253,7 @@ are exceptions, and behave as expected with [three-valued logic](https://en.wiki
  * `False and Null == False`
  * `True and Null == Null`
 
-FlatList is "Flat"
+`FlatList` is "Flat"
 ----------------------------------------
 `FlatList` uses a *flat-list* assumption to interpret slicing and indexing
 operations. This assumes lists are defined over all integer (**ℤ**)
@@ -246,126 +312,49 @@ DataObject for data
 -------------------
 
 
-You can wrap any object to make it appear like a Data.
+You can wrap any object to make it appear as `Data`.
 
 ```python
 	d = DataObject(my_data_object)
 ```
 
-This allows you to use the query operators of this `dot` library on this
-object. Care is required though: Your object may not be a pure data object,
+This allows you to use the operators in this library on the object, or set of objects. Care is required though: Your object may not be a pure data object,
 and there can be conflicts between the object methods and the properties it
 is expected to have.
 
 
-Mapping Leaves
---------------
-
-The implications of allowing `a["b.c"] == a.b.c` opens up two different Data
-forms: *standard form* and *leaf form*
-
-###Standard Form
-
-The `[]` operator in `Data` has been overridden to assume dots (`.`) represent
-paths rather than literal string values; but, the internal representation of
-`Data` is the same as `dict`; the property names are treated as black box
-strings. `[]` just provides convenience.
-
-When wrapping `dict`, the property names are **NOT** interpreted as paths;
-property names can include dots (`.`).
-
-```python
-	>>> from pyDots import wrap
-	>>> a = wrap({"b.c": 42})
-	>>> a.keys()
-	set(['b.c'])
-
-	>>> a["b.c"]
-	Null    # because b.c path does not exist
-
-	>>> a["b\.c"]
-	42      # escaping the dot (`.`) makes it literal
-```
-
-###Leaf form
-
-Leaf form is used in some JSON, or YAML, configuration files. Here is an
-example from my ElasticSearch configuration:
-
-**YAML**
-
-```yaml
-	discovery.zen.ping.multicast.enabled: true
-```
-
-**JSON**
-
-```javascript
-	{"discovery.zen.ping.multicast.enabled": true}
-```
-
-Both are intended to represent the deeply nested JSON
-
-```javascript
-	{"discovery": {"zen": {"ping": {"multicast": {"enabled": true}}}}}
-```
-
-Upon importing such files, it is good practice to convert it to standard form
-immediately:
-
-```python
-	config = wrap_leaves(config)
-```
-
-`wrap_leaves()` assumes any dots found in JSON names are referring to paths
-into objects, not a literal dots.
-
-When accepting input from other automations and users, your property names
-can potentially contain dots; which must be properly escaped to produce the
-JSON you are expecting. Specifically, this happens with URLs:
-
-**BAD** - dots in url are interpreted as paths
-
-```python
-	>>> from pyDots.datas import Data
-	>>> from pyDots import wrap, literal_field
-	>>>
-	>>> def update(summary, url, count):
-	...     summary[url] += count
-	...
-	>>> update(s, "example.html", 3)
-	>>> print s
-
-	Data({u'example': {'html': 3}})
-```
-
-**GOOD** - Notice the added `literal_field()` wrapping
-
-```python
-	>>> def update(summary, url, count):
-	...     summary[literal_field(url)] += count
-	...
-	>>> s = Data()
-	>>> update(s, "example.html", 3)
-	>>> print s
-
-	Data({u'example.html': 3})
-```
-
-You can produce leaf form by iterating over all leaves. This is good for
-simplifying iteration over deep object structures.
-
-```python
-	>>> from pyDots import wrap
-	>>> a = wrap({"b": {"c": 42}})
-	>>> for k, v in a.leaves():
-	...     print k + ": " + unicode(v)
-
-	b.c: 42
-```
 
 Appendix
 ========
+
+### Examples in the wild ###
+
+`Data` is a common pattern in many frameworks even though it goes by
+different names and slightly different variations, some examples are:
+
+ * [PEP 0505] uses ["safe navigation"](https://www.python.org/dev/peps/pep-0505/), but still treats None as a *missing value*. This is good for interacting with Nones coming out of libraries that share this meaning, but does not improve the manipulation of the data coming from those libraries.  
+ * `jinja2.environment.Environment.getattr()` to allow convenient dot notation
+ * `argparse.Environment()` - code performs `setattr(e, name, value)` on
+  instances of Environment to provide dot(`.`) accessors
+ * `collections.namedtuple()` - gives attribute names to tuple indices
+  effectively providing <code>a.b</code> rather than <code>a["b"]</code>
+     offered by dicts
+ * [configman's DotDict](https://github.com/mozilla/configman/blob/master/configman/dotdict.py)
+  allows dot notation, and path setting
+ * [Fabric's _AttributeDict](https://github.com/fabric/fabric/blob/19f5cffaada0f6f6132cd06742acd34e65cf1977/fabric/utils.py#L216) allows dot notation
+ * C# Linq requires anonymous types to avoid large amounts of boilerplate code.
+ * D3 has many of these conventions ["The function's return value is
+  then used to set each element's attribute. A null value will remove the
+  specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
+
+### Notes ###
+ * More on missing values: [http://www.np.org/NA-overview.html](http://www.np.org/NA-overview.html)
+it only considers the legitimate-field-with-missing-value (Statistical Null)
+and does not look at field-does-not-exist-in-this-context (Database Null)
+ * [Motivation for a 'mutable named tuple'](http://www.saltycrane.com/blog/2012/08/python-data-object-motivated-desire-mutable-namedtuple-default-values/)
+(aka anonymous class)
+
+
 
 Motivation for FlatList (optional reading)
 ------------------------------------------
@@ -408,7 +397,7 @@ Looks good, but this time let's use negative indices:
 Using negative indices `[-num:]` allows the programmer to slice relative to
 the right rather than the left. When `num` is a constant this problem is
 never revealed, but when `num` is a variable, then the inconsistency can
-reveal itself.
+bite you.
 
 ```python
     def get_suffix(num):
@@ -416,7 +405,7 @@ reveal itself.
 ```
 
 So, clearly, `[-num:]` can not be understood as a suffix slice, rather
-something more complicated; given `num` <= 0.
+something more complicated; given `num` <= 0 is possible.
 
 I advocate never using negative indices in the slice operator. Rather, use the
 `right()` method instead which is consistent for `num` ∈ ℤ:
