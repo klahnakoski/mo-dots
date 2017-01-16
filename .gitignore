@@ -2,3 +2,6 @@
 /dist
 /pyDots.egg-info
 /README.txt
+/tests/MoLogs
+/tests/pyLibrary
+/pyLibrary
