@@ -111,7 +111,7 @@ class Data(MutableMapping):
 
     def __setitem__(self, key, value):
         if key == "":
-            from pyLibrary.debugs.logs import Log
+            from MoLogs import Log
 
             Log.error("key is empty string.  Probably a bad idea")
         if key == None:
