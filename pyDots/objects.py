@@ -17,7 +17,6 @@ from decimal import Decimal
 from types import NoneType, GeneratorType
 
 from pyDots import wrap, unwrap, Data, FlatList, NullType, get_attr, set_attr
-from pyLibrary.times.dates import Date
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -112,7 +111,7 @@ def datawrap(v):
         return v
     elif hasattr(v, "as_dict"):
         return v.as_dict()
-    elif isinstance(v, (basestring, int, float, Decimal, Date, datetime, date, Data, FlatList, NullType, NoneType)):
+    elif isinstance(v, (basestring, int, float, Decimal, datetime, date, Data, FlatList, NullType, NoneType)):
         return v
     else:
         return DataObject(v)

@@ -14,9 +14,9 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from pyLibrary.collections import MAX
-from pyLibrary.debugs.logs import Log
+from MoLogs import Log
 from pyLibrary.meta import DataClass
+from pyLibrary.collections import MAX
 from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
 
 from pyDots import wrap, Null, set_default, unwrap, Data
@@ -318,6 +318,13 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a, {"b": {"c": ["test value"]}})
         self.assertEqual(a.b, {"c": ["test value"]})
         self.assertEqual(a.b.c, ["test value"])
+
+    def test_assign_none(self):
+        a = {}
+        A = wrap(a)
+
+        A[None] = "test"
+        self.assertEqual(a, {})
 
     def test_increment(self):
         a = {}
