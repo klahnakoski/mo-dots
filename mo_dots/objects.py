@@ -16,7 +16,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from types import NoneType, GeneratorType
 
-from pyDots import wrap, unwrap, Data, FlatList, NullType, get_attr, set_attr
+from mo_dots import wrap, unwrap, Data, FlatList, NullType, get_attr, set_attr
 
 _get = object.__getattribute__
 _set = object.__setattr__

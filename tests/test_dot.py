@@ -19,8 +19,8 @@ from pyLibrary.meta import DataClass
 from pyLibrary.collections import MAX
 from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
 
-from pyDots import wrap, Null, set_default, unwrap, Data
-from pyDots.objects import datawrap
+from mo_dots import wrap, Null, set_default, unwrap, Data
+from mo_dots.objects import datawrap
 
 
 class TestDot(FuzzyTestCase):
