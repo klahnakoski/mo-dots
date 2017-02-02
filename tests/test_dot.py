@@ -14,9 +14,9 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from MoLogs import Log
+from mo_logs import Log
+from mo_math import MAX
 from pyLibrary.meta import DataClass
-from pyLibrary.collections import MAX
 from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots import wrap, Null, set_default, unwrap, Data

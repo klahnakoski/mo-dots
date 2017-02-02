@@ -31,7 +31,7 @@ from __future__ import unicode_literals
 from collections import Mapping
 from copy import deepcopy
 
-from pyLibrary import convert
+import mo_json
 from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots import Data, set_default, unwrap
@@ -127,10 +127,10 @@ class AddictTests(FuzzyTestCase):
 
     def test_json(self):
         some_dict = TEST_DICT
-        some_json = convert.value2json(some_dict)
+        some_json = mo_json.value2json(some_dict)
         prop = Data()
         prop.a.b.c = TEST_VAL
-        prop_json = convert.value2json(prop)
+        prop_json = mo_json.value2json(prop)
         self.assertEqual(some_json, prop_json)
 
     def test_delitem(self):
