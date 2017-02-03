@@ -49,7 +49,7 @@ setup(
     long_description=long_desc,
     author='Kyle Lahnakoski',
     author_email='kyle@lahnakoski.com',
-    url='https://github.com/klahnakoski/pyDots',
+    url='https://github.com/klahnakoski/mo-dots',
     license='MPL 2.0',
     packages=find_packages(".", lib_prefix=""),
     install_requires=[],

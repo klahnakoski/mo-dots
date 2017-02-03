@@ -15,7 +15,8 @@ from __builtin__ import zip as _builtin_zip
 from collections import Mapping
 from types import GeneratorType, NoneType, ModuleType
 
-import sys
+from mo_dots import utils
+from mo_dots.utils import get_logger, get_module
 
 SELF_PATH = "."
 ROOT_PATH = [SELF_PATH]
@@ -46,7 +47,7 @@ def coalesce(*args):
 
 def zip(keys, values):
     """
-    CONVERT LIST OF KEY/VALUE PAIRS TO A DICT
+    CONVERT LIST OF KEY/VALUE PAIRS TO Data
     PLEASE `import dot`, AND CALL `dot.zip()`
     """
     output = Data()
@@ -64,7 +65,7 @@ def literal_field(field):
     try:
         return field.replace(".", "\.")
     except Exception, e:
-        Log = _late_import()
+        Log = get_logger()
 
         Log.error("bad literal", e)
 
@@ -80,7 +81,7 @@ def unliteral_field(field):
     :return: SIMPLER STRING
     """
     if len(split_field(field)) > 1:
-        Log = _late_import()
+        Log = get_logger()
         Log.error("Bad call! Dude!")
     return field.replace("\.", ".")
 
@@ -217,7 +218,7 @@ def _all_default(d, default, seen=None):
                         _set_attr(d, [k], default_value)
                     except Exception, e:
                         if PATH_NOT_FOUND not in e:
-                            Log = _late_import()
+                            Log = get_logger()
                             Log.error("Can not set attribute {{name}}", name=k, cause=e)
         elif isinstance(existing_value, list) or isinstance(default_value, list):
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
@@ -274,7 +275,7 @@ def set_attr(obj, path, value):
     try:
         return _set_attr(obj, split_field(path), value)
     except Exception, e:
-        Log = _late_import()
+        Log = get_logger()
         if PATH_NOT_FOUND in e:
             Log.warning(PATH_NOT_FOUND + ": {{path}}",  path= path)
         else:
@@ -288,7 +289,7 @@ def get_attr(obj, path):
     try:
         return _get_attr(obj, split_field(path))
     except Exception, e:
-        Log = _late_import()
+        Log = get_logger()
         if PATH_NOT_FOUND in e:
             Log.error(PATH_NOT_FOUND+": {{path}}",  path=path, cause=e)
         else:
@@ -308,7 +309,7 @@ def _get_attr(obj, path):
             return _get_attr(obj[attr_name], path[1:])
 
         # TRY FILESYSTEM
-        from mo_files import File
+        File = get_module("mo_files.File")
         possible_error = None
         if File.new_instance(File(obj.__file__).parent, attr_name).set_extension("py").exists:
             try:
@@ -323,16 +324,16 @@ def _get_attr(obj, path):
                     output = __import__(obj.__name__ + "." + attr_name, globals(), locals(), [path[1]], 0)
                     return _get_attr(output, path[1:])
             except Exception, e:
-                from mo_logs.exceptions import Except
+                Except = get_module("mo_logs.exceptions.Except")
                 possible_error = Except.wrap(e)
 
         # TRY A CASE-INSENSITIVE MATCH
         matched_attr_name = lower_match(attr_name, dir(obj))
         if not matched_attr_name:
-            Log = _late_import()
+            Log = get_logger()
             Log.warning(PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error)
         elif len(matched_attr_name) > 1:
-            Log = _late_import()
+            Log = get_logger()
             Log.error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
         else:
             return _get_attr(obj[matched_attr_name[0]], path[1:])
@@ -359,7 +360,7 @@ def _get_attr(obj, path):
 def _set_attr(obj, path, value):
     obj = _get_attr(obj, path[:-1])
     if obj is None:  # DELIBERATE, WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
-        Log = _late_import()
+        Log = get_logger()
         Log.error(PATH_NOT_FOUND)
 
     attr_name = path[-1]
@@ -384,7 +385,7 @@ def _set_attr(obj, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception, f:
-            Log = _late_import()
+            Log = get_logger()
             Log.error(PATH_NOT_FOUND)
 
 
@@ -433,7 +434,7 @@ def _wrap_leaves(value):
             value = _wrap_leaves(value)
 
             if key == "":
-                Log = _late_import()
+                Log = get_logger()
 
                 Log.error("key is empty string.  Probably a bad idea")
             if isinstance(key, str):
@@ -541,32 +542,6 @@ def tuplewrap(value):
     if isinstance(value, (list, set, tuple, GeneratorType)):
         return tuple(tuplewrap(v) if isinstance(v, (list, tuple, GeneratorType)) else v for v in value)
     return unwrap(value),
-
-
-_Log = None
-
-
-def _late_import():
-    global _Log
-    if _Log:
-        return _Log
-    try:
-        from mo_logs import Log as _Log
-        return _Log
-    except Exception, e:
-        _Log = PoorLogger()
-        _Log.warning("pip install mo-logs for better logging!")
-        return _Log
-
-class PoorLogger(object):
-    def note(self, note, **kwargs):
-        sys.stdout.write(note+"\n")
-
-    def warning(self, note, **kwargs):
-        sys.stdout.write("WARNING: "+note+"\n")
-
-    def error(self, note, **kwargs):
-        sys.stderr.write(note)
 
 
 
