@@ -555,7 +555,8 @@ def _late_import():
         return _Log
     except Exception, e:
         _Log = PoorLogger()
-
+        _Log.warning("pip install mo-logs for better logging!")
+        return _Log
 
 class PoorLogger(object):
     def note(self, note, **kwargs):
