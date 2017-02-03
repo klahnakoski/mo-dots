@@ -65,9 +65,7 @@ def literal_field(field):
     try:
         return field.replace(".", "\.")
     except Exception, e:
-        Log = get_logger()
-
-        Log.error("bad literal", e)
+        get_logger().error("bad literal", e)
 
 
 def unliteral_field(field):
@@ -81,8 +79,7 @@ def unliteral_field(field):
     :return: SIMPLER STRING
     """
     if len(split_field(field)) > 1:
-        Log = get_logger()
-        Log.error("Bad call! Dude!")
+        get_logger().error("Bad call! Dude!")
     return field.replace("\.", ".")
 
 
@@ -218,8 +215,7 @@ def _all_default(d, default, seen=None):
                         _set_attr(d, [k], default_value)
                     except Exception, e:
                         if PATH_NOT_FOUND not in e:
-                            Log = get_logger()
-                            Log.error("Can not set attribute {{name}}", name=k, cause=e)
+                            get_logger().error("Can not set attribute {{name}}", name=k, cause=e)
         elif isinstance(existing_value, list) or isinstance(default_value, list):
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
         elif (hasattr(existing_value, "__setattr__") or isinstance(existing_value, Mapping)) and isinstance(default_value, Mapping):
@@ -330,11 +326,9 @@ def _get_attr(obj, path):
         # TRY A CASE-INSENSITIVE MATCH
         matched_attr_name = lower_match(attr_name, dir(obj))
         if not matched_attr_name:
-            Log = get_logger()
-            Log.warning(PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error)
+            get_logger().warning(PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error)
         elif len(matched_attr_name) > 1:
-            Log = get_logger()
-            Log.error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
+            get_logger().error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
         else:
             return _get_attr(obj[matched_attr_name[0]], path[1:])
 
@@ -360,8 +354,7 @@ def _get_attr(obj, path):
 def _set_attr(obj, path, value):
     obj = _get_attr(obj, path[:-1])
     if obj is None:  # DELIBERATE, WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
-        Log = get_logger()
-        Log.error(PATH_NOT_FOUND)
+        get_logger().error(PATH_NOT_FOUND)
 
     attr_name = path[-1]
 
@@ -385,8 +378,7 @@ def _set_attr(obj, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception, f:
-            Log = get_logger()
-            Log.error(PATH_NOT_FOUND)
+            get_logger().error(PATH_NOT_FOUND)
 
 
 def lower_match(value, candidates):
@@ -434,9 +426,7 @@ def _wrap_leaves(value):
             value = _wrap_leaves(value)
 
             if key == "":
-                Log = get_logger()
-
-                Log.error("key is empty string.  Probably a bad idea")
+                get_logger().error("key is empty string.  Probably a bad idea")
             if isinstance(key, str):
                 key = key.decode("utf8")
 

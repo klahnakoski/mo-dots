@@ -35,9 +35,7 @@ def get_module(name):
     try:
         return importlib.import_module(name)
     except Exception, e:
-        Log = get_logger()
-        Log.error("`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e)
-
+        get_logger().error("`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e)
 
 
 class PoorLogger(object):
