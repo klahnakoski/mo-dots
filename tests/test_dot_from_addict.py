@@ -32,9 +32,8 @@ from collections import Mapping
 from copy import deepcopy
 
 import mo_json
-from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
-
 from mo_dots import Data, set_default, unwrap
+from mo_testing.fuzzytestcase import FuzzyTestCase
 
 TEST_VAL = [1, 2, 3]
 TEST_DICT = {'a': {'b': {'c': TEST_VAL}}}

@@ -14,13 +14,12 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from mo_logs import Log
-from mo_math import MAX
-from pyLibrary.meta import DataClass
-from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
-
 from mo_dots import wrap, Null, set_default, unwrap, Data
 from mo_dots.objects import datawrap
+from mo_logs import Log
+from mo_math import MAX
+from mo_testing.fuzzytestcase import FuzzyTestCase
+from pyLibrary.meta import DataClass
 
 
 class TestDot(FuzzyTestCase):
