@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 from collections import MutableMapping, Mapping
 from copy import deepcopy
 
-from pyDots import _getdefault, hash_value, literal_field, coalesce, listwrap
+from mo_dots import _getdefault, hash_value, literal_field, coalesce, listwrap, _late_import
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -86,7 +86,7 @@ class Data(MutableMapping):
         if isinstance(key, str):
             key = key.decode("utf8")
         elif not isinstance(key, unicode):
-            from MoLogs import Log
+            Log = _late_import()
             Log.error("only string keys are supported")
 
         d = _get(self, "_dict")
@@ -111,7 +111,7 @@ class Data(MutableMapping):
 
     def __setitem__(self, key, value):
         if key == "":
-            from MoLogs import Log
+            Log = _late_import()
 
             Log.error("key is empty string.  Probably a bad idea")
         if key == None:
@@ -233,7 +233,7 @@ class Data(MutableMapping):
         return listwrap(d.values())
 
     def clear(self):
-        from MoLogs import Log
+        Log = _late_import()
         Log.error("clear() not supported")
 
     def __len__(self):
@@ -309,7 +309,7 @@ def leaves(value, prefix=None):
             else:
                 output.append((prefix + literal_field(k), unwrap(v)))
         except Exception, e:
-            from MoLogs import Log
+            Log = _late_import()
 
             Log.error("Do not know how to handle", cause=e)
     return output
@@ -355,7 +355,7 @@ class _DictUsingSelf(dict):
 
     def __setitem__(self, key, value):
         if key == "":
-            from MoLogs import Log
+            Log = _late_import()
 
             Log.error("key is empty string.  Probably a bad idea")
         if isinstance(key, str):
@@ -462,7 +462,7 @@ class _DictUsingSelf(dict):
         return listwrap(dict.values(self))
 
     def clear(self):
-        from MoLogs import Log
+        Log = _late_import()
         Log.error("clear() not supported")
 
     def __len__(self):
@@ -533,5 +533,5 @@ def _str(value, depth):
         return str(type(value))
 
 
-from pyDots.nones import Null, NullType
-from pyDots import unwrap, wrap
+from mo_dots.nones import Null, NullType
+from mo_dots import unwrap, wrap

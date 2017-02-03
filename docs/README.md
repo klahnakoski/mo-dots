@@ -77,7 +77,7 @@ When wrapping `dict`, the property names are **NOT** interpreted as paths;
 property names can include dots (`.`).
 
 ```python
-	>>> from pyDots import wrap
+	>>> from mo_dots import wrap
 	>>> a = wrap({"b.c": 42})
 	>>> a.keys()
 	set(['b.c'])
@@ -129,7 +129,7 @@ JSON you are expecting. Specifically, this happens with URLs:
 **BAD** - dots in url are interpreted as paths
 
 ```python
-	>>> from pyDots import wrap, literal_field, Data
+	>>> from mo_dots import wrap, literal_field, Data
 	>>>
 	>>> def update(summary, url, count):
 	...     summary[url] += count
@@ -158,7 +158,7 @@ You can produce leaf form by iterating over all leaves. This is good for
 simplifying iteration over deep inner object structures.
 
 ```python
-	>>> from pyDots import wrap
+	>>> from mo_dots import wrap
 	>>> a = wrap({"b": {"c": 42}})
 	>>> for k, v in a.leaves():
 	...     print k + ": " + unicode(v)

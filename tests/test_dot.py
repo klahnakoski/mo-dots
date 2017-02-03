@@ -14,13 +14,12 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from MoLogs import Log
-from pyLibrary.meta import DataClass
-from pyLibrary.collections import MAX
-from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
-
-from pyDots import wrap, Null, set_default, unwrap, Data
-from pyDots.objects import datawrap
+from mo_dots import wrap, Null, set_default, unwrap, Data
+from mo_dots.objects import datawrap
+from mo_logs import Log
+from mo_math import MAX
+from mo_testing.fuzzytestcase import FuzzyTestCase
+# from pyLibrary.meta import DataClass
 
 
 class TestDot(FuzzyTestCase):
@@ -434,14 +433,10 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
 
 
-
-_TestMapping = DataClass("_TestMapping", ["a", "b"])
-
-
-
-
-
-
+class _TestMapping(object):
+    def __init__(self):
+        self.a = None
+        self.b = None
 
 class _UserDict:
     """

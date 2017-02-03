@@ -29,14 +29,12 @@
 from __future__ import unicode_literals
 
 from collections import Mapping
-from copy import copy, deepcopy
-import json
-import pickle
-from unittest import skipIf
+from copy import deepcopy
 
-from pyLibrary import convert
-from pyDots import Data, set_default, unwrap
-from pyLibrary.testing.fuzzytestcase import FuzzyTestCase
+import mo_json
+from mo_testing.fuzzytestcase import FuzzyTestCase
+
+from mo_dots import Data, set_default, unwrap
 
 TEST_VAL = [1, 2, 3]
 TEST_DICT = {'a': {'b': {'c': TEST_VAL}}}
@@ -129,10 +127,10 @@ class AddictTests(FuzzyTestCase):
 
     def test_json(self):
         some_dict = TEST_DICT
-        some_json = convert.value2json(some_dict)
+        some_json = mo_json.value2json(some_dict)
         prop = Data()
         prop.a.b.c = TEST_VAL
-        prop_json = convert.value2json(prop)
+        prop_json = mo_json.value2json(prop)
         self.assertEqual(some_json, prop_json)
 
     def test_delitem(self):
