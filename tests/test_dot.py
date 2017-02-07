@@ -432,6 +432,42 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a.a.a['a'], leaves["a\.a\.a"], "expecting 1")
         self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
 
+    def test_null_inequalities(self):
+        self.assertEqual(Null < 1, None)
+        self.assertEqual(Null <= 1, None)
+        self.assertEqual(Null != 1, None)
+        self.assertEqual(Null == 1, None)
+        self.assertEqual(Null >= 1, None)
+        self.assertEqual(Null > 1, None)
+
+        self.assertEqual(1 < Null, None)
+        self.assertEqual(1 <= Null, None)
+        self.assertEqual(1 != Null, None)
+        self.assertEqual(1 == Null, None)
+        self.assertEqual(1 >= Null, None)
+        self.assertEqual(1 > Null, None)
+
+        self.assertEqual(Null < Null, None)
+        self.assertEqual(Null <= Null, None)
+        self.assertEqual(Null != Null, False)
+        self.assertEqual(Null == Null, True)
+        self.assertEqual(Null >= Null, None)
+        self.assertEqual(Null > Null, None)
+
+        self.assertEqual(Null < None, None)
+        self.assertEqual(Null <= None, None)
+        self.assertEqual(Null != None, False)
+        self.assertEqual(Null == None, True)
+        self.assertEqual(Null >= None, None)
+        self.assertEqual(Null > None, None)
+
+        self.assertEqual(None < Null, None)
+        self.assertEqual(None <= Null, None)
+        self.assertEqual(None != Null, False)
+        self.assertEqual(None == Null, True)
+        self.assertEqual(None >= Null, None)
+        self.assertEqual(None > Null, None)
+
 
 class _TestMapping(object):
     def __init__(self):
