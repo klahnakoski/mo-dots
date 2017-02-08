@@ -305,7 +305,7 @@ def _get_attr(obj, path):
             return _get_attr(obj[attr_name], path[1:])
 
         # TRY FILESYSTEM
-        File = get_module("mo_files.File")
+        File = get_module("mo_files").File
         possible_error = None
         if File.new_instance(File(obj.__file__).parent, attr_name).set_extension("py").exists:
             try:

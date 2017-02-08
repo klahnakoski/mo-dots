@@ -394,6 +394,14 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(dd["a"], 20)
         self.assertEqual(dd, {"a": 20, "b": 30})
 
+    def test_object_wrap_w_deep_path(self):
+        d = SampleData()
+        d.a = Data(c=3)
+        dd = datawrap(d)
+
+        self.assertEqual(dd["a.c"], 3)
+        self.assertEqual(dd, {"a": {"c":3}, "b": 30})
+
     def test_deep_select(self):
         d = wrap([{"a": {"b": 1}}, {"a": {"b": 2}}])
 
@@ -431,6 +439,42 @@ class TestDot(FuzzyTestCase):
         leaves = wrap(dict(a.leaves()))
         self.assertEqual(a.a.a['a'], leaves["a\.a\.a"], "expecting 1")
         self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
+
+    def test_null_inequalities(self):
+        self.assertEqual(Null < 1, None)
+        self.assertEqual(Null <= 1, None)
+        self.assertEqual(Null != 1, None)
+        self.assertEqual(Null == 1, None)
+        self.assertEqual(Null >= 1, None)
+        self.assertEqual(Null > 1, None)
+
+        self.assertEqual(1 < Null, None)
+        self.assertEqual(1 <= Null, None)
+        self.assertEqual(1 != Null, None)
+        self.assertEqual(1 == Null, None)
+        self.assertEqual(1 >= Null, None)
+        self.assertEqual(1 > Null, None)
+
+        self.assertEqual(Null < Null, None)
+        self.assertEqual(Null <= Null, None)
+        self.assertEqual(Null != Null, False)
+        self.assertEqual(Null == Null, True)
+        self.assertEqual(Null >= Null, None)
+        self.assertEqual(Null > Null, None)
+
+        self.assertEqual(Null < None, None)
+        self.assertEqual(Null <= None, None)
+        self.assertEqual(Null != None, False)
+        self.assertEqual(Null == None, True)
+        self.assertEqual(Null >= None, None)
+        self.assertEqual(Null > None, None)
+
+        self.assertEqual(None < Null, None)
+        self.assertEqual(None <= Null, None)
+        self.assertEqual(None != Null, False)
+        self.assertEqual(None == Null, True)
+        self.assertEqual(None >= Null, None)
+        self.assertEqual(None > Null, None)
 
 
 class _TestMapping(object):
