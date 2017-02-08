@@ -394,6 +394,14 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(dd["a"], 20)
         self.assertEqual(dd, {"a": 20, "b": 30})
 
+    def test_object_wrap_w_deep_path(self):
+        d = SampleData()
+        d.a = Data(c=3)
+        dd = datawrap(d)
+
+        self.assertEqual(dd["a.c"], 3)
+        self.assertEqual(dd, {"a": {"c":3}, "b": 30})
+
     def test_deep_select(self):
         d = wrap([{"a": {"b": 1}}, {"a": {"b": 2}}])
 
