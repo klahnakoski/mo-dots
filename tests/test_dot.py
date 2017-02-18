@@ -440,6 +440,13 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a.a.a['a'], leaves["a\.a\.a"], "expecting 1")
         self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
 
+    def test_null_set_index(self):
+        temp = Null
+        # expecting no crash
+        temp[0] = 1
+        temp[1] = None
+
+
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
         self.assertEqual(Null <= 1, None)

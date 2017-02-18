@@ -89,7 +89,7 @@ def split_field(field):
     """
     if field == "." or field==None:
         return []
-    elif field.find(".") >= 0:
+    elif isinstance(field, unicode) and field.find(".") >= 0:
         field = field.replace("\.", "\a")
         return [k.replace("\a", ".") for k in field.split(".")]
     else:
@@ -467,6 +467,9 @@ def unwrap(v):
         return v.list
     elif _type is NullType:
         return None
+    elif _type is DataObject:
+        d = _get(v, "_obj")
+        return d
     elif _type is GeneratorType:
         return (unwrap(vv) for vv in v)
     else:
@@ -538,3 +541,4 @@ def tuplewrap(value):
 from mo_dots.nones import Null, NullType
 from mo_dots.datas import Data
 from mo_dots.lists import FlatList
+from mo_dots.objects import DataObject
