@@ -446,6 +446,12 @@ class TestDot(FuzzyTestCase):
         temp[0] = 1
         temp[1] = None
 
+    def test_deep_null_assignment(self):
+        temp = wrap({"a": 0})
+        e = temp.e
+        e.s.t = 1
+        e.s.s = 2
+        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
