@@ -176,7 +176,7 @@ class NullType(object):
         v = o.get(k)
         if v == None:
             return NullType(self, key)
-        return wrap(v).get(key)
+        return wrap(v.get(key))
 
     def __setattr__(self, key, value):
         key = key.decode('utf8')
@@ -197,8 +197,14 @@ class NullType(object):
             return
         k = d["__key__"]
 
-        seq = [k] + split_field(key)
-        _assign_to_null(o, seq, value)
+        if o is None:
+            return
+        elif isinstance(key, int):
+            seq = [k] + [key]
+            _assign_to_null(o, seq, value)
+        else:
+            seq = [k] + split_field(key)
+            _assign_to_null(o, seq, value)
 
     def keys(self):
         return set()
