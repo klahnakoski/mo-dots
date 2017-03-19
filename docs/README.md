@@ -237,7 +237,7 @@ assignment so it can be used in later programming logic. This feature proves
 useful when transforming hierarchical data; adding deep children to an
 incomplete tree.
 
-### Null Arithmetic ###
+### Null Arithmetic
 
 When `Null` is part of arithmetic operation (boolean or otherwise) it results
 in `Null`:
@@ -300,7 +300,7 @@ For the sake of completeness, we have two more convenience methods:
   * `flat_list.left(b)` same as `flat_list[:b:]`
   * `flat_list.not_left(b)` same as `flat_list[b::]`
 
-### FlatList Dot (.) Operator###
+### FlatList Dot (.) Operator
 
 The dot operator on a `FlatList` performs a simple projection; it will return a list of property values
 
@@ -327,7 +327,7 @@ is expected to have.
 Appendix
 ========
 
-### Examples in the wild ###
+### Examples in the wild
 
 `Data` is a common pattern in many frameworks even though it goes by
 different names and slightly different variations, some examples are:
@@ -347,7 +347,7 @@ different names and slightly different variations, some examples are:
   then used to set each element's attribute. A null value will remove the
   specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
 
-### Notes ###
+### Notes
  * More on missing values: [http://www.np.org/NA-overview.html](http://www.np.org/NA-overview.html)
 it only considers the legitimate-field-with-missing-value (Statistical Null)
 and does not look at field-does-not-exist-in-this-context (Database Null)
@@ -364,7 +364,7 @@ dot(.) and slice [::] operators. Not only must `FlatList` deal with
 `Nulls` (and `Nones`) but also provide fixes to Python's inconsistent
 slice operator.
 
-### The slice operator in Python2.7 is inconsistent###
+### The slice operator in Python2.7 is inconsistent
 
 At first glance, the python slice operator `[:]` is elegant and powerful.
 Unfortunately it is inconsistent and forces the programmer to write extra code
@@ -419,7 +419,7 @@ I advocate never using negative indices in the slice operator. Rather, use the
         return _list[-num:]
 ```
 
-### Python 2.7 `__getslice__` is broken###
+### Python 2.7 `__getslice__` is broken
 
 It would be nice to have our own list-like class that implements slicing in a
 way that is consistent. Specifically, we expect to solve the inconsistent
