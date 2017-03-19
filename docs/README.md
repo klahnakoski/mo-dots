@@ -96,7 +96,7 @@ example from my ElasticSearch configuration:
 
 **YAML**
 
-```yaml
+```javascript
 	discovery.zen.ping.multicast.enabled: true
 ```
 
@@ -208,7 +208,7 @@ To minimize the use of `Null` in our code we let comparisons
 with `None` succeed. The right-hand-side of the above comparisons can be
 replaced with `None` in all cases.
 
-###Identity and Absorbing (Zero) Elements###
+### Identity and Absorbing (Zero) Elements
 
 With `Null` defined, we have met the requirements for an [algebraic semigroup](https://en.wikipedia.org/wiki/Semigroup): The identity element is the dot string (`"."`) and the zero element is `Null`
 (or `None`).
@@ -219,7 +219,7 @@ With `Null` defined, we have met the requirements for an [algebraic semigroup](h
 which are true for all `a`.  I hope, dear reader, you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
 
 
-###NullTypes are Lazy###
+### NullTypes are Lazy
 
 NullTypes can also perform lazy assignment for increased expressibility.
 
@@ -300,7 +300,7 @@ For the sake of completeness, we have two more convenience methods:
   * `flat_list.left(b)` same as `flat_list[:b:]`
   * `flat_list.not_left(b)` same as `flat_list[b::]`
 
-###FlatList Dot (.) Operator###
+### FlatList Dot (.) Operator###
 
 The dot operator on a `FlatList` performs a simple projection; it will return a list of property values
 
@@ -364,7 +364,7 @@ dot(.) and slice [::] operators. Not only must `FlatList` deal with
 `Nulls` (and `Nones`) but also provide fixes to Python's inconsistent
 slice operator.
 
-###The slice operator in Python2.7 is inconsistent###
+### The slice operator in Python2.7 is inconsistent###
 
 At first glance, the python slice operator `[:]` is elegant and powerful.
 Unfortunately it is inconsistent and forces the programmer to write extra code
@@ -419,7 +419,7 @@ I advocate never using negative indices in the slice operator. Rather, use the
         return _list[-num:]
 ```
 
-###Python 2.7 `__getslice__` is broken###
+### Python 2.7 `__getslice__` is broken###
 
 It would be nice to have our own list-like class that implements slicing in a
 way that is consistent. Specifically, we expect to solve the inconsistent
