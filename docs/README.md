@@ -61,12 +61,12 @@ a == {"b": {"c": [1, 42]}}
  object.getattribute() is called with str() even when using `from __future__
  import unicode_literals`
 
-##Mapping Leaves
+## Mapping Leaves
 
 The implications of allowing `a["b.c"] == a.b.c` opens up two different Data
 forms: *standard form* and *leaf form*
 
-###Standard Form
+### Standard Form
 
 The `[]` operator in `Data` has been overridden to assume dots (`.`) represent
 paths rather than literal string values; but, the internal representation of
@@ -89,7 +89,7 @@ property names can include dots (`.`).
 	42      # escaping the dot (`.`) makes it literal
 ```
 
-###Leaf form
+### Leaf form
 
 Leaf form is used in some JSON, or YAML, configuration files. Here is an
 example from my ElasticSearch configuration:
