@@ -47,18 +47,16 @@ a == {}
 &gt;&gt;&gt; a.b.c += 1
 a == {"b": {"c": 1}}
 &gt;&gt;&gt; a.b.c += 42
-a == {"b": {"c": 43}}
-</pre>
+a == {"b": {"c": 43}}</pre>
  7. `+=` with a list (`[]`) will `append()`<pre>
 &gt;&gt;&gt; a = wrap({})
 a == {}
 &gt;&gt;&gt; a.b.c += [1]
 a == {"b": {"c": [1]}}
 &gt;&gt;&gt; a.b.c += [42]
-a == {"b": {"c": [1, 42]}}
-</pre>
+a == {"b": {"c": [1, 42]}}</pre>
  8. property names are coerced to unicode - it appears Python's
- object.getattribute() is called with str() even when using `from __future__
+ `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 
 ## Mapping Leaves

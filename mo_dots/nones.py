@@ -63,7 +63,7 @@ class NullType(object):
             key = d["__key__"]
 
             _assign_to_null(o, [key], other)
-        except Exception, e:
+        except Exception as e:
             raise e
         return other
 
@@ -260,5 +260,5 @@ def _assign_to_null(obj, path, value, force=True):
                 obj[path0] = old_value = {}
 
         _assign_to_null(old_value, path[1:], value)
-    except Exception, e:
+    except Exception as e:
         raise e
