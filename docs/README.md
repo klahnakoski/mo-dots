@@ -222,13 +222,13 @@ which are true for all `a`.  I hope, dear reader, you do not see this a some pec
 NullTypes can also perform lazy assignment for increased expressibility.
 
 ```python
-    a = wrap({})
-    x = a.b.c
-    x == None
-    >>> True
-    x = 42
-    a.b.c == 42
-    >>> True
+    >>> a = wrap({})
+    >>> x = a.b.c
+    >>> x == None
+    True
+    >>> x = 42
+    >>> a.b.c == 42
+    True
 ```
 in this case, specific `Nulls`, like `x`, keep track of the path
 assignment so it can be used in later programming logic. This feature proves
