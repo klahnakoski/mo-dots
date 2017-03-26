@@ -64,7 +64,7 @@ def literal_field(field):
     """
     try:
         return field.replace(".", "\.")
-    except Exception, e:
+    except Exception as e:
         get_logger().error("bad literal", e)
 
 
@@ -213,7 +213,7 @@ def _all_default(d, default, seen=None):
                     # ASSUME PRIMITIVE (OR LIST, WHICH WE DO NOT COPY)
                     try:
                         _set_attr(d, [k], default_value)
-                    except Exception, e:
+                    except Exception as e:
                         if PATH_NOT_FOUND not in e:
                             get_logger().error("Can not set attribute {{name}}", name=k, cause=e)
         elif isinstance(existing_value, list) or isinstance(default_value, list):
@@ -270,7 +270,7 @@ def set_attr(obj, path, value):
     """
     try:
         return _set_attr(obj, split_field(path), value)
-    except Exception, e:
+    except Exception as e:
         Log = get_logger()
         if PATH_NOT_FOUND in e:
             Log.warning(PATH_NOT_FOUND + ": {{path}}",  path= path)
@@ -284,7 +284,7 @@ def get_attr(obj, path):
     """
     try:
         return _get_attr(obj, split_field(path))
-    except Exception, e:
+    except Exception as e:
         Log = get_logger()
         if PATH_NOT_FOUND in e:
             Log.error(PATH_NOT_FOUND+": {{path}}",  path=path, cause=e)
@@ -307,19 +307,21 @@ def _get_attr(obj, path):
         # TRY FILESYSTEM
         File = get_module("mo_files").File
         possible_error = None
-        if File.new_instance(File(obj.__file__).parent, attr_name).set_extension("py").exists:
+        python_file = File.new_instance(File(obj.__file__).parent, attr_name).set_extension("py")
+        python_module = File.new_instance(File(obj.__file__).parent, attr_name, "__init__.py")
+        if python_file.exists or python_module.exists:
             try:
                 # THIS CASE IS WHEN THE __init__.py DOES NOT IMPORT THE SUBDIR FILE
                 # WE CAN STILL PUT THE PATH TO THE FILE IN THE from CLAUSE
                 if len(path)==1:
                     # GET MODULE OBJECT
-                    output = __import__(obj.__name__ + "." + attr_name, globals(), locals(), [path[0]], 0)
+                    output = __import__(obj.__name__ + b"." + attr_name.decode('utf8'), globals(), locals(), [attr_name.decode('utf8')], 0)
                     return output
                 else:
                     # GET VARIABLE IN MODULE
-                    output = __import__(obj.__name__ + "." + attr_name, globals(), locals(), [path[1]], 0)
+                    output = __import__(obj.__name__ + b"." + attr_name.decode('utf8'), globals(), locals(), [path[1].decode('utf8')], 0)
                     return _get_attr(output, path[1:])
-            except Exception, e:
+            except Exception as e:
                 Except = get_module("mo_logs.exceptions.Except")
                 possible_error = Except.wrap(e)
 
@@ -366,14 +368,14 @@ def _set_attr(obj, path, value):
             new_value = value
         else:
             new_value = old_value.__class__(value)  # TRY TO MAKE INSTANCE OF SAME CLASS
-    except Exception, e:
+    except Exception as e:
         old_value = None
         new_value = value
 
     try:
         setattr(obj, attr_name, new_value)
         return old_value
-    except Exception, e:
+    except Exception as e:
         try:
             obj[attr_name] = new_value
             return old_value

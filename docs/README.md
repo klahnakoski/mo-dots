@@ -47,26 +47,24 @@ a == {}
 &gt;&gt;&gt; a.b.c += 1
 a == {"b": {"c": 1}}
 &gt;&gt;&gt; a.b.c += 42
-a == {"b": {"c": 43}}
-</pre>
+a == {"b": {"c": 43}}</pre>
  7. `+=` with a list (`[]`) will `append()`<pre>
 &gt;&gt;&gt; a = wrap({})
 a == {}
 &gt;&gt;&gt; a.b.c += [1]
 a == {"b": {"c": [1]}}
 &gt;&gt;&gt; a.b.c += [42]
-a == {"b": {"c": [1, 42]}}
-</pre>
+a == {"b": {"c": [1, 42]}}</pre>
  8. property names are coerced to unicode - it appears Python's
- object.getattribute() is called with str() even when using `from __future__
+ `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 
-##Mapping Leaves
+## Mapping Leaves
 
 The implications of allowing `a["b.c"] == a.b.c` opens up two different Data
 forms: *standard form* and *leaf form*
 
-###Standard Form
+### Standard Form
 
 The `[]` operator in `Data` has been overridden to assume dots (`.`) represent
 paths rather than literal string values; but, the internal representation of
@@ -89,14 +87,14 @@ property names can include dots (`.`).
 	42      # escaping the dot (`.`) makes it literal
 ```
 
-###Leaf form
+### Leaf form
 
 Leaf form is used in some JSON, or YAML, configuration files. Here is an
 example from my ElasticSearch configuration:
 
 **YAML**
 
-```yaml
+```javascript
 	discovery.zen.ping.multicast.enabled: true
 ```
 
@@ -208,7 +206,7 @@ To minimize the use of `Null` in our code we let comparisons
 with `None` succeed. The right-hand-side of the above comparisons can be
 replaced with `None` in all cases.
 
-###Identity and Absorbing (Zero) Elements###
+### Identity and Absorbing (Zero) Elements
 
 With `Null` defined, we have met the requirements for an [algebraic semigroup](https://en.wikipedia.org/wiki/Semigroup): The identity element is the dot string (`"."`) and the zero element is `Null`
 (or `None`).
@@ -219,25 +217,25 @@ With `Null` defined, we have met the requirements for an [algebraic semigroup](h
 which are true for all `a`.  I hope, dear reader, you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
 
 
-###NullTypes are Lazy###
+### NullTypes are Lazy
 
 NullTypes can also perform lazy assignment for increased expressibility.
 
 ```python
-    a = wrap({})
-    x = a.b.c
-    x == None
-    >>> True
-    x = 42
-    a.b.c == 42
-    >>> True
+    >>> a = wrap({})
+    >>> x = a.b.c
+    >>> x == None
+    True
+    >>> x = 42
+    >>> a.b.c == 42
+    True
 ```
 in this case, specific `Nulls`, like `x`, keep track of the path
 assignment so it can be used in later programming logic. This feature proves
 useful when transforming hierarchical data; adding deep children to an
 incomplete tree.
 
-### Null Arithmetic ###
+### Null Arithmetic
 
 When `Null` is part of arithmetic operation (boolean or otherwise) it results
 in `Null`:
@@ -300,7 +298,7 @@ For the sake of completeness, we have two more convenience methods:
   * `flat_list.left(b)` same as `flat_list[:b:]`
   * `flat_list.not_left(b)` same as `flat_list[b::]`
 
-###FlatList Dot (.) Operator###
+### FlatList Dot (.) Operator
 
 The dot operator on a `FlatList` performs a simple projection; it will return a list of property values
 
@@ -327,7 +325,7 @@ is expected to have.
 Appendix
 ========
 
-### Examples in the wild ###
+### Examples in the wild
 
 `Data` is a common pattern in many frameworks even though it goes by
 different names and slightly different variations, some examples are:
@@ -347,7 +345,7 @@ different names and slightly different variations, some examples are:
   then used to set each element's attribute. A null value will remove the
   specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
 
-### Notes ###
+### Notes
  * More on missing values: [http://www.np.org/NA-overview.html](http://www.np.org/NA-overview.html)
 it only considers the legitimate-field-with-missing-value (Statistical Null)
 and does not look at field-does-not-exist-in-this-context (Database Null)
@@ -364,7 +362,7 @@ dot(.) and slice [::] operators. Not only must `FlatList` deal with
 `Nulls` (and `Nones`) but also provide fixes to Python's inconsistent
 slice operator.
 
-###The slice operator in Python2.7 is inconsistent###
+### The slice operator in Python2.7 is inconsistent
 
 At first glance, the python slice operator `[:]` is elegant and powerful.
 Unfortunately it is inconsistent and forces the programmer to write extra code
@@ -419,7 +417,7 @@ I advocate never using negative indices in the slice operator. Rather, use the
         return _list[-num:]
 ```
 
-###Python 2.7 `__getslice__` is broken###
+### Python 2.7 `__getslice__` is broken
 
 It would be nice to have our own list-like class that implements slicing in a
 way that is consistent. Specifically, we expect to solve the inconsistent
