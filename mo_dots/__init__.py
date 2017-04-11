@@ -13,7 +13,12 @@ from __future__ import unicode_literals
 
 from __builtin__ import zip as _builtin_zip
 from collections import Mapping
+from decimal import Decimal
 from types import GeneratorType, NoneType, ModuleType
+
+from datetime import datetime
+
+from datetime import date
 
 from mo_dots import utils
 from mo_dots.utils import get_logger, get_module
@@ -23,6 +28,7 @@ ROOT_PATH = [SELF_PATH]
 
 
 _get = object.__getattribute__
+_set = object.__setattr__
 
 
 def inverse(d):
@@ -90,7 +96,7 @@ def split_field(field):
     if field == "." or field==None:
         return []
     elif isinstance(field, unicode) and field.find(".") >= 0:
-        field = field.replace("\.", "\a")
+        field = field.replace("\\\\.", "\a").replace("\\.", "\a")
         return [k.replace("\a", ".") for k in field.split(".")]
     else:
         return [field]
@@ -273,9 +279,9 @@ def set_attr(obj, path, value):
     except Exception as e:
         Log = get_logger()
         if PATH_NOT_FOUND in e:
-            Log.warning(PATH_NOT_FOUND + ": {{path}}",  path= path)
+            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=e)
         else:
-            Log.error("Problem setting value", e)
+            Log.error("Problem setting value", cause=e)
 
 
 def get_attr(obj, path):
@@ -353,10 +359,12 @@ def _get_attr(obj, path):
         return None
 
 
-def _set_attr(obj, path, value):
-    obj = _get_attr(obj, path[:-1])
-    if obj is None:  # DELIBERATE, WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
-        get_logger().error(PATH_NOT_FOUND)
+def _set_attr(obj_, path, value):
+    obj = _get_attr(obj_, path[:-1])
+    if obj is None:  # DELIBERATE USE OF `is`: WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
+        obj = _get_attr(obj_, path[:-1])
+        if obj is None:
+            get_logger().error(PATH_NOT_FOUND+" Tried to get attribute of None")
 
     attr_name = path[-1]
 
@@ -380,7 +388,7 @@ def _set_attr(obj, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception, f:
-            get_logger().error(PATH_NOT_FOUND)
+            get_logger().error(PATH_NOT_FOUND, cause=e)
 
 
 def lower_match(value, candidates):
@@ -391,12 +399,9 @@ def wrap(v):
     type_ = _get(v, "__class__")
 
     if type_ is dict:
-        m = Data(v)
+        m = object.__new__(Data)
+        _set(m, "_dict", v)
         return m
-        # m = object.__new__(Data)
-        # object.__setattr__(m, "_dict", v)
-        # return m
-
     elif type_ is NoneType:
         return Null
     elif type_ is list:
@@ -471,7 +476,10 @@ def unwrap(v):
         return None
     elif _type is DataObject:
         d = _get(v, "_obj")
-        return d
+        if isinstance(d, Mapping):
+            return d
+        else:
+            return v
     elif _type is GeneratorType:
         return (unwrap(vv) for vv in v)
     else:
