@@ -42,7 +42,7 @@ class TestDot(FuzzyTestCase):
         d = show_kwargs(**a)
         self.assertAlmostEqual(d, {"a":1, "b":2})
 
-    def test__userdict(self):
+    def test_userdict(self):
         def show_kwargs(**kwargs):
             return kwargs
 
@@ -91,6 +91,11 @@ class TestDot(FuzzyTestCase):
             pass
         else:
             Log.error("error")
+
+    def test_null_access(self):
+        a = Data()
+        c = a.b[b'test']
+        self.assertTrue(c == None, "Expecting Null to accept str() for item access")
 
     def test_null(self):
         a = 0
