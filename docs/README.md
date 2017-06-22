@@ -253,16 +253,21 @@ are exceptions, and behave as expected with [three-valued logic](https://en.wiki
 
 `FlatList` is "Flat"
 ----------------------------------------
+
 `FlatList` uses a *flat-list* assumption to interpret slicing and indexing
 operations. This assumes lists are defined over all integer (**ℤ**)
 indices; defaulting to `Null` for indices not explicitly defined otherwise.
 This is distinctly different from Python's *loop-around* assumption,
 where negative indices are interpreted modulo-the-list-length.
 
+### Indexing
+
+We will compare the Python list behaviour (`loop_list`) to the FlatList (`flat_list`): 
+
     loop_list = ['A', 'B', 'C']
     flat_list = wrap(loop_list)
 
-Here is table comparing behaviours
+Here is table of indexing results
 
 | <br>`index`|*loop-around*<br>`loop_list[index]`|*flat-list*<br>`flat_list[index]`|
 | ------:|:------------------:|:------------------:|
@@ -277,6 +282,9 @@ Here is table comparing behaviours
 |    3   |     `<error>`      |       `Null`       |
 |    4   |     `<error>`      |       `Null`       |
 |    5   |     `<error>`      |       `Null`       |
+
+
+### Slicing
 
 The *flat list* assumption reduces exception handling and simplifies code for
 window functions. For example, `Math.min(flat_list[a:b:])` is valid for
@@ -298,7 +306,7 @@ For the sake of completeness, we have two more convenience methods:
   * `flat_list.left(b)` same as `flat_list[:b:]`
   * `flat_list.not_left(b)` same as `flat_list[b::]`
 
-### FlatList Dot (.) Operator
+### Dot (.) Operator
 
 The dot operator on a `FlatList` performs a simple projection; it will return a list of property values
 
@@ -306,9 +314,7 @@ The dot operator on a `FlatList` performs a simple projection; it will return a 
     myList.name == [x["name"] for x in myList]
 ```
 
-DataObject for data
--------------------
-
+## DataObject for data
 
 You can wrap any object to make it appear as `Data`.
 
