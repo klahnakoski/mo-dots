@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from mo_dots import wrap, Null, set_default, unwrap, Data
+from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field
 from mo_dots.objects import datawrap
 from mo_logs import Log
 from mo_math import MAX
@@ -356,7 +356,7 @@ class TestDot(FuzzyTestCase):
             # COMPARE CURRENT VALUE TO MAX OF PAST 5, BUT NOT THE VERY LAST ONE
             try:
                 return record - MAX(records[index - 6:index - 1:])
-            except Exception, e:
+            except Exception as e:
                 return None
 
         data1_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -500,6 +500,10 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(None >= Null, None)
         self.assertEqual(None > Null, None)
 
+    def test_escape_dot(self):
+        self.assertAlmostEqual(literal_field("."), "\.")
+        self.assertAlmostEqual(literal_field("\."), "\.")
+
 
 class _TestMapping(object):
     def __init__(self):
@@ -530,3 +534,4 @@ class SampleData(object):
 
     def __str__(self):
         return str(self.a)+str(self.b)
+
