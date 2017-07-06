@@ -69,7 +69,7 @@ def literal_field(field):
     RETURN SAME WITH DOTS (`.`) ESCAPED
     """
     try:
-        return field.replace("\.", "\a").replace(".", "\.").replace("\a", "\.")
+        return field.replace(".", "\.")
     except Exception as e:
         get_logger().error("bad literal", e)
 

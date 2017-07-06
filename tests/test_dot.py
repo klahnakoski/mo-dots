@@ -501,8 +501,11 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(None > Null, None)
 
     def test_escape_dot(self):
-        self.assertAlmostEqual(literal_field("."), "\.")
-        self.assertAlmostEqual(literal_field("\."), "\.")
+        self.assertAlmostEqual(literal_field("."), "\\.")
+        self.assertAlmostEqual(literal_field("\\."), "\\\\.")
+        self.assertAlmostEqual(literal_field("\\\\."), "\\\\\\.")
+        self.assertAlmostEqual(literal_field("a.b"), "a\.b")
+        self.assertAlmostEqual(literal_field("a\\.html"), "a\\\\.html")
 
 
 class _TestMapping(object):
