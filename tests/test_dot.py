@@ -295,6 +295,17 @@ class TestDot(FuzzyTestCase):
         expected = {"c": {"d": {"e.f": 1, "g.h": 2}}}
         self.assertEqual(a, expected)
 
+    def test_assign8(self):
+        a = {}
+        b = wrap(a)
+
+        b["a"][literal_field(literal_field("b.html"))]["z"] = 3
+
+        expected = {"a": {
+            "b\\.html": {"z": 3}
+        }}
+        self.assertEqual(a, expected)
+
     def test_setitem_and_deep(self):
         a = {}
         b = wrap(a)
