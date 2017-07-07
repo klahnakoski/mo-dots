@@ -306,6 +306,15 @@ class TestDot(FuzzyTestCase):
         }}
         self.assertEqual(a, expected)
 
+    def test_assign9(self):
+        a = {}
+        b = wrap(a)
+
+        b["a"]["."] = 1
+
+        expected = {"a": 1}
+        self.assertEqual(a, expected)
+
     def test_setitem_and_deep(self):
         a = {}
         b = wrap(a)

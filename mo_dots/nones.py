@@ -268,5 +268,7 @@ def _split_field(field):
     """
     SIMPLE SPLIT, NO CHECKS
     """
-    return [k.replace("\a", ".") for k in field.replace("\.", "\a").split(".")]
-
+    if field == ".":
+        return []
+    else:
+        return [k.replace("\a", ".") for k in field.replace("\.", "\a").split(".")]
