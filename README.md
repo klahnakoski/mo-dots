@@ -5,7 +5,7 @@ Defines a `Data` class that is much like `dict` but with dot-property accessors,
 
 ## Quick Overview
 
-This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. `mo_dots.wrap` is often used to wrap existing `dict`s so they may be used like `Data`
+This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
 
     >>> from mo_dots import wrap, Data
 
@@ -15,8 +15,13 @@ See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/doc
 
 Define `Data` using named parameters
 
-	>>> a = Data(b=42, c="hello world")
-	a == {"b": 42, "c": "hellow world"}
+    >>> Data(b=42, c="hello world")
+    Data({'b': 42, 'c': 'hello world'})
+
+or wrap existing `dict`s so they can be used like `Data`
+
+    >>> wrap({'b': 42, 'c': 'hello world'})
+    Data({'b': 42, 'c': 'hello world'})
 
 ### Dot Access
 
@@ -29,7 +34,6 @@ Access properties by dot-delimited path.
 	>>> a = wrap({"b": {"c": 42}})
 	>>> a["b.c"] == 42
 	True
-
 
 ### Safe Access
 
