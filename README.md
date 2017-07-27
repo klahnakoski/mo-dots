@@ -13,12 +13,12 @@ See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/doc
 
 ### Easy Definition
 
-Define `Data` using named parameters
+Define `Data` using named parameters, just like you would a `dict`
 
     >>> Data(b=42, c="hello world")
     Data({'b': 42, 'c': 'hello world'})
 
-or wrap existing `dict`s so they can be used like `Data`
+You can also wrap existing `dict`s so they can be used like `Data`
 
     >>> wrap({'b': 42, 'c': 'hello world'})
     Data({'b': 42, 'c': 'hello world'})
