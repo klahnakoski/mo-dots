@@ -8,7 +8,7 @@ and some state bundled into a package. The second are ***Data***: Primarily
 a set of properties, with only (de)serialization functions, or algebraic
 operators defined. 
 
-*Data* objects in Python do not require attributes, only properties. Therefore, we can conveniently use attribute access to mean the same as item access: `a["x"]==a.x` Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Data access is only the beginning. 
+*Data* objects in Python do not require attributes, only properties. Therefore, we can conveniently use attribute access to mean the same as item access: `a["x"]==a.x`. Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Data access is only the beginning. 
 
 Focusing on just *data* objects; We want a succinct way of transforming data. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. This library provides the consistent base for a high level data manipulation algebra. 
 
@@ -343,11 +343,12 @@ different names and slightly different variations, some examples are:
  * `collections.namedtuple()` - gives attribute names to tuple indices
   effectively providing <code>a.b</code> rather than <code>a["b"]</code>
      offered by dicts
+ * `collections.defaultdict()` - will change the `dict` upon observation of its properties, which is unexpected
  * [configman's DotDict](https://github.com/mozilla/configman/blob/master/configman/dotdict.py)
   allows dot notation, and path setting
  * [Fabric's _AttributeDict](https://github.com/fabric/fabric/blob/19f5cffaada0f6f6132cd06742acd34e65cf1977/fabric/utils.py#L216) allows dot notation
  * C# Linq requires anonymous types to avoid large amounts of boilerplate code.
- * D3 has many of these conventions ["The function's return value is
+ * D3 uses `null` to indicate property deletion: ["The function's return value is
   then used to set each element's attribute. A null value will remove the
   specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
 

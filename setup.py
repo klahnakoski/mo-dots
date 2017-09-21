@@ -44,7 +44,7 @@ def find_packages(where='.', lib_prefix='', exclude=()):
 
 setup(
     name='mo-dots',
-    version="1.5.17227",
+    version="1.6.17264",
     description='More Dots! Dot-access to Python dicts like Javascript',
     long_description=long_desc,
     author='Kyle Lahnakoski',
@@ -52,7 +52,7 @@ setup(
     url='https://github.com/klahnakoski/mo-dots',
     license='MPL 2.0',
     packages=find_packages(".", lib_prefix=""),
-    install_requires=[],
+    install_requires=["future"],
     include_package_data=True,
     zip_safe=False,
     classifiers=[  #https://pypi.python.org/pypi?%3Aaction=list_classifiers

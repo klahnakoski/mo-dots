@@ -14,7 +14,8 @@ from __future__ import unicode_literals
 from UserDict import UserDict
 from collections import Mapping
 
-from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field
+from copy import deepcopy
+from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field, NullType
 from mo_dots.objects import datawrap
 from mo_logs import Log
 from mo_math import MAX
@@ -526,6 +527,24 @@ class TestDot(FuzzyTestCase):
         self.assertAlmostEqual(literal_field("\\\\."), "\\\\\\.")
         self.assertAlmostEqual(literal_field("a.b"), "a\.b")
         self.assertAlmostEqual(literal_field("a\\.html"), "a\\\\.html")
+
+    def test_set_default_unicode_and_list(self):
+        a = {"a": "test"}
+        b = {"a": [1, 2]}
+        self.assertAlmostEqual(set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid")
+
+    def test_deepcopy(self):
+        self.assertIs(deepcopy(Null), Null)
+        self.assertEqual(deepcopy(Data()), {})
+        self.assertEqual(deepcopy(Data(a=Null)), {})
+
+    def test_null_type(self):
+        self.assertIs(Null.__class__, NullType)
+        self.assertTrue(isinstance(Null, NullType))
+
+    def test_null_assign(self):
+        output = Null
+        output.changeset.files = None
 
 
 class _TestMapping(object):

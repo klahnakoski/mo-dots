@@ -50,7 +50,7 @@ If a property does not exist then return `Null` rather than raising an error.
 
 ### Path assignment
 
-No need to make intermediate objects 
+No need to make intermediate `dicts`
 
     >>> a = Data()
     a == {}
