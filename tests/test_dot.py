@@ -539,7 +539,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(deepcopy(Data(a=Null)), {})
 
     def test_null_type(self):
-        self.assertEqual(Null.__class__, NullType)
+        self.assertIs(Null.__class__, NullType)
         self.assertTrue(isinstance(Null, NullType))
 
     def test_null_assign(self):
