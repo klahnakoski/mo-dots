@@ -218,6 +218,7 @@ def _all_default(d, default, seen=None):
                         if PATH_NOT_FOUND not in e:
                             get_logger().error("Can not set attribute {{name}}", name=k, cause=e)
         elif isinstance(existing_value, list) or isinstance(default_value, list):
+            _set_attr(d, [k], None)
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
         elif (hasattr(existing_value, "__setattr__") or isinstance(existing_value, Mapping)) and isinstance(default_value, Mapping):
             df = seen.get(id(default_value))
@@ -236,19 +237,19 @@ def _getdefault(obj, key):
     """
     try:
         return obj[key]
-    except Exception, f:
+    except Exception as f:
         pass
 
     try:
         return getattr(obj, key)
-    except Exception, f:
+    except Exception as f:
         pass
 
 
     try:
         if float(key) == round(float(key), 0):
             return obj[int(key)]
-    except Exception, f:
+    except Exception as f:
         pass
 
 
@@ -350,7 +351,7 @@ def _get_attr(obj, path):
     try:
         obj = obj[attr_name]
         return _get_attr(obj, path[1:])
-    except Exception, f:
+    except Exception as f:
         return None
 
 
@@ -369,6 +370,8 @@ def _set_attr(obj_, path, value):
         if old_value == None:
             old_value = None
             new_value = value
+        elif value == None:
+            new_value = None
         else:
             new_value = old_value.__class__(value)  # TRY TO MAKE INSTANCE OF SAME CLASS
     except Exception as e:
@@ -382,7 +385,7 @@ def _set_attr(obj_, path, value):
         try:
             obj[attr_name] = new_value
             return old_value
-        except Exception, f:
+        except Exception as f:
             get_logger().error(PATH_NOT_FOUND, cause=e)
 
 
@@ -391,11 +394,11 @@ def lower_match(value, candidates):
 
 
 def wrap(v):
-    type_ = _get(v, "__class__")
+    type_ = _get(v, b"__class__")
 
     if type_ is dict:
         m = object.__new__(Data)
-        _set(m, "_dict", v)
+        _set(m, b"_dict", v)
         return m
     elif type_ is NoneType:
         return Null
@@ -461,16 +464,16 @@ def _wrap_leaves(value):
 
 
 def unwrap(v):
-    _type = _get(v, "__class__")
+    _type = _get(v, b"__class__")
     if _type is Data:
-        d = _get(v, "_dict")
+        d = _get(v, b"_dict")
         return d
     elif _type is FlatList:
         return v.list
     elif _type is NullType:
         return None
     elif _type is DataObject:
-        d = _get(v, "_obj")
+        d = _get(v, b"_obj")
         if isinstance(d, Mapping):
             return d
         else:
