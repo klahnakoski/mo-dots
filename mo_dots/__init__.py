@@ -12,13 +12,11 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from collections import Mapping
-
-from __builtin__ import zip as _builtin_zip
-from future.utils import text_type
+from future.utils import text_type, binary_type
 from types import GeneratorType, NoneType, ModuleType
-
 from mo_dots.utils import get_logger, get_module
 
+_builtin_zip = zip
 SELF_PATH = "."
 ROOT_PATH = [SELF_PATH]
 
@@ -32,7 +30,7 @@ def inverse(d):
     reverse the k:v pairs
     """
     output = {}
-    for k, v in unwrap(d).iteritems():
+    for k, v in unwrap(d).items():
         output[v] = output.get(v, [])
         output[v].append(k)
     return output
@@ -191,7 +189,7 @@ def _all_default(d, default, seen=None):
     if default is None:
         return
     if isinstance(default, Data):
-        default = object.__getattribute__(default, "_dict")  # REACH IN AND GET THE dict
+        default = object.__getattribute__(default, b"_dict")  # REACH IN AND GET THE dict
         # Log = _late_import()
         # Log.error("strictly dict (or object) allowed: got {{type}}", type=default.__class__.__name__)
 
@@ -420,14 +418,14 @@ def wrap_leaves(value):
 def _wrap_leaves(value):
     if value == None:
         return None
-    if isinstance(value, (basestring, int, float)):
+    if isinstance(value, (text_type, binary_type, int, float)):
         return value
     if isinstance(value, Mapping):
         if isinstance(value, Data):
             value = unwrap(value)
 
         output = {}
-        for key, value in value.iteritems():
+        for key, value in value.items():
             value = _wrap_leaves(value)
 
             if key == "":
