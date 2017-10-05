@@ -14,11 +14,18 @@ from __future__ import unicode_literals
 from collections import MutableMapping, Mapping
 from copy import deepcopy
 
-from future.utils import text_type
+from future.utils import PY3
+
 from mo_dots import _getdefault, hash_value, literal_field, coalesce, listwrap, get_logger
 
 _get = object.__getattribute__
 _set = object.__setattr__
+
+if PY3:
+    text_type = str
+else:
+    text_type = (unicode, str)
+
 
 DEBUG = False
 
@@ -118,8 +125,6 @@ class Data(MutableMapping):
             v = unwrap(value)
             _set(self, "_dict", v)
             return v
-        if isinstance(key, str):
-            key = key.decode("utf8")
 
         try:
             d = _get(self, "_dict")
@@ -135,7 +140,10 @@ class Data(MutableMapping):
             for k in seq[:-1]:
                 d = _getdefault(d, k)
             if value == None:
-                d.pop(seq[-1], None)
+                try:
+                    d.pop(seq[-1], None)
+                except Exception as _:
+                    pass
             elif d==None:
                 d[literal_field(seq[-1])] = value
             else:

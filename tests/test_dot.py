@@ -11,16 +11,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from UserDict import UserDict
 from collections import Mapping
-
 from copy import deepcopy
-from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field, NullType
-from mo_dots.objects import datawrap
+
+from future.moves.collections import UserDict
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
-# from pyLibrary.meta import DataClass
+
+from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field, NullType
+from mo_dots.objects import datawrap
 
 
 class TestDot(FuzzyTestCase):
@@ -545,6 +545,17 @@ class TestDot(FuzzyTestCase):
     def test_null_assign(self):
         output = Null
         output.changeset.files = None
+
+    def test_string_assign(self):
+        def test():
+            a = wrap({"a": "world"})
+            a["a.html"] = "value"
+        self.assertRaises(Exception, test, "expecting error")
+
+    def test_string_assign_null(self):
+        a = wrap({"a": "world"})
+        a["a.html"] = None
+
 
 
 class _TestMapping(object):
