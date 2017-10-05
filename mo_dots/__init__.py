@@ -12,9 +12,15 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from collections import Mapping
+
+import sys
 from future.utils import text_type, binary_type
-from types import GeneratorType, NoneType, ModuleType
+from types import GeneratorType
 from mo_dots.utils import get_logger, get_module
+
+NoneType = type(None)
+ModuleType = type(sys.modules[__name__])
+
 
 _builtin_zip = zip
 SELF_PATH = "."
@@ -254,7 +260,7 @@ def _getdefault(obj, key):
     # TODO: FIGURE OUT WHY THIS WAS EVER HERE (AND MAKE A TEST)
     # try:
     #     return eval("obj."+text_type(key))
-    # except Exception, f:
+    # except Exception as f:
     #     pass
     return NullType(obj, key)
 
@@ -392,11 +398,11 @@ def lower_match(value, candidates):
 
 
 def wrap(v):
-    type_ = _get(v, b"__class__")
+    type_ = _get(v, "__class__")
 
     if type_ is dict:
         m = object.__new__(Data)
-        _set(m, b"_dict", v)
+        _set(m, "_dict", v)
         return m
     elif type_ is NoneType:
         return Null
@@ -462,16 +468,16 @@ def _wrap_leaves(value):
 
 
 def unwrap(v):
-    _type = _get(v, b"__class__")
+    _type = _get(v, "__class__")
     if _type is Data:
-        d = _get(v, b"_dict")
+        d = _get(v, "_dict")
         return d
     elif _type is FlatList:
         return v.list
     elif _type is NullType:
         return None
     elif _type is DataObject:
-        d = _get(v, b"_obj")
+        d = _get(v, "_obj")
         if isinstance(d, Mapping):
             return d
         else:

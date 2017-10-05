@@ -84,9 +84,7 @@ class Data(MutableMapping):
             else:
                 return output
 
-        if isinstance(key, str):
-            key = key.decode("utf8")
-        elif not isinstance(key, text_type):
+        if not isinstance(key, text_type):
             get_logger().error("only string keys are supported")
 
         d = _get(self, "_dict")
@@ -147,30 +145,20 @@ class Data(MutableMapping):
             raise e
 
     def __getattr__(self, key):
-        if isinstance(key, str):
-            ukey = key.decode("utf8")
-        else:
-            ukey = key
-
         d = _get(self, "_dict")
-        o = d.get(ukey)
+        o = d.get(key)
         if o == None:
-            return NullType(d, ukey)
+            return NullType(d, key)
         return wrap(o)
 
     def __setattr__(self, key, value):
-        if isinstance(key, str):
-            ukey = key.decode("utf8")
-        else:
-            ukey = key
-
         d = _get(self, "_dict")
         value = unwrap(value)
         if value is None:
             d = _get(self, "_dict")
             d.pop(key, None)
         else:
-            d[ukey] = value
+            d[key] = value
         return self
 
     def __hash__(self):
