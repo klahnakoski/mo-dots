@@ -556,6 +556,8 @@ class TestDot(FuzzyTestCase):
         a = wrap({"a": "world"})
         a["a.html"] = None
 
+    def test_empty_object_is_not_null(self):
+        self.assertFalse(wrap({}) == None, "expect empty objects to not compare well with None")
 
 
 class _TestMapping(object):
