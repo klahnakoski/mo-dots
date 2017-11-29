@@ -559,6 +559,11 @@ class TestDot(FuzzyTestCase):
     def test_empty_object_is_not_null(self):
         self.assertFalse(wrap({}) == None, "expect empty objects to not compare well with None")
 
+    def test_add_null_to_list(self):
+        expected = wrap(["test", "list"])
+        test = expected + None
+        self.assertEqual(test, expected, "expecting adding None to list does not change list")
+
 
 class _TestMapping(object):
     def __init__(self):
