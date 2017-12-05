@@ -11,14 +11,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import sys
 from collections import Mapping
 
-import sys
-from future.utils import text_type, binary_type
-from types import GeneratorType
 from mo_dots.utils import get_logger, get_module
+from mo_future import text_type, binary_type, generator_types
 
-NoneType = type(None)
+none_type = type(None)
 ModuleType = type(sys.modules[__name__])
 
 
@@ -418,12 +417,12 @@ def wrap(v):
         m = object.__new__(Data)
         _set(m, "_dict", v)
         return m
-    elif type_ is NoneType:
+    elif type_ is none_type:
         return Null
     elif type_ is list:
         return FlatList(v)
-    elif type_ is GeneratorType:
-        return (wrap(vv) for vv in v)
+    elif type_ in generator_types:
+        return FlatList(list(v))
     else:
         return v
 
@@ -450,7 +449,7 @@ def _wrap_leaves(value):
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
-            if isinstance(key, str):
+            if isinstance(key, binary_type):
                 key = key.decode("utf8")
 
             d = output
@@ -496,7 +495,7 @@ def unwrap(v):
             return d
         else:
             return v
-    elif _type is GeneratorType:
+    elif _type in generator_types:
         return (unwrap(vv) for vv in v)
     else:
         return v
@@ -558,8 +557,8 @@ def tuplewrap(value):
     """
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
-    if isinstance(value, (list, set, tuple, GeneratorType)):
-        return tuple(tuplewrap(v) if isinstance(v, (list, tuple, GeneratorType)) else v for v in value)
+    if isinstance(value, (list, set, tuple) + generator_types):
+        return tuple(tuplewrap(v) if isinstance(v, (list, tuple)) else v for v in value)
     return unwrap(value),
 
 
