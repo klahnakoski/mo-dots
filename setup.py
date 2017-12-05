@@ -44,7 +44,7 @@ def find_packages(where='.', lib_prefix='', exclude=()):
 
 setup(
     name='mo-dots',
-    version="1.6.17319",
+    version="1.7.17319",
     description='More Dots! Dot-access to Python dicts like Javascript',
     long_description=long_desc,
     author='Kyle Lahnakoski',

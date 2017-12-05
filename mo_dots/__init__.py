@@ -449,7 +449,7 @@ def _wrap_leaves(value):
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
-            if isinstance(key, str):
+            if isinstance(key, binary_type):
                 key = key.decode("utf8")
 
             d = output
@@ -558,7 +558,7 @@ def tuplewrap(value):
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
     if isinstance(value, (list, set, tuple) + generator_types):
-        return tuple(tuplewrap(v) if isinstance(v, (list, tuple) + generator_types) else v for v in value)
+        return tuple(tuplewrap(v) if isinstance(v, (list, tuple)) else v for v in value)
     return unwrap(value),
 
 
