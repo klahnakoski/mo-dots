@@ -161,7 +161,7 @@ class FlatList(list):
             _get(self, "list").append(unwrap(v))
         return self
 
-    def pop(self, index=None):
+    def pop(self, index=0):
         return wrap(_get(self, "list").pop(index))
 
     def __add__(self, value):

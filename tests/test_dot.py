@@ -564,6 +564,17 @@ class TestDot(FuzzyTestCase):
         test = expected + None
         self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
+    def test_flatlist_pop(self):
+        l = wrap([1, 2, 3])
+
+        test1 = l.pop(1)
+        test2 = l.pop(0)
+        test3 = l.pop()
+
+        self.assertEqual(test1, 2)
+        self.assertEqual(test2, 1)
+        self.assertEqual(test3, 3)
+
 
 class _TestMapping(object):
     def __init__(self):
