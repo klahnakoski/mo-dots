@@ -47,7 +47,7 @@ def test_wrap_1():
             for v in inputs:
                 results.append(baseline(v))
 
-        Log.note("Done {{i}} of {{num}}", {"i": i, "num": NUM_REPEAT})
+        Log.note("Done {{i}} of {{num}}", i= i, num= NUM_REPEAT)
 
 
 def test_wrap_2():
@@ -79,7 +79,7 @@ def test_wrap_2():
             for v in inputs:
                 results.append(baseline(v))
 
-        Log.note("Done {{i}} of {{num}}", {"i": i, "num": NUM_REPEAT})
+        Log.note("Done {{i}} of {{num}}", i= i, num= NUM_REPEAT)
 
 
 def test_wrap_3():
@@ -112,7 +112,7 @@ def test_wrap_3():
             for v in inputs:
                 results.append(baseline(v))
 
-        Log.note("Done {{i}} of {{num}}", {"i": i, "num": NUM_REPEAT})
+        Log.note("Done {{i}} of {{num}}", i= i, num= NUM_REPEAT)
 
 
 profiles.ON = True
