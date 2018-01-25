@@ -162,7 +162,10 @@ class FlatList(list):
         return self
 
     def pop(self, index=None):
-        return wrap(_get(self, "list").pop(index))
+        if index is None:
+            return wrap(_get(self, "list").pop())
+        else:
+            return wrap(_get(self, "list").pop(index))
 
     def __add__(self, value):
         if value == None:

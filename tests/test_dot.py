@@ -14,7 +14,6 @@ from __future__ import unicode_literals
 from collections import Mapping
 from copy import deepcopy
 
-from future.moves.collections import UserDict
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -564,11 +563,20 @@ class TestDot(FuzzyTestCase):
         test = expected + None
         self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
+    def test_pop(self):
+        l = wrap([1, 2, 3, 4])
+
+        self.assertEquals(l.pop(3), 4)
+        self.assertEquals(l.pop(0), 1)
+        self.assertEquals(l.pop(1), 3)
+        self.assertEquals(l.pop(), 2)
+
 
 class _TestMapping(object):
     def __init__(self):
         self.a = None
         self.b = None
+
 
 class _UserDict:
     """
