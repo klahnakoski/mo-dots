@@ -571,6 +571,21 @@ class TestDot(FuzzyTestCase):
         self.assertEquals(l.pop(1), 3)
         self.assertEquals(l.pop(), 2)
 
+    def test_values(self):
+        a = wrap({"a": 1, "b": 2})
+        result = []
+        for v in a.values():
+            result.append(v)
+
+        expected = {1, 2}
+        self.assertAlmostEqual(result, expected)
+
+    def test_wrap_wrap(self):
+        a = wrap({"a": 1, "b": 2})
+        b = wrap(a)
+
+        self.assertIs(a, b, "expecting same object")
+
 
 class _TestMapping(object):
     def __init__(self):
