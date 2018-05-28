@@ -166,8 +166,7 @@ simplifying iteration over deep inner object structures.
 
 
 
-`Null` replaces Python's `None`
--------------------------------
+## Towards a better `None`
 
 In many applications the meaning of None (or null) is always in the context of
 a known type: Each type has a list of expected properties, and if an instance
@@ -184,11 +183,18 @@ Python, and the *pythonic way*, and many of its libraries, assume None is a
 *Missing Value*. This assumption results in an excess of exception handling
 and decision code when processing a multitude of types with a single
 method, or when dealing with unknown future polymorphic types, or working with
-one of many ephemeral 'types' that only have meaning in a few lines of a method.
+one of many ephemeral 'types' who's existence is limited to a few lines of a method.
 
 Assuming None means *Out of Context* makes our code forgiving when encountering
 changing type definitions, flexible in the face of polymorphism, makes code
 more generic when dealing with sets and lists with members of non-uniform type.
+
+#### More reading on Null
+
+* A clear demonstration of how converting a schema to be "null-free" tends toward a columnar datastore: [Missing-info-without-nulls.pdf](https://www.dcs.warwick.ac.uk/~hugh/TTM/Missing-info-without-nulls.pdf) 
+* Programmers use variables in their programs; they are used to hold (or point to) values. Insisting that variables continue to exist even when they do not point to a legitimate value results in the need for `null` to represent that missing value: [The Logical Disaster of Null](https://rob.conery.io/2018/05/01/the-logical-disaster-of-null/)
+
+### `Null` replaces Python's `None`
 
 I would like to override `None` in order to change its behaviour.
 Unfortunately, `None` is a primitive that can not be extended, so we create
@@ -201,6 +207,7 @@ operators. `Null` acts as both an impotent list and an impotent dict:
  4. `Null[a:b:c] == Null`
  5. `a[Null:b:c] == Null`
  6. `a[b:Null:c] == Null`
+ 7. `Null() == Null`
 
 To minimize the use of `Null` in our code we let comparisons
 with `None` succeed. The right-hand-side of the above comparisons can be
