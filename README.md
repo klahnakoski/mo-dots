@@ -9,7 +9,8 @@ This library defines a `Data` class that can serve as a replacement for `dict`, 
 
     >>> from mo_dots import wrap, Data
 
-See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of Mo-Dots.  
+See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features
+of Mo-Dots.  
 
 ### Easy Definition
 
