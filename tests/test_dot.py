@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 from collections import Mapping
 from copy import deepcopy
 
+from mo_future import UserDict
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -29,28 +30,26 @@ class TestDot(FuzzyTestCase):
         s |= Null
         self.assertAlmostEqual(s, set('a'))
 
-
     def test_null_class(self):
         self.assertFalse(isinstance(Null, Mapping))
 
-
-    def test_userdict(self):
+    def test_userdict_1(self):
         def show_kwargs(**kwargs):
             return kwargs
 
         a = UserDict(a=1, b=2)
         d = show_kwargs(**a)
-        self.assertAlmostEqual(d, {"a":1, "b":2})
+        self.assertAlmostEqual(d, {"a": 1, "b": 2})
 
-    def test_userdict(self):
+    def test_userdict_2(self):
         def show_kwargs(**kwargs):
             return kwargs
 
-        a = _UserDict()
+        a = UserDict()
         a.data["a"] = 1
         a.data["b"] = 2
         d = show_kwargs(**a)
-        self.assertAlmostEqual(d, {"a":1, "b":2})
+        self.assertAlmostEqual(d, {"a": 1, "b": 2})
 
     def test_dict_args(self):
         def show_kwargs(**kwargs):
@@ -160,7 +159,7 @@ class TestDot(FuzzyTestCase):
 
     def test_int_null(self):
         a = Data()
-        value = a.b*1000
+        value = a.b * 1000
         assert value == Null
 
     def test_dot_self(self):
@@ -358,13 +357,13 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c\\.a"].d += 1
 
-        self.assertEqual(a,  {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
+        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
 
         b.c1.d += 2
         b.c2.e += "f"
         b.c3.f += ["g"]
         b["c\\.a"].d += 3
-        self.assertEqual(a,  {"c1": {"d": 3}, "c2": {"e": "ef"}, "c3": {"f": ["f", "g"]}, "c.a": {"d": 4}})
+        self.assertEqual(a, {"c1": {"d": 3}, "c2": {"e": "ef"}, "c3": {"f": ["f", "g"]}, "c.a": {"d": 4}})
 
     def test_slicing(self):
 
@@ -396,7 +395,7 @@ class TestDot(FuzzyTestCase):
 
         a = wrap({"b": {"c": 1}})
 
-        a.b.c=None
+        a.b.c = None
         self.assertEqual({"b": {}}, a)
         self.assertEqual(a, {"b": {}})
 
@@ -408,7 +407,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a, {"b": {"d": 2}})
         a = wrap({"b": {"c": 1, "d": 2}})
 
-        a.b.c=None
+        a.b.c = None
         self.assertEqual({"b": {"d": 2}}, a)
         self.assertEqual(a, {"b": {"d": 2}})
 
@@ -431,7 +430,7 @@ class TestDot(FuzzyTestCase):
         dd = datawrap(d)
 
         self.assertEqual(dd["a.c"], 3)
-        self.assertEqual(dd, {"a": {"c":3}, "b": 30})
+        self.assertEqual(dd, {"a": {"c": 3}, "b": 30})
 
     def test_deep_select(self):
         d = wrap([{"a": {"b": 1}}, {"a": {"b": 2}}])
@@ -549,6 +548,7 @@ class TestDot(FuzzyTestCase):
         def test():
             a = wrap({"a": "world"})
             a["a.html"] = "value"
+
         self.assertRaises(Exception, test, "expecting error")
 
     def test_string_assign_null(self):
@@ -586,27 +586,15 @@ class TestDot(FuzzyTestCase):
 
         self.assertIs(a, b, "expecting same object")
 
+    def test_key_in_data(self):
+        a = wrap({"key": {}})
+        self.assertIn("key", a)
+
 
 class _TestMapping(object):
     def __init__(self):
         self.a = None
         self.b = None
-
-
-class _UserDict:
-    """
-    COPY OF UserDict
-    """
-    def __init__(self, **kwargs):
-        self.data = {}
-    def __getitem__(self, key):
-        if key in self.data:
-            return self.data[key]
-        if hasattr(self.__class__, "__missing__"):
-            return self.__class__.__missing__(self, key)
-        raise KeyError(key)
-    def keys(self):
-        return self.data.keys()
 
 
 class SampleData(object):
@@ -616,5 +604,4 @@ class SampleData(object):
         self.b = 30
 
     def __str__(self):
-        return str(self.a)+str(self.b)
-
+        return str(self.a) + str(self.b)
