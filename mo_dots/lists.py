@@ -181,6 +181,17 @@ class FlatList(list):
         else:
             return wrap(_get(self, "list").pop(index))
 
+    def __eq__(self, other):
+        if isinstance(other, FlatList):
+            other = _get(other, "list")
+        if not isinstance(other, list):
+            return False
+        lst = _get(self, "list")
+        if len(lst) != len(other):
+            return False
+        return all(s == o for s, o in zip(lst, other))
+
+
     def __add__(self, value):
         if value == None:
             return self
