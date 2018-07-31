@@ -590,6 +590,17 @@ class TestDot(FuzzyTestCase):
         a = wrap({"key": {}})
         self.assertIn("key", a)
 
+    def test_list_eq(self):
+        a = wrap([{"a": 1}])
+        b = wrap([])
+        c = wrap([])
+
+        self.assertFalse(a == b)
+        self.assertTrue(a == a)
+        self.assertTrue(b == b)
+        self.assertTrue(b == c)
+
+
 
 class _TestMapping(object):
     def __init__(self):
