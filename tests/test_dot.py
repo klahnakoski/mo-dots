@@ -599,6 +599,10 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(a == a)
         self.assertTrue(b == b)
         self.assertTrue(b == c)
+        self.assertTrue(b == None)
+        self.assertTrue(b == Null)
+        self.assertTrue(None == b)
+        self.assertTrue(Null == b)
 
 
 
