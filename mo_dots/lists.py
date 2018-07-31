@@ -171,8 +171,9 @@ class FlatList(list):
         return self
 
     def extend(self, values):
+        lst = _get(self, "list")
         for v in values:
-            _get(self, "list").append(unwrap(v))
+            lst.append(unwrap(v))
         return self
 
     def pop(self, index=None):
@@ -184,9 +185,11 @@ class FlatList(list):
     def __eq__(self, other):
         if isinstance(other, FlatList):
             other = _get(other, "list")
+        lst = _get(self, "list")
+        if other == None and len(lst) == 0:
+            return True
         if not isinstance(other, list):
             return False
-        lst = _get(self, "list")
         if len(lst) != len(other):
             return False
         return all(s == o for s, o in zip(lst, other))
