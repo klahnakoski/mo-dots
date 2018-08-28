@@ -555,8 +555,11 @@ class TestDot(FuzzyTestCase):
         a = wrap({"a": "world"})
         a["a.html"] = None
 
-    def test_empty_object_is_not_null(self):
-        self.assertFalse(wrap({}) == None, "expect empty objects to not compare well with None")
+    def test_empty_object_is_not_null1(self):
+        self.assertFalse(wrap({}) == None, "expect empty objects to not equal None")
+
+    def test_empty_object_is_not_null2(self):
+        self.assertTrue(wrap({}) != None, "expect empty objects to not equal None")
 
     def test_add_null_to_list(self):
         expected = wrap(["test", "list"])
