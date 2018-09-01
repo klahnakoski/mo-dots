@@ -25,14 +25,6 @@ from mo_dots.objects import datawrap
 
 class TestDot(FuzzyTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        Log.start({"profile": True})
-
-    @classmethod
-    def tearDownClass(cls):
-        Log.stop()
-
     def test_set_union_w_null(self):
         s = set('a')
         s |= Null
