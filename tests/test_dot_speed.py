@@ -23,13 +23,15 @@ from mo_dots import Data, wrap
 class TestDotSpeed(FuzzyTestCase):
 
     def test_simple_access(self):
-        x = wrap({"a":{"b":42}})
+        """
+        THIS WILL WRITE A STATS FILE TO THE PROJECT DIRECTORY
+        """
+        x = wrap({"a": {"b": 42}})
 
         cprofiler = cProfile.Profile()
         cprofiler.enable()
-        for i in range(1000*1000):
+        for i in range(1000 * 1000):
             y = x.a
         cprofiler.disable()
 
         write_profile(Data(filename="test_dot_speed.tab"), [pstats.Stats(cprofiler)])
-
