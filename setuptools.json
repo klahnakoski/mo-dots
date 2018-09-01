@@ -1,0 +1,18 @@
+{
+    "name": "mo-dots",
+    "version": "2.18.18240",
+    "description": "More Dots! Dot-access to Python dicts like Javascript",
+    "author": "Kyle Lahnakoski",
+    "author_email": "kyle@lahnakoski.com",
+    "url": "https://github.com/klahnakoski/mo-dots",
+    "license": "MPL 2.0",
+    "install_requires": ["mo-future>=2.18.18240"],
+    "include_package_data": true,
+    "zip_safe": false,
+    "classifiers": [
+        "Development Status :: 4 - Beta",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+    ]
+}
