@@ -16,7 +16,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
 `Data` replaces Python's `dict`
 -------------------------------
 
-`Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, and to keep them succinct. In many ways, `dict` can act as an anonymous type, but it does not have the features listed here.
+`Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, and to keep them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
 
  1. `a.b == a["b"]`
  2. missing property names are handled gracefully, which is beneficial when being used in
@@ -55,7 +55,13 @@ a == {}
 a == {"b": {"c": [1]}}
 &gt;&gt;&gt; a.b.c += [42]
 a == {"b": {"c": [1, 42]}}</pre>
- 8. property names are coerced to unicode - it appears Python's
+ 8. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:<pre>
+&gt;&gt;&gt; a = wrap({"a":42, "b":["hello"]})
+&gt;&gt;&gt; b = {"a":24, "b":["world"]}
+&gt;&gt;&gt; c = a + b
+c == {"a":66, "b":["hello", "world"]}
+</pre>
+ 9. property names are coerced to unicode - it appears Python's
  `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 

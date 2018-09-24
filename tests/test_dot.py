@@ -607,6 +607,30 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(None == b)
         self.assertTrue(Null == b)
 
+    def test_add_1(self):
+        a = wrap({"a": 1, "y": {"b": 4, "c": [5]}})
+        b = wrap({"a": 1, "x": 5, "y": {"b": 6, "c": [12]}})
+
+        expected_ab = {"a": 2, "x": 5, "y": {"b": 10, "c": [5, 12]}}
+        expected_ba = {"a": 2, "x": 5, "y": {"b": 10, "c": [12, 5]}}
+        self.assertEqual(a + b, expected_ab)
+        self.assertEqual(b + a, expected_ba)
+
+        a += b
+        self.assertEqual(a, expected_ab)
+
+    def test_add_2(self):
+        a = wrap({"a": 1, "y": {"b": 4, "c": [5]}})
+        b = wrap({"a": 1, "x": 5, "y": {"b": 6, "c": 12}})
+
+        expected_ab = {"a": 2, "x": 5, "y": {"b": 10, "c": [5, 12]}}
+        expected_ba = {"a": 2, "x": 5, "y": {"b": 10, "c": [12, 5]}}
+        self.assertEqual(a + b, expected_ab)
+        self.assertEqual(b + a, expected_ba)
+
+        a += b
+        self.assertEqual(a, expected_ab)
+
 
 
 class _TestMapping(object):
