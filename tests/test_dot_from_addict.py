@@ -327,7 +327,7 @@ class AddictTests(FuzzyTestCase):
         def run():
             d.x += 1
 
-        self.assertRaises(TypeError, run)
+        self.assertRaises(Exception, run)
 
     def test_add_on_non_empty_value(self):
         d = Data()

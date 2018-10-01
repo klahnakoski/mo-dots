@@ -61,7 +61,7 @@ a == {"b": {"c": [1, 42]}}</pre>
 &gt;&gt;&gt; c = a + b
 c == {"a":66, "b":["hello", "world"]}
 </pre>
- 9. property names are coerced to unicode - it appears Python's
+ 9. property names are coerced to unicode - it appears Python2.7
  `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 
