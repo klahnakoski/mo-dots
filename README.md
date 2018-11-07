@@ -3,6 +3,11 @@
 
 Defines a `Data` class that is much like `dict` but with dot-property accessors, and a few other features: 
 
+
+[![Build Status](https://travis-ci.org/klahnakoski/mo-dots?branch=master)](https://travis-ci.org/klahnakoski/mo-dots)   |
+
+
+
 ## Quick Overview
 
 This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
