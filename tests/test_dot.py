@@ -633,7 +633,7 @@ class TestDot(FuzzyTestCase):
 
     def test_list_get(self):
         flat_list = wrap([{"a": 1}, {"a": None}])
-        # THIS IS NOT AN OPTION BECAUSE [] IS RESERVED FOR INDEXING AN SLICING
+        # THIS IS NOT AN OPTION BECAUSE [] IS RESERVED FOR INDEXING AND SLICING
         self.assertEqual(flat_list["a"], None)
 
     def test_copy1(self):
