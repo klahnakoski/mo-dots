@@ -2,7 +2,7 @@
 # More Dots!
 
 
-[![Build Status](https://travis-ci.org/klahnakoski/mo-dots?branch=master)](https://travis-ci.org/klahnakoski/mo-dots) 
+[![Build Status](https://travis-ci.org/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.org/klahnakoski/mo-dots) 
 
 
 ## Overview
