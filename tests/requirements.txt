@@ -1,2 +1,4 @@
 mo-logs
+mo-json
+mo-threads
 mo-testing
