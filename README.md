@@ -1,21 +1,17 @@
 
 # More Dots!
 
-Defines a `Data` class that is much like `dict` but with dot-property accessors, and a few other features: 
-
 
 [![Build Status](https://travis-ci.org/klahnakoski/mo-dots?branch=master)](https://travis-ci.org/klahnakoski/mo-dots) 
 
 
-
-## Quick Overview
+## Overview
 
 This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
 
     >>> from mo_dots import wrap, Data
 
-See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features
-of Mo-Dots.  
+*See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
 
 ### Easy Definition
 
