@@ -20,7 +20,7 @@ from mo_threads import profiles
 from mo_dots import Data, wrap
 
 
-class TestDotSpeed(FuzzyTestCase):
+class SpeedTestDot(FuzzyTestCase):
 
     def test_simple_access(self):
         """
