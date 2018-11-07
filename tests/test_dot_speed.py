@@ -14,8 +14,8 @@ from __future__ import unicode_literals
 import cProfile
 import pstats
 
-from mo_logs import write_profile
 from mo_testing.fuzzytestcase import FuzzyTestCase
+from mo_threads import profiles
 
 from mo_dots import Data, wrap
 
@@ -34,4 +34,4 @@ class TestDotSpeed(FuzzyTestCase):
             y = x.a
         cprofiler.disable()
 
-        write_profile(Data(filename="test_dot_speed.tab"), [pstats.Stats(cprofiler)])
+        profiles.write(Data(filename="test_dot_speed.tab"), [pstats.Stats(cprofiler)])
