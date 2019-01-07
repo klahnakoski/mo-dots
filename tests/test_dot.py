@@ -64,6 +64,14 @@ class TestDot(FuzzyTestCase):
     def test_is_mapping(self):
         self.assertTrue(isinstance(Data(), Mapping), "All Data must be Mappings")
 
+    def test_kwargs(self):
+        d = Data(a=1, b=2)
+
+        def func(a, b):
+            return a == 1, b == 2
+
+        self.assertTrue(func(**d))
+
     def test_none(self):
         a = 0
         b = 0
