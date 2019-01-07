@@ -4,11 +4,11 @@ Classes for Processing Data
 
 There are two major families of objects in Object Oriented programming. The
 first, are ***Actors***: characterized by a number of useful instance methods
-and some state bundled into a package. The second are ***Data***: Primarily
+and some state bundled together to form a unit. The second are ***Data***: Primarily
 a set of properties, with only (de)serialization functions, or algebraic
 operators defined. 
 
-*Data* objects in Python do not require attributes, only properties. Therefore, we can conveniently use attribute access to mean the same as item access: `a["x"]==a.x`. Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Data access is only the beginning. 
+*Data* objects in Python have minimal attributes, if any. Therefore, we can use attributes to access properties: `a.x == a["x"]`. Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Property access is only the beginning. 
 
 Focusing on just *data* objects; We want a succinct way of transforming data. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. This library provides the consistent base for a high level data manipulation algebra. 
 
@@ -16,7 +16,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
 `Data` replaces Python's `dict`
 -------------------------------
 
-`Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, and to keep them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
+`Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, while at the same time keeping them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
 
  1. `a.b == a["b"]`
  2. missing property names are handled gracefully, which is beneficial when being used in
@@ -174,18 +174,18 @@ simplifying iteration over deep inner object structures.
 
 ## Towards a better `None`
 
-In many applications the meaning of None (or null) is always in the context of
+In many applications the meaning of `None` (or `null`) is always in the context of
 a known type: Each type has a list of expected properties, and if an instance
-is missing one of those properties we set it to None. Let us call it this the
+is missing one of those properties we set it to `None`. Let us call it this the
 "*Missing Value*" definition. Also known as ["my billion dollar mistake"](https://en.wikipedia.org/wiki/Tony_Hoare).
 
-Another interpretation for None (or null), is that the instance simply does not
+Another interpretation for `None` (or `null`), is that the instance simply does not
 have that property: Asking for the physical height of poem is nonsense, and
-we return None/null to indicate this. Databases use `NULL` in this way to
+we return `None`/`null` to indicate this. Databases use `NULL` in this way to
 allow tables to hold records of multiple (sub)types and minimize query complexity. 
 Call this version of None the "*Out of Context*" definition.
 
-Python, and the *pythonic way*, and many of its libraries, assume None is a
+Python, and the *pythonic way*, and many of its libraries, assume `None` is a
 *Missing Value*. This assumption results in an excess of exception handling
 and decision code when processing a multitude of types with a single
 method, or when dealing with unknown future polymorphic types, or working with
@@ -193,7 +193,7 @@ one of many ephemeral 'types' who's existence is limited to a few lines of a met
 
 Assuming None means *Out of Context* makes our code forgiving when encountering
 changing type definitions, flexible in the face of polymorphism, makes code
-more generic when dealing with sets and lists with members of non-uniform type.
+more generic when dealing with sets and lists containing members of non-uniform type.
 
 #### More reading on Null
 
@@ -227,7 +227,7 @@ With `Null` defined, we have met the requirements for an [algebraic semigroup](h
  1. `a[Null] == Null`
  2. `a["."] == a`
 
-which are true for all `a`.  I hope, dear reader, you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
+which are true for all `a`. I hope, dear reader, you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
 
 
 ### NullTypes are Lazy
@@ -264,8 +264,7 @@ are exceptions, and behave as expected with [three-valued logic](https://en.wiki
  * `False and Null == False`
  * `True and Null == Null`
 
-`FlatList` is "Flat"
-----------------------------------------
+## `FlatList` is "Flat"
 
 `FlatList` uses a *flat-list* assumption to interpret slicing and indexing
 operations. This assumes lists are defined over all integer (**ℤ**)
