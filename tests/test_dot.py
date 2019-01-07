@@ -676,6 +676,17 @@ class TestDot(FuzzyTestCase):
     def test_in_null(self):
         self.assertIn(Null, [None])
 
+    def test_in_none(self):
+        self.assertIn(None, [Null])
+
+    def test_none_and_null_in_dict(self):
+        d = {
+            None: None,
+            Null: None
+        }
+        self.assertEqual(len(d), 1)
+
+
 
 class _TestMapping(object):
     def __init__(self):
