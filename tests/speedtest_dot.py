@@ -67,8 +67,8 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertEqual(m_result, i_result)
         self.assertEqual(e_result, i_result)
 
-        self.assertGreater(i_time, s_time)
-        self.assertGreater(m_time, s_time)
+        self.assertGreater(i_time.duration, s_time.duration)
+        self.assertGreater(m_time.duration, s_time.duration)
 
 
 MAPPING_TYPES = (Data, dict)
