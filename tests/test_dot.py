@@ -664,6 +664,17 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(aa, a, "expecting to be the same")
         self.assertEqual(a, aa, "expecting to be the same")
 
+    def test_in(self):
+        a = {"_id": "yes"}
+        b = {"id": "no"}
+        aa = wrap(a)
+        bb = wrap(b)
+
+        self.assertEqual("_id" in aa, "_id" in a)
+        self.assertEqual("_id" in bb, "_id" in b)
+
+    def test_in_null(self):
+        self.assertIn(Null, [None])
 
 
 class _TestMapping(object):
