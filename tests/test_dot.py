@@ -64,6 +64,14 @@ class TestDot(FuzzyTestCase):
     def test_is_mapping(self):
         self.assertTrue(isinstance(Data(), Mapping), "All Data must be Mappings")
 
+    def test_kwargs(self):
+        d = Data(a=1, b=2)
+
+        def func(a, b):
+            return a == 1, b == 2
+
+        self.assertTrue(func(**d))
+
     def test_none(self):
         a = 0
         b = 0
@@ -663,6 +671,28 @@ class TestDot(FuzzyTestCase):
         aa = a.copy()
         self.assertEqual(aa, a, "expecting to be the same")
         self.assertEqual(a, aa, "expecting to be the same")
+
+    def test_in(self):
+        a = {"_id": "yes"}
+        b = {"id": "no"}
+        aa = wrap(a)
+        bb = wrap(b)
+
+        self.assertEqual("_id" in aa, "_id" in a)
+        self.assertEqual("_id" in bb, "_id" in b)
+
+    def test_in_null(self):
+        self.assertIn(Null, [None])
+
+    def test_in_none(self):
+        self.assertIn(None, [Null])
+
+    def test_none_and_null_in_dict(self):
+        d = {
+            None: None,
+            Null: None
+        }
+        self.assertEqual(len(d), 1)
 
 
 
