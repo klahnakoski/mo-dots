@@ -15,6 +15,7 @@ import cProfile
 from collections import Mapping, deque
 import pstats
 
+from mo_future import text_type
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_threads import profiles
@@ -60,8 +61,8 @@ class SpeedTestDot(FuzzyTestCase):
         with Timer("eq check") as e_time:
             e_result = [d.__class__ is Data or d.__class__ is dict for d in data]
 
-        # with Timer("deep check") as d_time:
-        #     d_result = [is_instance(d, Mapping) for d in data]
+        with Timer("name check") as n_time:
+            n_result = [is_instance(d, Data) or is_instance(d, dict) for d in data]
 
         with Timer("check w method") as m_time:
             m_result = [is_mapping(d) for d in data]
@@ -69,7 +70,42 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertEqual(s_result, i_result)
         self.assertEqual(m_result, i_result)
         self.assertEqual(e_result, i_result)
-        # self.assertEqual(d_result, i_result)
+        self.assertEqual(n_result, i_result)
+
+        self.assertGreater(i_time.duration, s_time.duration)
+        self.assertGreater(m_time.duration, s_time.duration)
+
+    def test_compare_isinstance_to_text(self):
+        num = 1 * 1000 * 1000
+        options = {
+            0: lambda: 6,
+            1: lambda: "string"
+            # 2: lambda: {},
+            # 3: lambda: Data(),
+            # 4: lambda: Null,
+
+        }
+        data = [options[Random.int(len(options))]() for _ in range(num)]
+
+        with Timer("isinstance check") as i_time:
+            i_result = [isinstance(d, text_type) for d in data]
+
+        with Timer("set check") as s_time:
+            s_result = [d.__class__ in (text_type,) for d in data]
+
+        with Timer("eq check") as e_time:
+            e_result = [d.__class__ is text_type for d in data]
+
+        with Timer("name check") as n_time:
+            n_result = [is_instance(d, text_type) for d in data]
+
+        with Timer("check w method") as m_time:
+            m_result = [is_text(d) for d in data]
+
+        self.assertEqual(s_result, i_result)
+        self.assertEqual(m_result, i_result)
+        self.assertEqual(e_result, i_result)
+        self.assertEqual(n_result, i_result)
 
         self.assertGreater(i_time.duration, s_time.duration)
         self.assertGreater(m_time.duration, s_time.duration)
@@ -78,22 +114,13 @@ class SpeedTestDot(FuzzyTestCase):
 MAPPING_TYPES = (Data, dict)
 
 
+def is_text(t):
+    return t.__class__ is text_type
+
+
 def is_mapping(d):
     return d.__class__ in MAPPING_TYPES
 
 
-def is_instance(d, type):
-    # THIS DOES NOT WORK dict.__bases__[0] is object
-    c = d.__class__
-    if c is type:
-        return True
-    return is_child_of(c, type)
-
-
-def is_child_of(c, type):
-    for b in c.__bases__:
-        if b is type:
-            return True
-        if is_child_of(b, type):
-            return True
-    return False
+def is_instance(d, type_):
+    return d.__class__.__name__ == type_.__name__

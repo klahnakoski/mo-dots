@@ -11,9 +11,9 @@ from __future__ import absolute_import, division, unicode_literals
 
 import sys
 
-from mo_future import binary_type, generator_types, text_type
+from mo_future import binary_type, generator_types, is_binary, is_text, text_type
 
-from mo_dots.utils import get_logger, get_module, CLASS, OBJ
+from mo_dots.utils import CLASS, OBJ, get_logger, get_module
 
 none_type = type(None)
 ModuleType = type(sys.modules[__name__])
@@ -107,7 +107,7 @@ def split_field(field):
     """
     if field == "." or field==None:
         return []
-    elif isinstance(field, text_type) and "." in field:
+    elif is_text(field) and "." in field:
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
@@ -186,9 +186,9 @@ def relative_field(field, parent):
 
 
 def hash_value(v):
-    if isinstance(v, (set, tuple, list)):
+    if is_many(v):
         return hash(tuple(hash_value(vv) for vv in v))
-    elif _get(v, CLASS) not in MAPPING_TYPES:
+    elif _get(v, CLASS) not in data_types:
         return hash(v)
     else:
         return hash(tuple(sorted(hash_value(vv) for vv in v.values())))
@@ -213,7 +213,7 @@ def set_default(*params):
     FOR EACH LEAF, RETURN THE HIGHEST PRIORITY LEAF VALUE
     """
     p0 = params[0]
-    agg = p0 if p0 or _get(p0, CLASS) in MAPPING_TYPES else {}
+    agg = p0 if p0 or _get(p0, CLASS) in data_types else {}
     for p in params[1:]:
         p = unwrap(p)
         if p is None:
@@ -240,7 +240,7 @@ def _all_default(d, default, seen=None):
 
         if existing_value == None:
             if default_value != None:
-                if _get(default_value, CLASS) in MAPPING_TYPES:
+                if _get(default_value, CLASS) in data_types:
                     df = seen.get(id(default_value))
                     if df is not None:
                         _set_attr(d, [k], df)
@@ -256,10 +256,10 @@ def _all_default(d, default, seen=None):
                     except Exception as e:
                         if PATH_NOT_FOUND not in e:
                             get_logger().error("Can not set attribute {{name}}", name=k, cause=e)
-        elif isinstance(existing_value, list) or isinstance(default_value, list):
+        elif is_list(existing_value) or is_list(default_value):
             _set_attr(d, [k], None)
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
-        elif (hasattr(existing_value, "__setattr__") or _get(existing_value, CLASS) in MAPPING_TYPES) and _get(default_value, CLASS) in MAPPING_TYPES:
+        elif (hasattr(existing_value, "__setattr__") or _get(existing_value, CLASS) in data_types) and _get(default_value, CLASS) in data_types:
             df = seen.get(id(default_value))
             if df is not None:
                 _set_attr(d, [k], df)
@@ -469,7 +469,7 @@ def _wrap_leaves(value):
     class_ = _get(value, CLASS)
     if class_ in (text_type, binary_type, int, float):
         return value
-    if class_ in MAPPING_TYPES:
+    if class_ in data_types:
         if class_ is Data:
             value = unwrap(value)
 
@@ -479,7 +479,7 @@ def _wrap_leaves(value):
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
-            if isinstance(key, binary_type):
+            if is_binary(key):
                 key = key.decode("utf8")
 
             d = output
@@ -521,7 +521,7 @@ def unwrap(v):
         return None
     elif _type is DataObject:
         d = _get(v, OBJ)
-        if _get(d, CLASS) in MAPPING_TYPES:
+        if _get(d, CLASS) in data_types:
             return d
         else:
             return v
@@ -561,7 +561,7 @@ def listwrap(value):
     """
     if value == None:
         return FlatList()
-    elif isinstance(value, list):
+    elif is_list(value):
         return wrap(value)
     elif isinstance(value, set):
         return wrap(list(value))
@@ -572,7 +572,7 @@ def unwraplist(v):
     """
     LISTS WITH ZERO AND ONE element MAP TO None AND element RESPECTIVELY
     """
-    if isinstance(v, list):
+    if is_list(v):
         if len(v) == 0:
             return None
         elif len(v) == 1:
@@ -588,11 +588,11 @@ def tuplewrap(value):
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
     if isinstance(value, (list, set, tuple) + generator_types):
-        return tuple(tuplewrap(v) if isinstance(v, (list, tuple)) else v for v in value)
+        return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
     return unwrap(value),
 
 
-from mo_dots.datas import Data, SLOT, MAPPING_TYPES
+from mo_dots.datas import Data, SLOT, data_types, is_data
 from mo_dots.nones import Null, NullType
-from mo_dots.lists import FlatList
+from mo_dots.lists import FlatList, is_list, is_sequence, is_container, is_many
 from mo_dots.objects import DataObject
