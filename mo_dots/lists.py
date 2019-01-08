@@ -11,9 +11,9 @@ from __future__ import absolute_import, division, unicode_literals
 
 from copy import deepcopy
 
-from mo_future import text_type
+from mo_future import generator_types, text_type
 
-from mo_dots import coalesce, unwrap, wrap, CLASS
+from mo_dots import CLASS, coalesce, unwrap, wrap
 from mo_dots.nones import Null
 
 LIST = text_type("list")
@@ -29,6 +29,7 @@ Log = None
 def _late_import():
     global _datawrap
     global Log
+
 
     from mo_dots.objects import datawrap as _datawrap
     try:
@@ -52,7 +53,7 @@ class FlatList(list):
         # list.__init__(self)
         if vals == None:
             self.list = []
-        elif isinstance(vals, FlatList):
+        elif vals.__class__ is FlatList:
             self.list = vals.list
         else:
             self.list = vals
@@ -110,7 +111,6 @@ class FlatList(list):
         """
         if not Log:
             _late_import()
-
         return FlatList(vals=[unwrap(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)])
 
     def select(self, key):
@@ -217,7 +217,7 @@ class FlatList(list):
         return FlatList(vals=output)
 
     def __iadd__(self, other):
-        if isinstance(other, list):
+        if is_list(other):
             self.extend(other)
         else:
             self.append(other)
@@ -284,3 +284,22 @@ class FlatList(list):
 
 
 FlatList.EMPTY = Null
+
+list_types = (list, FlatList)
+container_types = (list, FlatList, set)
+sequence_types = (list, FlatList, tuple)
+many_types = tuple(set(list_types + container_types + sequence_types + generator_types))
+
+
+def is_list(l):
+    return l.__class__ in list_types
+
+def is_container(l):
+    return l.__class__ in container_types
+
+def is_sequence(l):
+    return l.__class__ in sequence_types
+
+def is_many(l):
+    return l.__class__ in many_types
+

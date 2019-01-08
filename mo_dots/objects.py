@@ -7,17 +7,16 @@
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 from collections import Mapping
 from datetime import date, datetime
 from decimal import Decimal
 
-from mo_dots import wrap, unwrap, Data, FlatList, NullType, get_attr, set_attr, SLOT, MAPPING_TYPES
-from mo_future import text_type, binary_type, get_function_defaults, get_function_arguments, none_type, generator_types
+from mo_future import binary_type, generator_types, get_function_arguments, get_function_defaults, none_type, text_type
 
+from mo_dots import Data, FlatList, NullType, SLOT, get_attr, set_attr, unwrap, wrap
+from mo_dots.datas import register_data
 from mo_dots.utils import CLASS, OBJ
 
 _get = object.__getattribute__
@@ -100,6 +99,9 @@ class DataObject(Mapping):
         return obj(*args, **kwargs)
 
 
+register_data(DataObject)
+
+
 def datawrap(v):
     type_ = _get(v, CLASS)
 
@@ -107,10 +109,10 @@ def datawrap(v):
         m = Data()
         _set(m, SLOT, v)  # INJECT m.__dict__=v SO THERE IS NO COPY
         return m
-    elif type_ in (Data, DataObject, none_type):
-        return v
     elif type_ is list:
         return FlatList(v)
+    elif type_ in (Data, DataObject, none_type, FlatList, text_type, binary_type, int, float, Decimal, datetime, date, NullType, none_type):
+        return v
     elif type_ in generator_types:
         return (wrap(vv) for vv in v)
     elif isinstance(v, (text_type, binary_type, int, float, Decimal, datetime, date, FlatList, NullType, Mapping, none_type)):
