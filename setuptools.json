@@ -16,6 +16,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "2.29.19025",
+    "version": "2.30.19025",
     "zip_safe": false
 }
