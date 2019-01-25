@@ -299,7 +299,7 @@ Here is table of indexing results
 ### Slicing
 
 The *flat list* assumption reduces exception handling and simplifies code for
-window functions. For example, `Math.min(flat_list[a:b:])` is valid for
+window functions. For example, `mo_math.min(flat_list[a:b:])` is valid for
 all `a<=b`
 
   * Python 2.x binary slicing `[:]` throws a warning if used on a FlatList (see implementation issues below)
@@ -363,6 +363,7 @@ different names and slightly different variations, some examples are:
  * D3 uses `null` to indicate property deletion: ["The function's return value is
   then used to set each element's attribute. A null value will remove the
   specified attribute."](https://github.com/mbostock/d3/wiki/Selections#attr)
+ * [Simplify your code by making the data consistent](https://blog.conjur.org/special-cases-are-a-code-smell/)
 
 ### Notes
  * More on missing values: [http://www.np.org/NA-overview.html](http://www.np.org/NA-overview.html)
