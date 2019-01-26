@@ -11,7 +11,7 @@ setup(
     include_package_data=True,
     classifiers=["Development Status :: 4 - Beta","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"],
     install_requires=["mo-future>=2.24.19023"],
-    version=str(u'2.32.19026'),
+    version=str(u'2.36.19026'),
     url=str(u'https://github.com/klahnakoski/mo-dots'),
     zip_safe=False,
     packages=["mo_dots"],
