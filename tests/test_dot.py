@@ -694,6 +694,12 @@ class TestDot(FuzzyTestCase):
         }
         self.assertEqual(len(d), 1)
 
+    def test_none_and_null_compare_with_list(self):
+        empty = wrap([])
+
+        self.assertTrue([] == Null)
+        self.assertTrue(empty == Null)
+        self.assertTrue(empty == None)
 
 
 class _TestMapping(object):
