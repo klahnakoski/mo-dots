@@ -18,6 +18,7 @@ from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_times import Timer
 
 from mo_dots import Data, Null, wrap, NullType, FlatList, data_types
+from speedtest_dot import MAPPING_TYPES
 
 
 class TestDotSpeed(FuzzyTestCase):
