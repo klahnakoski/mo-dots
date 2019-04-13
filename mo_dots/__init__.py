@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from importlib import import_module
 import sys
 
 from mo_future import binary_type, generator_types, is_binary, is_text, text_type
@@ -194,23 +195,13 @@ def hash_value(v):
         return hash(tuple(sorted(hash_value(vv) for vv in v.values())))
 
 
-
-def _setdefault(obj, key, value):
-    """
-    DO NOT USE __dict__.setdefault(obj, key, value), IT DOES NOT CHECK FOR obj[key] == None
-    """
-    v = obj.get(key)
-    if v == None:
-        obj[key] = value
-        return value
-    return v
-
-
 def set_default(*params):
     """
-    INPUT dicts IN PRIORITY ORDER
     UPDATES FIRST dict WITH THE MERGE RESULT, WHERE MERGE RESULT IS DEFINED AS:
     FOR EACH LEAF, RETURN THE HIGHEST PRIORITY LEAF VALUE
+
+    :param params:  dicts IN PRIORITY ORDER, FIRST IS HIGHES PRIORITY
+    :return: FIRST dict OR NEW dict WITH PROPERTIES SET
     """
     p0 = params[0]
     agg = p0 if p0 or _get(p0, CLASS) in data_types else {}
@@ -584,7 +575,7 @@ def listwrap(value):
         return FlatList()
     elif is_list(value):
         return wrap(value)
-    elif isinstance(value, set):
+    elif is_many(value):
         return wrap(list(value))
     else:
         return wrap([unwrap(value)])
@@ -608,7 +599,7 @@ def tuplewrap(value):
     """
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
-    if isinstance(value, (list, set, tuple) + generator_types):
+    if is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
     return unwrap(value),
 
@@ -617,3 +608,8 @@ from mo_dots.datas import Data, SLOT, data_types, is_data
 from mo_dots.nones import Null, NullType
 from mo_dots.lists import FlatList, is_list, is_sequence, is_container, is_many
 from mo_dots.objects import DataObject
+
+import mo_dots.nones as temp
+temp.wrap = wrap
+temp.is_sequence = is_sequence
+del temp
