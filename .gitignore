@@ -7,3 +7,5 @@
 /pyLibrary
 /mo_dots.egg-info
 /mo_dots/*.pyc
+/.coverage
+/tests/*.pyc
