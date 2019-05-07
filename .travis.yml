@@ -8,10 +8,13 @@ env:
       - PYTHONPATH=.
 
 install:
+  - "pip install coverage"
+  - "pip install coveralls"
   - "pip install -r requirements.txt"
   - "pip install -r tests/requirements.txt"
 
-# command to run tests
 script:
   - "python -m unittest discover tests"
 
+after_success:
+  - coveralls
