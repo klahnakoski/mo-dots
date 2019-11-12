@@ -11,14 +11,13 @@ from __future__ import absolute_import, division, unicode_literals
 
 from collections import Mapping
 
-from mo_future import text_type, none_type
+from mo_future import text, none_type
 from mo_logs import Log
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_times import Timer
 
-from mo_dots import Data, Null, wrap, NullType, FlatList, data_types
-from speedtest_dot import MAPPING_TYPES
+from mo_dots import Data, Null, wrap, NullType, FlatList, data_types, is_data
 
 
 class TestDotSpeed(FuzzyTestCase):
@@ -54,20 +53,20 @@ class TestDotSpeed(FuzzyTestCase):
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
 
-        with Timer("isinstance check") as i_time:
+        with Timer("Data: isinstance check") as i_time:
             i_result = [isinstance(d, Mapping) for d in data]
 
-        with Timer("set check") as s_time:
-            s_result = [d.__class__ in MAPPING_TYPES for d in data]
+        with Timer("Data: set check") as s_time:
+            s_result = [d.__class__ in data_types for d in data]
 
-        with Timer("eq check") as e_time:
+        with Timer("Data: eq check") as e_time:
             e_result = [d.__class__ is Data or d.__class__ is dict for d in data]
 
-        with Timer("name check") as n_time:
+        with Timer("Data: name check") as n_time:
             n_result = [is_instance(d, Data) or is_instance(d, dict) for d in data]
 
-        with Timer("check w method") as m_time:
-            m_result = [is_mapping(d) for d in data]
+        with Timer("Data: check w method") as m_time:
+            m_result = [is_data(d) for d in data]
 
         self.assertEqual(s_result, i_result)
         self.assertEqual(m_result, i_result)
@@ -88,20 +87,21 @@ class TestDotSpeed(FuzzyTestCase):
 
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
+        text_types = (text,)
 
-        with Timer("isinstance check") as i_time:
-            i_result = [isinstance(d, text_type) for d in data]
+        with Timer("String: isinstance check") as i_time:
+            i_result = [isinstance(d, text) for d in data]
 
-        with Timer("set check") as s_time:
-            s_result = [d.__class__ in (text_type,) for d in data]
+        with Timer("String: set check") as s_time:
+            s_result = [d.__class__ in text_types for d in data]
 
-        with Timer("eq check") as e_time:
-            e_result = [d.__class__ is text_type for d in data]
+        with Timer("String: eq check") as e_time:
+            e_result = [d.__class__ is text for d in data]
 
-        with Timer("name check") as n_time:
-            n_result = [is_instance(d, text_type) for d in data]
+        with Timer("String: name check") as n_time:
+            n_result = [is_instance(d, text) for d in data]
 
-        with Timer("check w method") as m_time:
+        with Timer("String: check w method") as m_time:
             m_result = [is_text(d) for d in data]
 
         self.assertEqual(s_result, i_result)
@@ -109,8 +109,8 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(e_result, i_result)
         self.assertEqual(n_result, i_result)
 
-        self.assertGreater(i_time.duration, s_time.duration)
-        self.assertGreater(m_time.duration, s_time.duration)
+        self.assertGreater(i_time.duration, s_time.duration, msg="isinstance should be slower than __class__ in set")
+        self.assertGreater(m_time.duration, s_time.duration, "is_text should be slower than isinstance check")
 
         Log.note("is_text check is {{t|round(places=2)}}x faster than isinstance", t=i_time.duration.seconds/m_time.duration.seconds)
 
@@ -148,11 +148,7 @@ def is_null(t):
 
 
 def is_text(t):
-    return t.__class__ is text_type
-
-
-def is_mapping(d):
-    return d.__class__ in MAPPING_TYPES
+    return t.__class__ is text
 
 
 def is_instance(d, type_):
