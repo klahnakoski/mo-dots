@@ -12,16 +12,15 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import cProfile
-from collections import Mapping, deque
 import pstats
+from collections import Mapping
 
-from mo_future import text_type
+from mo_dots import Data, wrap, Null
+from mo_future import text
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_threads import profiles
 from mo_times import Timer
-
-from mo_dots import Data, wrap, Null
 
 
 class SpeedTestDot(FuzzyTestCase):
@@ -88,16 +87,16 @@ class SpeedTestDot(FuzzyTestCase):
         data = [options[Random.int(len(options))]() for _ in range(num)]
 
         with Timer("isinstance check") as i_time:
-            i_result = [isinstance(d, text_type) for d in data]
+            i_result = [isinstance(d, text) for d in data]
 
         with Timer("set check") as s_time:
-            s_result = [d.__class__ in (text_type,) for d in data]
+            s_result = [d.__class__ in (text,) for d in data]
 
         with Timer("eq check") as e_time:
-            e_result = [d.__class__ is text_type for d in data]
+            e_result = [d.__class__ is text for d in data]
 
         with Timer("name check") as n_time:
-            n_result = [is_instance(d, text_type) for d in data]
+            n_result = [is_instance(d, text) for d in data]
 
         with Timer("check w method") as m_time:
             m_result = [is_text(d) for d in data]
@@ -115,7 +114,7 @@ MAPPING_TYPES = (Data, dict)
 
 
 def is_text(t):
-    return t.__class__ is text_type
+    return t.__class__ is text
 
 
 def is_mapping(d):

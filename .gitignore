@@ -10,3 +10,4 @@
 /.coverage
 /tests/*.pyc
 .svn
+.idea
