@@ -1,6 +1,7 @@
-mo-logs
-mo-json
-mo-threads
-mo-testing
-jx-python
-pyLibrary
+mo-logs>3
+mo-json>3
+mo-threads>3
+mo-testing>3
+jx-python>3
+pyLibrary>3
+mo-math>3.7
