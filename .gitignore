@@ -9,3 +9,4 @@
 /mo_dots/*.pyc
 /.coverage
 /tests/*.pyc
+.svn
