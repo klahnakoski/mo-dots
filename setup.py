@@ -9,7 +9,11 @@ setup(
     author_email=str(u'kyle@lahnakoski.com'),
     long_description_content_type=str(u'text/markdown'),
     include_package_data=True,
-    classifiers=["Development Status :: 4 - Beta","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"],
+    classifiers=["Development Status :: 4 - Beta",
+                 "Programming Language :: Python :: 2.7",
+                 "Programming Language :: Python :: 3",
+                 
+                 "Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"],
     install_requires=["mo-future>=3.1.19316"],
     version=str(u'3.14.19317'),
     url=str(u'https://github.com/klahnakoski/mo-dots'),
