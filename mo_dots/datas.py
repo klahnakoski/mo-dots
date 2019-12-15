@@ -13,7 +13,7 @@ from collections import MutableMapping
 from copy import copy, deepcopy
 from decimal import Decimal
 
-from mo_future import PY2, generator_types, is_binary, iteritems, long, none_type, text
+from mo_future import generator_types, iteritems, long, none_type, text
 
 from mo_dots import _getdefault, coalesce, get_logger, hash_value, listwrap, literal_field
 from mo_dots.utils import CLASS
@@ -224,7 +224,7 @@ class Data(MutableMapping):
 
     def items(self):
         d = self._internal_dict
-        return [(k, wrap(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
+        return [(literal_field(k), wrap(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
 
     def leaves(self, prefix=None):
         """
@@ -235,7 +235,7 @@ class Data(MutableMapping):
     def iteritems(self):
         # LOW LEVEL ITERATION, NO WRAPPING
         d = self._internal_dict
-        return ((k, wrap(v)) for k, v in iteritems(d))
+        return ((literal_field(k), wrap(v)) for k, v in iteritems(d))
 
     def keys(self):
         d = self._internal_dict
