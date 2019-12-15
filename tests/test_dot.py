@@ -703,15 +703,15 @@ class TestDot(FuzzyTestCase):
 
     def test_keys(self):
         a = wrap({"a.b": "c"})
-        self.assertEqual(a.keys(), {"a\\.b"})
+        self.assertEqual(a.keys(), {"a.b"})
 
     def test_items(self):
         a = wrap({"a.b": "c"})
-        self.assertEqual(a.items(), [("a\\.b", "c")])
+        self.assertEqual(a.items(), [("a.b", "c")])
 
     def test_iteritems(self):
         a = wrap({"a.b": "c"})
-        self.assertEqual(list(a.iteritems()), [("a\\.b", "c")])
+        self.assertEqual(list(a.iteritems()), [("a.b", "c")])
 
 
 class _TestMapping(object):

@@ -224,7 +224,7 @@ class Data(MutableMapping):
 
     def items(self):
         d = self._internal_dict
-        return [(literal_field(k), wrap(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
+        return [(k, wrap(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
 
     def leaves(self, prefix=None):
         """
@@ -235,11 +235,11 @@ class Data(MutableMapping):
     def iteritems(self):
         # LOW LEVEL ITERATION, NO WRAPPING
         d = self._internal_dict
-        return ((literal_field(k), wrap(v)) for k, v in iteritems(d))
+        return ((k, wrap(v)) for k, v in iteritems(d))
 
     def keys(self):
         d = self._internal_dict
-        return set(map(literal_field, d.keys()))
+        return set(d.keys())
 
     def values(self):
         d = self._internal_dict
