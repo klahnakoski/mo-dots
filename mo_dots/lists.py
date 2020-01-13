@@ -4,14 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+# Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
 from __future__ import absolute_import, division, unicode_literals
 
 from copy import deepcopy
 
-from mo_future import generator_types, text
+from mo_future import generator_types, text, first
 
 from mo_dots import CLASS, coalesce, unwrap, wrap
 from mo_dots.nones import Null
@@ -30,8 +30,8 @@ def _late_import():
     global _datawrap
     global Log
 
-
     from mo_dots.objects import datawrap as _datawrap
+
     try:
         from mo_logs import Log
     except Exception:
@@ -46,6 +46,7 @@ class FlatList(list):
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS
     https://github.com/klahnakoski/mo-dots/tree/dev/docs#flatlist-is-flat
     """
+
     EMPTY = None
 
     def __init__(self, vals=None):
@@ -64,7 +65,9 @@ class FlatList(list):
             if index.step is not None:
                 if not Log:
                     _late_import()
-                Log.error("slice step must be None, do not know how to deal with values")
+                Log.error(
+                    "slice step must be None, do not know how to deal with values"
+                )
             length = len(_get_list(self))
 
             i = index.start
@@ -111,7 +114,9 @@ class FlatList(list):
         """
         if not Log:
             _late_import()
-        return FlatList(vals=[unwrap(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)])
+        return FlatList(
+            vals=[unwrap(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)]
+        )
 
     def select(self, key):
         if not Log:
@@ -119,12 +124,16 @@ class FlatList(list):
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return FlatList(vals=[unwrap(u) for u in (wrap(v) for v in _get_list(self)) if _filter(u)])
+        return FlatList(
+            vals=[unwrap(u) for u in (wrap(v) for v in _get_list(self)) if _filter(u)]
+        )
 
     def __delslice__(self, i, j):
         if not Log:
             _late_import()
-        Log.error("Can not perform del on slice: modulo arithmetic was performed on the parameters.  You can try using clear()")
+        Log.error(
+            "Can not perform del on slice: modulo arithmetic was performed on the parameters.  You can try using clear()"
+        )
 
     def __clear__(self):
         self.list = []
@@ -153,7 +162,9 @@ class FlatList(list):
             _emit_slice_warning = False
             if not Log:
                 _late_import()
-            Log.warning("slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes.  Use [start:stop:step] (see https://github.com/klahnakoski/pyLibrary/blob/master/pyLibrary/dot/README.md#the-slice-operator-in-python27-is-inconsistent)")
+            Log.warning(
+                "slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes.  Use [start:stop:step] (see https://github.com/klahnakoski/pyLibrary/blob/master/pyLibrary/dot/README.md#the-slice-operator-in-python27-is-inconsistent)"
+            )
         return self[i:j:]
 
     def __list__(self):
@@ -228,7 +239,7 @@ class FlatList(list):
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE RIGHT [-num:]
         """
         if num == None:
-            return FlatList([_get_list(self)[-1]])
+            return self
         if num <= 0:
             return Null
 
@@ -239,7 +250,7 @@ class FlatList(list):
         NOT REQUIRED, BUT EXISTS AS OPPOSITE OF right()
         """
         if num == None:
-            return FlatList([_get_list(self)[0]])
+            return self
         if num <= 0:
             return Null
 
@@ -250,7 +261,7 @@ class FlatList(list):
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE LEFT [:-num:]
         """
         if num == None:
-            return FlatList([_get_list(self)[:-1:]])
+            return self
         if num <= 0:
             return FlatList.EMPTY
 
@@ -261,7 +272,7 @@ class FlatList(list):
         NOT REQUIRED, EXISTS AS OPPOSITE OF not_right()
         """
         if num == None:
-            return FlatList([_get_list(self)[-1]])
+            return self
         if num <= 0:
             return self
 
@@ -283,23 +294,46 @@ class FlatList(list):
             return FlatList([oper(v) for v in _get_list(self) if v != None])
 
 
+def last(values):
+    if is_many(values):
+        if isinstance(values, FlatList):
+            return values.last()
+        elif is_list(values):
+            return values[-1]
+        elif is_sequence(values):
+            l = Null
+            for i in values:
+                l = i
+            return l
+        else:
+            return first(values)
+
+    return values
+
+
 FlatList.EMPTY = Null
 
 list_types = (list, FlatList)
 container_types = (list, FlatList, set)
-sequence_types = (list, FlatList, tuple)
-many_types = tuple(set(list_types + container_types + sequence_types + generator_types))
+sequence_types = (list, FlatList, tuple) + generator_types
+many_types = tuple(set(list_types + container_types + sequence_types))
 
 
 def is_list(l):
+    # ORDERED, AND CAN CHANGE CONTENTS
     return l.__class__ in list_types
 
+
 def is_container(l):
+    # CAN ADD AND REMOVE ELEMENTS
     return l.__class__ in container_types
 
+
 def is_sequence(l):
+    # HAS AN ORDER, INCLUDES GENERATORS
     return l.__class__ in sequence_types
 
-def is_many(l):
-    return l.__class__ in many_types
 
+def is_many(l):
+    # REPRESENTS MULTIPLE VALUES
+    return l.__class__ in many_types
