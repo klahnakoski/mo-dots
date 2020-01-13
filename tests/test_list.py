@@ -26,6 +26,12 @@ class TestList(FuzzyTestCase):
     def test_empty_generator(self):
         self.assertEqual(last(reversed([])), None)
 
+    def test_empty_list(self):
+        self.assertEqual(last([]), None)
+
+    def test_empty_set(self):
+        self.assertEqual(last(set()), None)
+
     def test_set(self):
         self.assertEqual(last(set(values)).__class__, int)
 
@@ -39,6 +45,10 @@ class TestList(FuzzyTestCase):
     def test_string(self):
         v = "test"
         self.assertEqual(last(v), "test")
+
+    def test_bytes(self):
+        v = b"test"
+        self.assertEqual(last(v), b"test")
 
     def test_number(self):
         v = 42
