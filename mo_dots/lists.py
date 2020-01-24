@@ -9,14 +9,13 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
-import collections
 import types
 from copy import deepcopy
 
-from mo_future import generator_types, text, first, binary_type
+from mo_future import generator_types, text, first
 
 from mo_dots import CLASS, coalesce, unwrap, wrap
-from mo_dots.nones import Null, NullType
+from mo_dots.nones import Null
 
 LIST = text("list")
 
@@ -298,6 +297,8 @@ class FlatList(list):
 
 def last(values):
     if is_many(values):
+        if not values:
+            return Null
         if isinstance(values, FlatList):
             return values.last()
         elif is_list(values):
@@ -322,7 +323,7 @@ container_types = (list, FlatList, set)
 sequence_types = (list, FlatList, tuple) + generator_types
 many_types = tuple(set(list_types + container_types + sequence_types))
 
-not_many_types = (text, binary_type, NullType, dict)  # ITERATORS THAT ARE CONSIDERED PRIMITIVE
+not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "Data")  # ITERATORS THAT ARE CONSIDERED PRIMITIVE
 
 
 def is_list(l):
@@ -340,22 +341,21 @@ def is_sequence(l):
     return l.__class__ in sequence_types
 
 
-def is_many(l):
+def is_many(value):
     # REPRESENTS MULTIPLE VALUES
+    # TODO: CLEAN UP THIS LOGIC
+    # THIS IS COMPLICATED BECAUSE I AM UNSURE ABOUT ALL THE "PRIMITIVE TYPES"
+    # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
+    # UNTIL WE HAVE A COMPLETE LIST, WE KEEP ALL THIS warning() CODE
     global many_types
-    type_ = l.__class__
+    type_ = value.__class__
     if type_ in many_types:
         return True
-    if type_ in not_many_types:
-        return False
 
     if issubclass(type_, types.GeneratorType):
         if not Log:
             _late_import()
         many_types = many_types + (type_,)
-        Log.warning("is_many() can not detect type {{type}}", type=type_.__name__)
-    elif issubclass(type_, collections.Iterable):
-        if not Log:
-            _late_import()
-        Log.error("is_many() can not detect type {{type}}", type=type_.__name__)
+        Log.warning("is_many() can not detect generator {{type}}", type=type_.__name__)
+        return True
     return False
