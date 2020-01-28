@@ -1,6 +1,5 @@
 
-Classes for Processing Data
-===========================
+# Classes for Processing Data
 
 There are two major families of objects in Object Oriented programming. The
 first, are ***Actors***: characterized by a number of useful instance methods
@@ -13,8 +12,7 @@ operators defined.
 Focusing on just *data* objects; We want a succinct way of transforming data. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. This library provides the consistent base for a high level data manipulation algebra. 
 
 
-`Data` replaces Python's `dict`
--------------------------------
+## `Data` replaces Python's `dict`
 
 `Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, while at the same time keeping them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
 
@@ -340,8 +338,7 @@ is expected to have.
 
 
 
-Appendix
-========
+# Appendix
 
 ### Examples in the wild
 
@@ -373,9 +370,7 @@ and does not look at field-does-not-exist-in-this-context (Database Null)
 (aka anonymous class)
 
 
-
-Motivation for FlatList (optional reading)
-------------------------------------------
+## Motivation for FlatList (optional reading)
 
 `FlatList` is the final type required to to provide closure under the
 dot(.) and slice [::] operators. Not only must `FlatList` deal with
