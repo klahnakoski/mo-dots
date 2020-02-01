@@ -10,9 +10,8 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import sys
-from collections import OrderedDict
 
-from mo_future import binary_type, generator_types, is_binary, is_text, text
+from mo_future import binary_type, generator_types, is_binary, is_text, text, OrderedDict
 
 from mo_dots.utils import CLASS, OBJ, get_logger, get_module
 
