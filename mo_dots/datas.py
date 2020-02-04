@@ -187,6 +187,9 @@ class Data(object):
         return _iadd(self, other)
 
     def __or__(self, other):
+        """
+        RECURSIVE COALESCE OF DATA PROPERTIES
+        """
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting a Mapping")
 
@@ -196,16 +199,25 @@ class Data(object):
         return output
 
     def __ror__(self, other):
+        """
+        RECURSIVE COALESCE OF DATA PROPERTIES
+        """
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting a Mapping")
 
         return wrap(other).__or__(self)
 
     def __ior__(self, other):
+        """
+        RECURSIVE COALESCE OF DATA PROPERTIES
+        """
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting a Mapping")
         d = self._internal_dict
         for ok, ov in other.items():
+            if ov == None:
+                continue
+
             sv = d.get(ok)
             if sv == None:
                 d[ok] = ov
@@ -387,6 +399,13 @@ def _str(value, depth):
 
 
 def _iadd(self, other):
+    """
+    RECURSIVE ADDITION OF DATA PROPERTIES
+    * LISTS ARE CONCATENATED
+    * SETS ARE UNIONED
+    * NUMBERS ARE ADDED
+    """
+
     if not _get(other, CLASS) in data_types:
         get_logger().error("Expecting a Mapping")
     d = unwrap(self)
