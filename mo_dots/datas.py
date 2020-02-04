@@ -23,7 +23,7 @@ SLOT = str("_internal_dict")
 DEBUG = False
 
 
-class Data(MutableMapping):
+class Data(object):
     """
     Please see README.md
     """
@@ -149,7 +149,7 @@ class Data(MutableMapping):
             Log.error("can not set key={{key}}", key=key, cause=e)
 
     def __getattr__(self, key):
-        d = _get(self, SLOT)
+        d = self._internal_dict
         v = d.get(key)
         t = _get(v, CLASS)
 
@@ -190,12 +190,12 @@ class Data(MutableMapping):
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting a Mapping")
 
-        output = object.__new__(Data)
-        output._internal_dict = {}
         d = self._internal_dict
+        output = Data(**d)
         for ok, ov in other.items():
             sv = d.get(ok)
-            output[ok] = sv | ov
+            if sv == None:
+                output[ok] = ov
         return output
 
     def __ror__(self, other):
@@ -210,8 +210,9 @@ class Data(MutableMapping):
         d = self._internal_dict
         for ok, ov in other.items():
             sv = d.get(ok)
-            d[ok] = sv | ov
-        return d
+            if sv == None:
+                d[ok] = ov
+        return self
 
     def __hash__(self):
         d = self._internal_dict
@@ -327,6 +328,9 @@ class Data(MutableMapping):
             return "Data("+dict.__repr__(self._internal_dict)+")"
         except Exception as e:
             return "Data()"
+
+
+MutableMapping.register(Data)
 
 
 def leaves(value, prefix=None):

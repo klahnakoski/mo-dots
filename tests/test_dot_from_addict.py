@@ -225,37 +225,58 @@ class AddictTests(FuzzyTestCase):
 
         self.assertEqual(old, reference)
 
-    def test_update_with_lists(self):
+    def test_update1_with_lists(self):
         org = Data()
         org.a = [1, 2, {'a': 'superman'}]
         someother = Data()
         someother.b = [{'b': 123}]
-        org.update(someother)
+        org = someother | org
 
         correct = {'a': [1, 2, {'a': 'superman'}],
                    'b': [{'b': 123}]}
 
-        org.update(someother)
+        org = someother | org
         self.assertEqual(org, correct)
         self.assertIsInstance(org.b[0], Mapping)
 
-    def test_update_with_kws(self):
+    def test_update2_with_lists(self):
+        org = Data()
+        org.a = [1, 2, {'a': 'superman'}]
+        someother = Data()
+        someother.b = [{'b': 123}]
+        org |= someother
+
+        correct = {'a': [1, 2, {'a': 'superman'}],
+                   'b': [{'b': 123}]}
+
+        org |= someother
+        self.assertEqual(org, correct)
+        self.assertIsInstance(org.b[0], Mapping)
+
+    def test_update1_with_kws(self):
         org = Data(one=1, two=2)
         someother = Data(one=3)
-        someother.update(one=1, two=2)
+        someother = dict(one=1, two=2) | someother
         self.assertEqual(org, someother)
 
-    def test_update_with_args_and_kwargs(self):
+    def test_update2_with_kws(self):
+        org = Data(one=3, two=2)
+        someother = Data(one=3)
+        someother |= dict(one=1, two=2)
+        self.assertEqual(org, someother)
+
+    def test_update1_with_args_and_kwargs(self):
         expected = {'a': 1, 'b': 2}
         org = Data()
-        org.update({'a': 3, 'b': 2}, a=1)
+        org = {"a": 1} | ({'a': 3, 'b': 2} | org)
         self.assertEqual(org, expected)
 
-    def test_update_with_multiple_args(self):
+    def test_update2_with_args_and_kwargs(self):
+        expected = {'a': 3, 'b': 2}
         org = Data()
-        def update():
-            org.update({'a': 2}, {'a': 1})
-        self.assertRaises(TypeError, update)
+        org |= {'a': 3, 'b': 2}
+        org |= {"a": 1}
+        self.assertEqual(org, expected)
 
     def test_hook_in_constructor(self):
         a_dict = Data(TEST_DICT)
