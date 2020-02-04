@@ -80,17 +80,17 @@ class TestDotSpeed(FuzzyTestCase):
         num = 1 * 1000 * 1000
         options = {
             0: lambda: 6,
-            1: lambda: "string"
-            # 2: lambda: {},
-            # 3: lambda: Data(),
-            # 4: lambda: Null,
+            1: lambda: "string",
+            2: lambda: {},
+            3: lambda: Data(),
+            4: lambda: Null,
 
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
         text_types = (text,)
 
         with Timer("String: isinstance check") as i_time:
-            i_result = [isinstance(d, text) for d in data]
+            i_result = [isinstance(d, text_types) for d in data]
 
         with Timer("String: set check") as s_time:
             s_result = [d.__class__ in text_types for d in data]

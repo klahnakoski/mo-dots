@@ -713,6 +713,12 @@ class TestDot(FuzzyTestCase):
         a = wrap({"a.b": "c"})
         self.assertEqual(list(a.iteritems()), [("a.b", "c")])
 
+    def test_update_complex(self):
+        a = Data(a=1, b={"c": 0})
+        b = Data(b={"d": 3})
+        result = a | b
+        self.assertEqual(result, {"a": 1, "b": {"c": 0, "d": 3}})
+
 
 class _TestMapping(object):
     def __init__(self):

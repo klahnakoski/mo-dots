@@ -192,10 +192,7 @@ class Data(object):
 
         d = self._internal_dict
         output = Data(**d)
-        for ok, ov in other.items():
-            sv = d.get(ok)
-            if sv == None:
-                output[ok] = ov
+        output.__ior__(other)
         return output
 
     def __ror__(self, other):
@@ -212,6 +209,12 @@ class Data(object):
             sv = d.get(ok)
             if sv == None:
                 d[ok] = ov
+            elif isinstance(sv, Data):
+                sv |= ov
+            elif is_data(sv):
+                wv = object.__new__(Data)
+                _set(wv, SLOT, sv)
+                wv |= ov
         return self
 
     def __hash__(self):
@@ -322,6 +325,10 @@ class Data(object):
             return dict.__str__(self._internal_dict)
         except Exception:
             return "{}"
+
+    def __dir__(self):
+        d = self._internal_dict
+        return d.keys()
 
     def __repr__(self):
         try:
