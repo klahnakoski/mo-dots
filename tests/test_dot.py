@@ -464,6 +464,17 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(wrap(a).x.z, None, "a should not have been altered")
 
+    def test_or(self):
+        a = {"x": {"y": 1}}
+        b = {"x": {"z": 2}}
+        c = Data()
+        d = c | a | b
+
+        self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
+        self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
+
+        self.assertEqual(wrap(a).x.z, None, "a should not have been altered")
+
     def test_Dict_of_Dict(self):
         value = {"a": 1}
         wrapped = Data(Data(value))
@@ -538,6 +549,12 @@ class TestDot(FuzzyTestCase):
         a = {"a": "test"}
         b = {"a": [1, 2]}
         self.assertAlmostEqual(set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid")
+
+    def test_unicode_or_list(self):
+        a = wrap({"a": "test"})
+        b = {"a": [1, 2]}
+        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
+        self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
         self.assertIs(deepcopy(Null), Null)
@@ -712,6 +729,12 @@ class TestDot(FuzzyTestCase):
     def test_iteritems(self):
         a = wrap({"a.b": "c"})
         self.assertEqual(list(a.iteritems()), [("a.b", "c")])
+
+    def test_update_complex(self):
+        a = Data(a=1, b={"c": 0})
+        b = Data(b={"d": 3})
+        result = a | b
+        self.assertEqual(result, {"a": 1, "b": {"c": 0, "d": 3}})
 
 
 class _TestMapping(object):

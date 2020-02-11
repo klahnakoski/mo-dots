@@ -17,7 +17,7 @@ from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_times import Timer
 
-from mo_dots import Data, Null, wrap, NullType, FlatList, data_types, is_data
+from mo_dots import Data, Null, wrap, NullType, FlatList, data_types, is_data, unwrap
 
 
 class TestDotSpeed(FuzzyTestCase):
@@ -80,17 +80,17 @@ class TestDotSpeed(FuzzyTestCase):
         num = 1 * 1000 * 1000
         options = {
             0: lambda: 6,
-            1: lambda: "string"
-            # 2: lambda: {},
-            # 3: lambda: Data(),
-            # 4: lambda: Null,
+            1: lambda: "string",
+            2: lambda: {},
+            3: lambda: Data(),
+            4: lambda: Null,
 
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
         text_types = (text,)
 
         with Timer("String: isinstance check") as i_time:
-            i_result = [isinstance(d, text) for d in data]
+            i_result = [isinstance(d, text_types) for d in data]
 
         with Timer("String: set check") as s_time:
             s_result = [d.__class__ in text_types for d in data]
@@ -132,6 +132,19 @@ class TestDotSpeed(FuzzyTestCase):
         Log.note("is_null compare is {{t|round(places=2)}}x faster", t=me_time.duration.seconds/eq_time.duration.seconds)
         Log.note("is compare is {{t|round(places=2)}}x faster", t=me_time.duration.seconds/is_time.duration.seconds)
 
+    def test_unwrap(self):
+        num = 1 * 1000 * 1000
+        options = {
+            0: Data(),
+            1: {},
+            2: "string",
+            3: None,
+            4: Null
+        }
+        data = [options[Random.int(len(options))] for _ in range(num)]
+
+        with Timer("unwrap") as i_time:
+            i_result = [unwrap(d) for d in data]
 
 def is_null(t):
     class_ = t.__class__
