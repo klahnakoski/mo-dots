@@ -11,10 +11,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from mo_future import PY3
+
 from mo_dots import wrap, Null
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots.lists import last
+from mo_dots.lists import last, is_many
 
 values = [1, 2, 3]
 
@@ -66,4 +68,7 @@ class TestList(FuzzyTestCase):
         v = Null
         self.assertEqual(last(v), None)
 
-
+    def test_is_not_many(self):
+        if PY3:
+            self.assertEqual(hasattr("", "__iter__"), True)
+        self.assertEqual(is_many(""), False)
