@@ -13,10 +13,16 @@ from __future__ import unicode_literals
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import relative_field
+from mo_dots import relative_field, tail_field
 
 
 class TestFields(FuzzyTestCase):
 
     def test_relative(self):
         self.assertEqual(relative_field("testing", "testing"), ".")
+
+    def test_tail_field(self):
+        value, tail = tail_field("meta\\.stats")
+        expected = ("meta.stats", )
+
+        self.assertEqual(value, expected)
