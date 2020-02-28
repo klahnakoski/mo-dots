@@ -23,6 +23,6 @@ class TestFields(FuzzyTestCase):
 
     def test_tail_field(self):
         value, tail = tail_field("meta\\.stats")
-        expected = ("meta.stats", )
+        expected = "meta.stats"
 
-        self.assertEqual(value, expected)
+        self.assertEqual(value, expected, "expecting identical")
