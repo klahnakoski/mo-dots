@@ -112,7 +112,7 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertGreater(i_time.duration, s_time.duration, msg="isinstance should be slower than __class__ in set")
         self.assertGreater(m_time.duration, s_time.duration, "is_text should be slower than isinstance check")
 
-        Log.note("is_text check is {{t|round(places=2)}}x faster than isinstance", t=i_time.duration.seconds/m_time.duration.seconds)
+        Log.note("is_text check is {{t|round(places=2)}}x faster than isinstance", t=m_time.duration.seconds/i_time.duration.seconds)
 
     def test_null_compare(self):
         values = Random.sample([None, Null, {}, Data(), Data(a="b"), [], FlatList()], 1000*1000)
