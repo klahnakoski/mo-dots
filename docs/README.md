@@ -30,36 +30,37 @@ True</pre>
     missing property names are common when dealing with JSON, which is often almost anything.
     Unfortunately, you do loose the ability to perform <code>a is None</code>
     checks: **You must always use <code>a == None</code> instead**.
- 3. remove an attribute by assigning `None` (eg `a.b = None`)
- 4. you can access paths as a variable: `a["b.c"] == a.b.c`. Of course,
+ 3. Accessing missing properties does not change the data; unlike `defaultdict`
+ 4. Remove an attribute by assigning `None` (eg `a.b = None`)
+ 5. Access paths as a variable: `a["b.c"] == a.b.c`. Of course,
  this creates a need to refer to literal dot (`.`), which can be done by
  escaping with backslash: `a["b\\.c"] == a["b\.c"]`
- 5. you can set paths to values, missing dicts along the path are created:<pre>
+ 6. you can set paths to values, missing dicts along the path are created:<pre>
 &gt;&gt;&gt; a = wrap({})
 a == {}
 &gt;&gt;&gt; a["b.c"] = 42   # same as a.b.c = 42
 a == {"b": {"c": 42}}</pre>
- 6. path assignment also works for the `+=` operator <pre>
+ 7. path assignment also works for the `+=` operator <pre>
 &gt;&gt;&gt; a = wrap({})
 a == {}
 &gt;&gt;&gt; a.b.c += 1
 a == {"b": {"c": 1}}
 &gt;&gt;&gt; a.b.c += 42
 a == {"b": {"c": 43}}</pre>
- 7. `+=` with a list (`[]`) will `append()`<pre>
+ 8. `+=` with a list (`[]`) will `append()`<pre>
 &gt;&gt;&gt; a = wrap({})
 a == {}
 &gt;&gt;&gt; a.b.c += [1]
 a == {"b": {"c": [1]}}
 &gt;&gt;&gt; a.b.c += [42]
 a == {"b": {"c": [1, 42]}}</pre>
- 8. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:<pre>
+ 9. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:<pre>
 &gt;&gt;&gt; a = wrap({"a":42, "b":["hello"]})
 &gt;&gt;&gt; b = {"a":24, "b":["world"]}
 &gt;&gt;&gt; c = a + b
 c == {"a":66, "b":["hello", "world"]}
 </pre>
- 9. property names are coerced to unicode - it appears Python2.7
+ 10. property names are coerced to unicode - it appears Python2.7
  `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 
@@ -79,16 +80,16 @@ When wrapping `dict`, the property names are **NOT** interpreted as paths;
 property names can include dots (`.`).
 
 ```python
-	>>> from mo_dots import wrap
-	>>> a = wrap({"b.c": 42})
-	>>> a.keys()
-	set(['b.c'])
+>>> from mo_dots import wrap
+>>> a = wrap({"b.c": 42})
+>>> a.keys()
+set(['b.c'])
 
-	>>> a["b.c"]
-	Null    # because b.c path does not exist
+>>> a["b.c"]
+Null    # because b.c path does not exist
 
-	>>> a["b\.c"]
-	42      # escaping the dot (`.`) makes it literal
+>>> a["b\.c"]
+42      # escaping the dot (`.`) makes it literal
 ```
 
 ### Leaf form
@@ -99,26 +100,26 @@ example from my ElasticSearch configuration:
 **YAML**
 
 ```javascript
-	discovery.zen.ping.multicast.enabled: true
+discovery.zen.ping.multicast.enabled: true
 ```
 
 **JSON**
 
 ```javascript
-	{"discovery.zen.ping.multicast.enabled": true}
+{"discovery.zen.ping.multicast.enabled": true}
 ```
 
 Both are intended to represent the deeply nested JSON
 
 ```javascript
-	{"discovery": {"zen": {"ping": {"multicast": {"enabled": true}}}}}
+{"discovery": {"zen": {"ping": {"multicast": {"enabled": true}}}}}
 ```
 
 Upon importing such files, it is good practice to convert it to standard form
 immediately:
 
 ```python
-	config = wrap_leaves(config)
+config = wrap_leaves(config)
 ```
 
 `wrap_leaves()` assumes any dots found in JSON names are referring to paths
@@ -131,41 +132,41 @@ JSON you are expecting. Specifically, this happens with URLs:
 **BAD** - dots in url are interpreted as paths
 
 ```python
-	>>> from mo_dots import wrap, literal_field, Data
-	>>>
-	>>> def update(summary, url, count):
-	...     summary[url] += count
-	...
-	>>> s = Data()
-	>>> update(s, "example.html", 3)
-	>>> print s
+>>> from mo_dots import wrap, literal_field, Data
+>>>
+>>> def update(summary, url, count):
+...     summary[url] += count
+...
+>>> s = Data()
+>>> update(s, "example.html", 3)
+>>> print s
 
-	Data({u'example': {'html': 3}})
+Data({u'example': {'html': 3}})
 ```
 
 **GOOD** - Notice the added `literal_field()` wrapping
 
 ```python
-	>>> def update(summary, url, count):
-	...     summary[literal_field(url)] += count
-	...
-	>>> s = Data()
-	>>> update(s, "example.html", 3)
-	>>> print s
+>>> def update(summary, url, count):
+...     summary[literal_field(url)] += count
+...
+>>> s = Data()
+>>> update(s, "example.html", 3)
+>>> print s
 
-	Data({u'example.html': 3})
+Data({u'example.html': 3})
 ```
 
 You can produce leaf form by iterating over all leaves. This is good for
 simplifying iteration over deep inner object structures.
 
 ```python
-	>>> from mo_dots import wrap
-	>>> a = wrap({"b": {"c": 42}})
-	>>> for k, v in a.leaves():
-	...     print k + ": " + unicode(v)
+>>> from mo_dots import wrap
+>>> a = wrap({"b": {"c": 42}})
+>>> for k, v in a.leaves():
+...     print k + ": " + unicode(v)
 
-	b.c: 42
+b.c: 42
 ```
 
 
@@ -233,13 +234,13 @@ which are true for all `a`. I hope, dear reader, you do not see this a some pecu
 NullTypes can also perform lazy assignment for increased expressibility.
 
 ```python
-    >>> a = wrap({})
-    >>> x = a.b.c
-    >>> x == None
-    True
-    >>> x = 42
-    >>> a.b.c == 42
-    True
+>>> a = wrap({})
+>>> x = a.b.c
+>>> x == None
+True
+>>> x = 42
+>>> a.b.c == 42
+True
 ```
 in this case, specific `Nulls`, like `x`, keep track of the path
 assignment so it can be used in later programming logic. This feature proves
@@ -352,7 +353,7 @@ different names and slightly different variations, some examples are:
  * `collections.namedtuple()` - gives attribute names to tuple indices
   effectively providing <code>a.b</code> rather than <code>a["b"]</code>
      offered by dicts
- * `collections.defaultdict()` - will change the `dict` upon observation of its properties, which is unexpected
+ * `collections.defaultdict()` - observing missing properties will mutate the instance, which is not desired behaviour
  * [configman's DotDict](https://github.com/mozilla/configman/blob/master/configman/dotdict.py)
   allows dot notation, and path setting
  * [Fabric's _AttributeDict](https://github.com/fabric/fabric/blob/19f5cffaada0f6f6132cd06742acd34e65cf1977/fabric/utils.py#L216) allows dot notation
