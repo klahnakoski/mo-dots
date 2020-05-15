@@ -591,13 +591,23 @@ class TestDot(FuzzyTestCase):
         test = expected + None
         self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
-    def test_pop(self):
+    def test_pop_list(self):
         l = wrap([1, 2, 3, 4])
 
         self.assertEquals(l.pop(3), 4)
         self.assertEquals(l.pop(0), 1)
         self.assertEquals(l.pop(1), 3)
         self.assertEquals(l.pop(), 2)
+
+    def test_pop_dict(self):
+        d = wrap({"a": 1, "b": 2, "c": 3})
+
+        self.assertAlmostEqual(d.pop("a"), 1)
+        self.assertAlmostEqual({"b": 2, "c": 3}, d)
+        self.assertAlmostEqual(d.pop("c"), 3)
+        self.assertAlmostEqual({"b": 2}, d)
+        self.assertAlmostEqual(d.pop("b"), 2)
+        self.assertAlmostEqual({}, d)
 
     def test_values(self):
         a = wrap({"a": 1, "b": 2})
