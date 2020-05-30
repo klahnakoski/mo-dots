@@ -53,19 +53,19 @@ class TestDotSpeed(FuzzyTestCase):
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
 
-        with Timer("Data: isinstance check") as i_time:
+        with Timer("Data: isinstance of Mapping check") as i_time:
             i_result = [isinstance(d, Mapping) for d in data]
 
-        with Timer("Data: set check") as s_time:
+        with Timer("Data: in data_types check") as s_time:
             s_result = [d.__class__ in data_types for d in data]
 
-        with Timer("Data: eq check") as e_time:
+        with Timer("Data: is checks") as e_time:
             e_result = [d.__class__ is Data or d.__class__ is dict for d in data]
 
-        with Timer("Data: name check") as n_time:
+        with Timer("Data: is_instance checks") as n_time:
             n_result = [is_instance(d, Data) or is_instance(d, dict) for d in data]
 
-        with Timer("Data: check w method") as m_time:
+        with Timer("Data: check w is_data()") as m_time:
             m_result = [is_data(d) for d in data]
 
         self.assertEqual(s_result, i_result)
@@ -89,19 +89,19 @@ class TestDotSpeed(FuzzyTestCase):
         data = [options[Random.int(len(options))]() for _ in range(num)]
         text_types = (text,)
 
-        with Timer("String: isinstance check") as i_time:
+        with Timer("String: isinstance text_types check") as i_time:
             i_result = [isinstance(d, text_types) for d in data]
 
-        with Timer("String: set check") as s_time:
+        with Timer("String: in text_types check") as s_time:
             s_result = [d.__class__ in text_types for d in data]
 
-        with Timer("String: eq check") as e_time:
+        with Timer("String: is check") as e_time:
             e_result = [d.__class__ is text for d in data]
 
-        with Timer("String: name check") as n_time:
+        with Timer("String: is_instance of text check") as n_time:
             n_result = [is_instance(d, text) for d in data]
 
-        with Timer("String: check w method") as m_time:
+        with Timer("String: check w is_text method") as m_time:
             m_result = [is_text(d) for d in data]
 
         self.assertEqual(s_result, i_result)

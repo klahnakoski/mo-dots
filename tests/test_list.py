@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_future import PY3
 
-from mo_dots import wrap, Null
+from mo_dots import to_data, Null
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots.lists import last, is_many
@@ -41,7 +41,7 @@ class TestList(FuzzyTestCase):
         self.assertEqual(last(values), 3)
 
     def test_flat_list(self):
-        v = wrap(values)
+        v = to_data(values)
         self.assertEqual(last(v), 3)
 
     def test_string(self):
@@ -58,7 +58,7 @@ class TestList(FuzzyTestCase):
 
     def test_object(self):
         v = {}
-        self.assertEqual(last(v), wrap({}))
+        self.assertEqual(last(v), to_data({}))
 
     def test_none(self):
         v = None

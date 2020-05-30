@@ -8,7 +8,7 @@ from mo_logs import Log
 from mo_math.randoms import Random
 from mo_times import Timer
 
-from mo_dots import Data, wrap
+from mo_dots import Data, to_data
 from mo_dots.lists import FlatList
 
 
@@ -34,9 +34,9 @@ def test_wrap_1():
     for i in range(NUM_REPEAT):
         results = []
         gc.collect()
-        with Timer("more struct: wrap"):
+        with Timer("more struct: to_data"):
             for v in inputs:
-                results.append(wrap(v))
+                results.append(to_data(v))
 
         results = []
         gc.collect()
@@ -63,9 +63,9 @@ def test_wrap_2():
     for i in range(NUM_REPEAT):
         results = []
         gc.collect()
-        with Timer("more string: wrap"):
+        with Timer("more string: to_data"):
             for v in inputs:
-                results.append(wrap(v))
+                results.append(to_data(v))
 
         results = []
         gc.collect()
