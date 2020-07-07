@@ -17,14 +17,14 @@ from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_times import Timer
 
-from mo_dots import Data, Null, wrap, NullType, FlatList, data_types, is_data, unwrap
+from mo_dots import Data, Null, wrap, NullType, FlatList, data_types, is_data, unwrap, to_data, from_data
 
 
 class TestDotSpeed(FuzzyTestCase):
 
     def test_simple_access(self):
         times = range(1000*1000)
-        x = wrap({"a": {"b": 42}})
+        x = to_data({"a": {"b": 42}})
         y = Dummy({"b": 42})
 
         with Timer("slot access") as slot:
@@ -132,7 +132,7 @@ class TestDotSpeed(FuzzyTestCase):
         Log.note("is_null compare is {{t|round(places=2)}}x faster", t=me_time.duration.seconds/eq_time.duration.seconds)
         Log.note("is compare is {{t|round(places=2)}}x faster", t=me_time.duration.seconds/is_time.duration.seconds)
 
-    def test_unwrap(self):
+    def test_from_data(self):
         num = 1 * 1000 * 1000
         options = {
             0: Data(),
@@ -144,7 +144,7 @@ class TestDotSpeed(FuzzyTestCase):
         data = [options[Random.int(len(options))] for _ in range(num)]
 
         with Timer("unwrap") as i_time:
-            i_result = [unwrap(d) for d in data]
+            i_result = [from_data(d) for d in data]
 
 def is_null(t):
     class_ = t.__class__

@@ -19,7 +19,7 @@ from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import to_data, Null, set_default, unwrap, Data, literal_field, NullType
+from mo_dots import to_data, Null, set_default, Data, literal_field, NullType, leaves_to_data, from_data
 from mo_dots.objects import datawrap
 
 
@@ -422,7 +422,7 @@ class TestDot(FuzzyTestCase):
     def test_wrap(self):
         d = {}
         dd = to_data(d)
-        self.assertIs(unwrap(dd), d)
+        self.assertIs(from_data(dd), d)
 
     def test_object_wrap(self):
         d = SampleData()
@@ -430,7 +430,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(dd["a"], 20)
         self.assertEqual(dd, {"a": 20, "b": 30})
-        self.assertIs(unwrap(dd), dd)
+        self.assertIs(from_data(dd), dd)
 
     def test_object_wrap_w_deep_path(self):
         d = SampleData()
@@ -458,7 +458,7 @@ class TestDot(FuzzyTestCase):
         c = {}
         d = set_default(c, a, b)
 
-        self.assertTrue(unwrap(d) is c, "expecting first parameter to be returned")
+        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
@@ -478,7 +478,7 @@ class TestDot(FuzzyTestCase):
     def test_Dict_of_Dict(self):
         value = {"a": 1}
         wrapped = Data(Data(value))
-        self.assertTrue(value is unwrap(wrapped), "expecting identical object")
+        self.assertTrue(value is from_data(wrapped), "expecting identical object")
 
     def test_leaves_of_mappings(self):
         a = to_data({"a": _TestMapping()})
@@ -745,6 +745,11 @@ class TestDot(FuzzyTestCase):
         b = Data(b={"d": 3})
         result = a | b
         self.assertEqual(result, {"a": 1, "b": {"c": 0, "d": 3}})
+
+    def test_string_using_leaves(self):
+        result = leaves_to_data("test")
+        self.assertNotIsInstance(result, Data)
+        self.assertEqual(result, "test")
 
 
 class _TestMapping(object):
