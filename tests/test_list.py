@@ -76,3 +76,6 @@ class TestList(FuzzyTestCase):
     def test_index(self):
         v = to_data([{"index":v} for v in values])
         self.assertEqual(v.index, values)
+
+    def test_json(self):
+        self.assertEqual(hasattr(to_data(values), "__json__"), False)

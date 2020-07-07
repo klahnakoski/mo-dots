@@ -103,6 +103,8 @@ class FlatList(object):
             Log.error("problem", cause=e)
 
     def __getattr__(self, key):
+        if key in ["__json__"]:
+            raise AttributeError()
         return self.get(key)
 
     def get(self, key):
@@ -113,7 +115,10 @@ class FlatList(object):
             _late_import()
 
         return FlatList(
-            vals=[from_data(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)]
+            vals=[
+                from_data(coalesce(_datawrap(v), Null)[key])
+                for v in _get_list(self)
+            ]
         )
 
     def select(self, key):
