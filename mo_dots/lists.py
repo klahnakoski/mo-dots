@@ -12,19 +12,22 @@ from __future__ import absolute_import, division, unicode_literals
 import types
 from copy import deepcopy
 
-from mo_future import generator_types, text, first
+from mo_future import generator_types, first
 
-from mo_dots import CLASS, coalesce, unwrap, to_data, from_data
+from mo_dots import CLASS, coalesce, to_data, from_data
 from mo_dots.nones import Null
 
-LIST = text("list")
-
+_list = str("list")
 _get = object.__getattribute__
-_get_list = lambda self: _get(self, LIST)
 _set = object.__setattr__
 _emit_slice_warning = True
-_datawrap = None
-Log = None
+
+
+Log, _datawrap = [None]*2
+
+
+def _get_list(self):
+    return _get(self, _list)
 
 
 def _late_import():
@@ -41,7 +44,7 @@ def _late_import():
     _ = _datawrap
 
 
-class FlatList(list):
+class FlatList(object):
     """
     ENCAPSULATES HANDING OF Nulls BY wrapING ALL MEMBERS AS NEEDED
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS
