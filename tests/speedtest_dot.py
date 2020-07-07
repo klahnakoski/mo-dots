@@ -15,7 +15,7 @@ import cProfile
 import pstats
 from collections import Mapping
 
-from mo_dots import Data, wrap, Null
+from mo_dots import Data, to_data, Null
 from mo_future import text
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -29,7 +29,7 @@ class SpeedTestDot(FuzzyTestCase):
         """
         THIS WILL WRITE A STATS FILE TO THE PROJECT DIRECTORY
         """
-        x = wrap({"a": {"b": 42}})
+        x = to_data({"a": {"b": 42}})
 
         cprofiler = cProfile.Profile()
         cprofiler.enable()

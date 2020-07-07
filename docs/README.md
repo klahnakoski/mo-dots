@@ -19,7 +19,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
  1. `a.b == a["b"]`
  2. missing property names are handled gracefully, which is beneficial when being used in
     set operations (database operations) without raising exceptions <pre>
-&gt;&gt;&gt; a = wrap({})
+&gt;&gt;&gt; a = to_data({})
 a == {}
 &gt;&gt;&gt; a.b == None
 True
@@ -36,26 +36,26 @@ True</pre>
  this creates a need to refer to literal dot (`.`), which can be done by
  escaping with backslash: `a["b\\.c"] == a["b\.c"]`
  6. you can set paths to values, missing dicts along the path are created:<pre>
-&gt;&gt;&gt; a = wrap({})
+&gt;&gt;&gt; a = to_data({})
 a == {}
 &gt;&gt;&gt; a["b.c"] = 42   # same as a.b.c = 42
 a == {"b": {"c": 42}}</pre>
  7. path assignment also works for the `+=` operator <pre>
-&gt;&gt;&gt; a = wrap({})
+&gt;&gt;&gt; a = to_data({})
 a == {}
 &gt;&gt;&gt; a.b.c += 1
 a == {"b": {"c": 1}}
 &gt;&gt;&gt; a.b.c += 42
 a == {"b": {"c": 43}}</pre>
  8. `+=` with a list (`[]`) will `append()`<pre>
-&gt;&gt;&gt; a = wrap({})
+&gt;&gt;&gt; a = to_data({})
 a == {}
 &gt;&gt;&gt; a.b.c += [1]
 a == {"b": {"c": [1]}}
 &gt;&gt;&gt; a.b.c += [42]
 a == {"b": {"c": [1, 42]}}</pre>
  9. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:<pre>
-&gt;&gt;&gt; a = wrap({"a":42, "b":["hello"]})
+&gt;&gt;&gt; a = to_data({"a":42, "b":["hello"]})
 &gt;&gt;&gt; b = {"a":24, "b":["world"]}
 &gt;&gt;&gt; c = a + b
 c == {"a":66, "b":["hello", "world"]}
@@ -80,8 +80,8 @@ When wrapping `dict`, the property names are **NOT** interpreted as paths;
 property names can include dots (`.`).
 
 ```python
->>> from mo_dots import wrap
->>> a = wrap({"b.c": 42})
+>>> from mo_dots import to_data
+>>> a = to_data({"b.c": 42})
 >>> a.keys()
 set(['b.c'])
 
@@ -132,7 +132,7 @@ JSON you are expecting. Specifically, this happens with URLs:
 **BAD** - dots in url are interpreted as paths
 
 ```python
->>> from mo_dots import wrap, literal_field, Data
+>>> from mo_dots import to_data, literal_field, Data
 >>>
 >>> def update(summary, url, count):
 ...     summary[url] += count
@@ -161,8 +161,8 @@ You can produce leaf form by iterating over all leaves. This is good for
 simplifying iteration over deep inner object structures.
 
 ```python
->>> from mo_dots import wrap
->>> a = wrap({"b": {"c": 42}})
+>>> from mo_dots import to_data
+>>> a = to_data({"b": {"c": 42}})
 >>> for k, v in a.leaves():
 ...     print k + ": " + unicode(v)
 
@@ -234,7 +234,7 @@ which are true for all `a`. I hope, dear reader, you do not see this a some pecu
 NullTypes can also perform lazy assignment for increased expressibility.
 
 ```python
->>> a = wrap({})
+>>> a = to_data({})
 >>> x = a.b.c
 >>> x == None
 True
@@ -276,7 +276,7 @@ where negative indices are interpreted modulo-the-list-length.
 We will compare the Python list behaviour (`loop_list`) to the FlatList (`flat_list`): 
 
     loop_list = ['A', 'B', 'C']
-    flat_list = wrap(loop_list)
+    flat_list = to_data(loop_list)
 
 Here is table of indexing results
 

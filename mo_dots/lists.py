@@ -14,7 +14,7 @@ from copy import deepcopy
 
 from mo_future import generator_types, text, first
 
-from mo_dots import CLASS, coalesce, unwrap, wrap
+from mo_dots import CLASS, coalesce, unwrap, to_data, from_data
 from mo_dots.nones import Null
 
 LIST = text("list")
@@ -85,7 +85,7 @@ class FlatList(list):
 
         if not isinstance(index, int) or index < 0 or len(_get_list(self)) <= index:
             return Null
-        return wrap(_get_list(self)[index])
+        return to_data(_get_list(self)[index])
 
     def __setitem__(self, i, y):
         try:
@@ -93,21 +93,14 @@ class FlatList(list):
             if i <= len(_list):
                 for i in range(len(_list), i):
                     _list.append(None)
-            _list[i] = unwrap(y)
+            _list[i] = from_data(y)
         except Exception as e:
             if not Log:
                 _late_import()
             Log.error("problem", cause=e)
 
-    def __getattribute__(self, key):
-        try:
-            if key != "index":  # WE DO NOT WANT TO IMPLEMENT THE index METHOD
-                output = _get(self, key)
-                return output
-        except Exception as e:
-            if key[0:2] == "__":  # SYSTEM LEVEL ATTRIBUTES CAN NOT BE USED FOR SELECT
-                raise e
-        return FlatList.get(self, key)
+    def __getattr__(self, key):
+        return self.get(key)
 
     def get(self, key):
         """
@@ -115,8 +108,9 @@ class FlatList(list):
         """
         if not Log:
             _late_import()
+
         return FlatList(
-            vals=[unwrap(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)]
+            vals=[from_data(coalesce(_datawrap(v), Null)[key]) for v in _get_list(self)]
         )
 
     def select(self, key):
@@ -126,7 +120,7 @@ class FlatList(list):
 
     def filter(self, _filter):
         return FlatList(
-            vals=[unwrap(u) for u in (wrap(v) for v in _get_list(self)) if _filter(u)]
+            vals=[from_data(u) for u in (to_data(v) for v in _get_list(self)) if _filter(u)]
         )
 
     def __delslice__(self, i, j):
@@ -140,14 +134,14 @@ class FlatList(list):
         self.list = []
 
     def __iter__(self):
-        temp = [wrap(v) for v in _get_list(self)]
+        temp = [to_data(v) for v in _get_list(self)]
         return iter(temp)
 
     def __contains__(self, item):
         return list.__contains__(_get_list(self), item)
 
     def append(self, val):
-        _get_list(self).append(unwrap(val))
+        _get_list(self).append(from_data(val))
         return self
 
     def __str__(self):
@@ -181,7 +175,7 @@ class FlatList(list):
 
     def __deepcopy__(self, memo):
         d = _get_list(self)
-        return wrap(deepcopy(d, memo))
+        return to_data(deepcopy(d, memo))
 
     def remove(self, x):
         _get_list(self).remove(x)
@@ -190,14 +184,14 @@ class FlatList(list):
     def extend(self, values):
         lst = _get_list(self)
         for v in values:
-            lst.append(unwrap(v))
+            lst.append(from_data(v))
         return self
 
     def pop(self, index=None):
         if index is None:
-            return wrap(_get_list(self).pop())
+            return to_data(_get_list(self).pop())
         else:
-            return wrap(_get_list(self).pop(index))
+            return to_data(_get_list(self).pop(index))
 
     def __eq__(self, other):
         lst = _get_list(self)
@@ -248,7 +242,7 @@ class FlatList(list):
 
         return FlatList(_get_list(self)[-num:])
 
-    def left(self, num=None):
+    def limit(self, num=None):
         """
         NOT REQUIRED, BUT EXISTS AS OPPOSITE OF right()
         """
@@ -266,7 +260,7 @@ class FlatList(list):
         if num == None:
             return self
         if num <= 0:
-            return FlatList.EMPTY
+            return EMPTY
 
         return FlatList(_get_list(self)[:-num:])
 
@@ -287,7 +281,7 @@ class FlatList(list):
         """
         lst = _get_list(self)
         if lst:
-            return wrap(lst[-1])
+            return to_data(lst[-1])
         return Null
 
     def map(self, oper, includeNone=True):
@@ -318,7 +312,7 @@ def last(values):
     return values
 
 
-FlatList.EMPTY = Null
+EMPTY = Null
 
 list_types = (list, FlatList)
 container_types = (list, FlatList, set)

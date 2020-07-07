@@ -19,7 +19,7 @@ from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import wrap, Null, set_default, unwrap, Data, literal_field, NullType
+from mo_dots import to_data, Null, set_default, Data, literal_field, NullType, leaves_to_data, from_data
 from mo_dots.objects import datawrap
 
 
@@ -151,7 +151,7 @@ class TestDot(FuzzyTestCase):
             Log.error("error")
 
     def test_get_value(self):
-        a = wrap({"a": 1, "b": {}})
+        a = to_data({"a": 1, "b": {}})
 
         if a.a != 1:
             Log.error("error")
@@ -159,7 +159,7 @@ class TestDot(FuzzyTestCase):
             Log.error("error")
 
     def test_get_class(self):
-        a = wrap({})
+        a = to_data({})
         _type = a.__class__
 
         if _type is not Data:
@@ -194,7 +194,7 @@ class TestDot(FuzzyTestCase):
     def test_assign1(self):
         a = {}
 
-        b = wrap(a)
+        b = to_data(a)
         b.c = "test1"
         b.d.e = "test2"
         b.f.g.h = "test3"
@@ -221,7 +221,7 @@ class TestDot(FuzzyTestCase):
     def test_assign2(self):
         a = {}
 
-        b = wrap(a)
+        b = to_data(a)
         b_c = b.c
         b.c.d = "test1"
 
@@ -238,7 +238,7 @@ class TestDot(FuzzyTestCase):
     def test_assign3(self):
         # IMPOTENT ASSIGNMENTS DO NOTHING
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b.c = None
         expected = {}
@@ -263,20 +263,20 @@ class TestDot(FuzzyTestCase):
     def test_assign4(self):
         # IMPOTENT ASSIGNMENTS DO NOTHING
         a = {"c": {"d": {}}}
-        b = wrap(a)
+        b = to_data(a)
         b.c.d = None
         expected = {"c": {}}
         self.assertEqual(a, expected)
 
         a = {"c": {"d": {}}}
-        b = wrap(a)
+        b = to_data(a)
         b.c = None
         expected = {}
         self.assertEqual(a, expected)
 
     def test_assign5(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b.c["d\.e"].f = 2
         expected = {"c": {"d.e": {"f": 2}}}
@@ -284,7 +284,7 @@ class TestDot(FuzzyTestCase):
 
     def test_assign6(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b["c.d.e\.f"] = 1
         b["c.d.e\.g"] = 2
@@ -294,7 +294,7 @@ class TestDot(FuzzyTestCase):
 
     def test_assign7(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b["c.d.e\.f"] = 1
         b["c.d.g\.h"] = 2
@@ -304,7 +304,7 @@ class TestDot(FuzzyTestCase):
 
     def test_assign8(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b["a"][literal_field(literal_field("b.html"))]["z"] = 3
 
@@ -315,7 +315,7 @@ class TestDot(FuzzyTestCase):
 
     def test_assign9(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b["a"]["."] = 1
 
@@ -324,14 +324,14 @@ class TestDot(FuzzyTestCase):
 
     def test_setitem_and_deep(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
 
         b.c["d"].e.f = 3
         expected = {"c": {"d": {"e": {"f": 3}}}}
         self.assertEqual(a, expected)
 
     def test_assign_and_use1(self):
-        a = wrap({})
+        a = to_data({})
         agg = a.b
         agg.c = []
         agg.c.append("test value")
@@ -341,7 +341,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a.b.c, ["test value"])
 
     def test_assign_and_use2(self):
-        a = wrap({})
+        a = to_data({})
         agg = a.b.c
         agg += []
         agg.append("test value")
@@ -352,14 +352,14 @@ class TestDot(FuzzyTestCase):
 
     def test_assign_none(self):
         a = {}
-        A = wrap(a)
+        A = to_data(a)
 
         A[None] = "test"
         self.assertEqual(a, {})
 
     def test_increment(self):
         a = {}
-        b = wrap(a)
+        b = to_data(a)
         b.c1.d += 1
         b.c2.e += "e"
         b.c3.f += ["f"]
@@ -390,30 +390,30 @@ class TestDot(FuzzyTestCase):
         result1 = [diff(r, i, data1_list) for i, r in enumerate(data1_list)]
         assert result1 == [-7, None, None, None, None, None, 2, 2, 2]  # WHAT IS EXPECTED, BUT NOT WHAT WE WANT
 
-        data2_list = wrap(data1_list)
+        data2_list = to_data(data1_list)
         result2 = [diff(r, i, data2_list) for i, r in enumerate(data2_list)]
         assert result2 == [None, None, 2, 2, 2, 2, 2, 2, 2]
 
     def test_delete1(self):
-        a = wrap({"b": {"c": 1}})
+        a = to_data({"b": {"c": 1}})
 
         del a.b.c
         self.assertEqual({"b": {}}, a)
         self.assertEqual(a, {"b": {}})
 
-        a = wrap({"b": {"c": 1}})
+        a = to_data({"b": {"c": 1}})
 
         a.b.c = None
         self.assertEqual({"b": {}}, a)
         self.assertEqual(a, {"b": {}})
 
     def test_delete2(self):
-        a = wrap({"b": {"c": 1, "d": 2}})
+        a = to_data({"b": {"c": 1, "d": 2}})
 
         del a.b.c
         self.assertEqual({"b": {"d": 2}}, a)
         self.assertEqual(a, {"b": {"d": 2}})
-        a = wrap({"b": {"c": 1, "d": 2}})
+        a = to_data({"b": {"c": 1, "d": 2}})
 
         a.b.c = None
         self.assertEqual({"b": {"d": 2}}, a)
@@ -421,8 +421,8 @@ class TestDot(FuzzyTestCase):
 
     def test_wrap(self):
         d = {}
-        dd = wrap(d)
-        self.assertIs(unwrap(dd), d)
+        dd = to_data(d)
+        self.assertIs(from_data(dd), d)
 
     def test_object_wrap(self):
         d = SampleData()
@@ -430,7 +430,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(dd["a"], 20)
         self.assertEqual(dd, {"a": 20, "b": 30})
-        self.assertIs(unwrap(dd), dd)
+        self.assertIs(from_data(dd), dd)
 
     def test_object_wrap_w_deep_path(self):
         d = SampleData()
@@ -441,13 +441,13 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(dd, {"a": {"c": 3}, "b": 30})
 
     def test_deep_select(self):
-        d = wrap([{"a": {"b": 1}}, {"a": {"b": 2}}])
+        d = to_data([{"a": {"b": 1}}, {"a": {"b": 2}}])
 
         test = d.a.b
         self.assertEqual(test, [1, 2])
 
     def test_deep_select_list(self):
-        d = wrap({"a": {"b": [{"c": 1}, {"c": 2}]}})
+        d = to_data({"a": {"b": [{"c": 1}, {"c": 2}]}})
 
         test = d["a.b.c"]
         self.assertEqual(test, [1, 2])
@@ -458,11 +458,11 @@ class TestDot(FuzzyTestCase):
         c = {}
         d = set_default(c, a, b)
 
-        self.assertTrue(unwrap(d) is c, "expecting first parameter to be returned")
+        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(wrap(a).x.z, None, "a should not have been altered")
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
 
     def test_or(self):
         a = {"x": {"y": 1}}
@@ -473,19 +473,19 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(wrap(a).x.z, None, "a should not have been altered")
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
 
     def test_Dict_of_Dict(self):
         value = {"a": 1}
         wrapped = Data(Data(value))
-        self.assertTrue(value is unwrap(wrapped), "expecting identical object")
+        self.assertTrue(value is from_data(wrapped), "expecting identical object")
 
     def test_leaves_of_mappings(self):
-        a = wrap({"a": _TestMapping()})
+        a = to_data({"a": _TestMapping()})
         a.a.a = {"a": 1}
         a.a.b = {"b": 2}
 
-        leaves = wrap(dict(a.leaves()))
+        leaves = to_data(dict(a.leaves()))
         self.assertEqual(a.a.a['a'], leaves["a\.a\.a"], "expecting 1")
         self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
 
@@ -496,7 +496,7 @@ class TestDot(FuzzyTestCase):
         temp[1] = None
 
     def test_deep_null_assignment(self):
-        temp = wrap({"a": 0})
+        temp = to_data({"a": 0})
         e = temp.e
         e.s.t = 1
         e.s.s = 2
@@ -551,7 +551,7 @@ class TestDot(FuzzyTestCase):
         self.assertAlmostEqual(set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid")
 
     def test_unicode_or_list(self):
-        a = wrap({"a": "test"})
+        a = to_data({"a": "test"})
         b = {"a": [1, 2]}
         self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
@@ -571,36 +571,46 @@ class TestDot(FuzzyTestCase):
 
     def test_string_assign(self):
         def test():
-            a = wrap({"a": "world"})
+            a = to_data({"a": "world"})
             a["a.html"] = "value"
 
         self.assertRaises(Exception, test, "expecting error")
 
     def test_string_assign_null(self):
-        a = wrap({"a": "world"})
+        a = to_data({"a": "world"})
         a["a.html"] = None
 
     def test_empty_object_is_not_null1(self):
-        self.assertFalse(wrap({}) == None, "expect empty objects to not equal None")
+        self.assertFalse(to_data({}) == None, "expect empty objects to not equal None")
 
     def test_empty_object_is_not_null2(self):
-        self.assertTrue(wrap({}) != None, "expect empty objects to not equal None")
+        self.assertTrue(to_data({}) != None, "expect empty objects to not equal None")
 
     def test_add_null_to_list(self):
-        expected = wrap(["test", "list"])
+        expected = to_data(["test", "list"])
         test = expected + None
         self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
-    def test_pop(self):
-        l = wrap([1, 2, 3, 4])
+    def test_pop_list(self):
+        l = to_data([1, 2, 3, 4])
 
         self.assertEquals(l.pop(3), 4)
         self.assertEquals(l.pop(0), 1)
         self.assertEquals(l.pop(1), 3)
         self.assertEquals(l.pop(), 2)
 
+    def test_pop_dict(self):
+        d = to_data({"a": 1, "b": 2, "c": 3})
+
+        self.assertAlmostEqual(d.pop("a"), 1)
+        self.assertAlmostEqual({"b": 2, "c": 3}, d)
+        self.assertAlmostEqual(d.pop("c"), 3)
+        self.assertAlmostEqual({"b": 2}, d)
+        self.assertAlmostEqual(d.pop("b"), 2)
+        self.assertAlmostEqual({}, d)
+
     def test_values(self):
-        a = wrap({"a": 1, "b": 2})
+        a = to_data({"a": 1, "b": 2})
         result = []
         for v in a.values():
             result.append(v)
@@ -609,19 +619,19 @@ class TestDot(FuzzyTestCase):
         self.assertAlmostEqual(result, expected)
 
     def test_wrap_wrap(self):
-        a = wrap({"a": 1, "b": 2})
-        b = wrap(a)
+        a = to_data({"a": 1, "b": 2})
+        b = to_data(a)
 
         self.assertIs(a, b, "expecting same object")
 
     def test_key_in_data(self):
-        a = wrap({"key": {}})
+        a = to_data({"key": {}})
         self.assertIn("key", a)
 
     def test_list_eq(self):
-        a = wrap([{"a": 1}])
-        b = wrap([])
-        c = wrap([])
+        a = to_data([{"a": 1}])
+        b = to_data([])
+        c = to_data([])
 
         self.assertFalse(a == b)
         self.assertTrue(a == a)
@@ -633,8 +643,8 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(Null == b)
 
     def test_add_1(self):
-        a = wrap({"a": 1, "y": {"b": 4, "c": [5]}})
-        b = wrap({"a": 1, "x": 5, "y": {"b": 6, "c": [12]}})
+        a = to_data({"a": 1, "y": {"b": 4, "c": [5]}})
+        b = to_data({"a": 1, "x": 5, "y": {"b": 6, "c": [12]}})
 
         expected_ab = {"a": 2, "x": 5, "y": {"b": 10, "c": [5, 12]}}
         expected_ba = {"a": 2, "x": 5, "y": {"b": 10, "c": [12, 5]}}
@@ -645,8 +655,8 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a, expected_ab)
 
     def test_add_2(self):
-        a = wrap({"a": 1, "y": {"b": 4, "c": [5]}})
-        b = wrap({"a": 1, "x": 5, "y": {"b": 6, "c": 12}})
+        a = to_data({"a": 1, "y": {"b": 4, "c": [5]}})
+        b = to_data({"a": 1, "x": 5, "y": {"b": 6, "c": 12}})
 
         expected_ab = {"a": 2, "x": 5, "y": {"b": 10, "c": [5, 12]}}
         expected_ba = {"a": 2, "x": 5, "y": {"b": 10, "c": [12, 5]}}
@@ -657,7 +667,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(a, expected_ab)
 
     def test_list_get(self):
-        flat_list = wrap([{"a": 1}, {"a": None}])
+        flat_list = to_data([{"a": 1}, {"a": None}])
         # THIS IS NOT AN OPTION BECAUSE [] IS RESERVED FOR INDEXING AND SLICING
         self.assertEqual(flat_list["a"], None)
 
@@ -682,7 +692,7 @@ class TestDot(FuzzyTestCase):
         self.assertNotEqual(aa, a, "expecting to be different now")
 
     def test_copy_value(self):
-        a = wrap({})
+        a = to_data({})
         a["."] = "test"
 
         aa = a.copy()
@@ -692,8 +702,8 @@ class TestDot(FuzzyTestCase):
     def test_in(self):
         a = {"_id": "yes"}
         b = {"id": "no"}
-        aa = wrap(a)
-        bb = wrap(b)
+        aa = to_data(a)
+        bb = to_data(b)
 
         self.assertEqual("_id" in aa, "_id" in a)
         self.assertEqual("_id" in bb, "_id" in b)
@@ -712,22 +722,22 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(len(d), 1)
 
     def test_none_and_null_compare_with_list(self):
-        empty = wrap([])
+        empty = to_data([])
 
         self.assertTrue([] == Null)
         self.assertTrue(empty == Null)
         self.assertTrue(empty == None)
 
     def test_keys(self):
-        a = wrap({"a.b": "c"})
+        a = to_data({"a.b": "c"})
         self.assertEqual(a.keys(), {"a.b"})
 
     def test_items(self):
-        a = wrap({"a.b": "c"})
+        a = to_data({"a.b": "c"})
         self.assertEqual(a.items(), [("a.b", "c")])
 
     def test_iteritems(self):
-        a = wrap({"a.b": "c"})
+        a = to_data({"a.b": "c"})
         self.assertEqual(list(a.iteritems()), [("a.b", "c")])
 
     def test_update_complex(self):
@@ -735,6 +745,11 @@ class TestDot(FuzzyTestCase):
         b = Data(b={"d": 3})
         result = a | b
         self.assertEqual(result, {"a": 1, "b": {"c": 0, "d": 3}})
+
+    def test_string_using_leaves(self):
+        result = leaves_to_data("test")
+        self.assertNotIsInstance(result, Data)
+        self.assertEqual(result, "test")
 
 
 class _TestMapping(object):

@@ -32,7 +32,7 @@ def inverse(d):
     reverse the k:v pairs
     """
     output = {}
-    for k, v in unwrap(d).items():
+    for k, v in from_data(d).items():
         output[v] = output.get(v, [])
         output[v].append(k)
     return output
@@ -43,7 +43,7 @@ def coalesce(*args):
     # http://en.wikipedia.org/wiki/Null_coalescing_operator
     for a in args:
         if a != None:
-            return wrap(a)
+            return to_data(a)
     return Null
 
 
@@ -222,11 +222,11 @@ def set_default(*dicts):
     p0 = dicts[0]
     agg = p0 if p0 or _get(p0, CLASS) in data_types else {}
     for p in dicts[1:]:
-        p = unwrap(p)
+        p = from_data(p)
         if p is None:
             continue
         _all_default(agg, p, seen={})
-    return wrap(agg)
+    return to_data(agg)
 
 
 def _all_default(d, default, seen=None):
@@ -242,7 +242,7 @@ def _all_default(d, default, seen=None):
         # Log.error("strictly dict (or object) allowed: got {{type}}", type=_get(default, CLASS).__name__)
 
     for k, default_value in default.items():
-        default_value = unwrap(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
+        default_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
         if is_data(d):
             existing_value = d.get(k)
         else:
@@ -464,7 +464,27 @@ def lower_match(value, candidates):
     return [v for v in candidates if v.lower() == value.lower()]
 
 
-def wrap(v):
+def dict_to_data(d):
+    """
+    DO NOT CHECK TYPE
+    :param d: dict
+    :return: Data
+    """
+    m = object.__new__(Data)
+    _set(m, SLOT, d)
+    return m
+
+
+def list_to_data(v):
+    """
+    to_data, BUT WITHOUT CHECKS
+    """
+    output = list.__new__(FlatList)
+    output.list = v
+    return output
+
+
+def to_data(v):
     """
     WRAP AS Data OBJECT FOR DATA PROCESSING: https://github.com/klahnakoski/mo-dots/tree/dev/docs
     :param v:  THE VALUE TO WRAP
@@ -482,19 +502,28 @@ def wrap(v):
     elif type_ is list:
         return FlatList(v)
     elif type_ in generator_types:
-        return FlatList(list(unwrap(vv) for vv in v))
+        return FlatList(list(from_data(vv) for vv in v))
     else:
         return v
 
 
-def wrap_leaves(value):
+wrap = to_data
+
+
+def leaves_to_data(value):
     """
     dict WITH DOTS IN KEYS IS INTERPRETED AS A PATH
     """
-    return wrap(_wrap_leaves(value))
+    return to_data(_leaves_to_data(value))
 
 
-def _wrap_leaves(value):
+wrap_leaves = leaves_to_data
+
+
+def _leaves_to_data(value):
+    """
+    RETURN UNWRAPPED STRUCTURES
+    """
     if value == None:
         return None
 
@@ -503,11 +532,11 @@ def _wrap_leaves(value):
         return value
     if class_ in data_types:
         if class_ is Data:
-            value = unwrap(value)
+            value = from_data(value)
 
         output = {}
         for key, value in value.items():
-            value = _wrap_leaves(value)
+            value = _leaves_to_data(value)
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
@@ -536,13 +565,13 @@ def _wrap_leaves(value):
     if hasattr(value, '__iter__'):
         output = []
         for v in value:
-            v = wrap_leaves(v)
+            v = leaves_to_data(v)
             output.append(v)
         return output
     return value
 
 
-def unwrap(v):
+def from_data(v):
     if v is None:
         return None
     _type = _get(v, CLASS)
@@ -560,9 +589,12 @@ def unwrap(v):
         else:
             return v
     elif _type in generator_types:
-        return (unwrap(vv) for vv in v)
+        return (from_data(vv) for vv in v)
     else:
         return v
+
+
+unwrap = from_data
 
 
 def listwrap(value):
@@ -596,11 +628,11 @@ def listwrap(value):
     if value == None:
         return FlatList()
     elif is_list(value):
-        return wrap(value)
+        return list_to_data(value)
     elif is_many(value):
-        return wrap(list(value))
+        return list_to_data(list(value))
     else:
-        return wrap([unwrap(value)])
+        return list_to_data([from_data(value)])
 
 def unwraplist(v):
     """
@@ -610,11 +642,11 @@ def unwraplist(v):
         if len(v) == 0:
             return None
         elif len(v) == 1:
-            return unwrap(v[0])
+            return from_data(v[0])
         else:
-            return unwrap(v)
+            return from_data(v)
     else:
-        return unwrap(v)
+        return from_data(v)
 
 
 def tuplewrap(value):
@@ -623,7 +655,7 @@ def tuplewrap(value):
     """
     if is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
-    return unwrap(value),
+    return from_data(value),
 
 
 from mo_dots.datas import Data, SLOT, data_types, is_data
@@ -633,6 +665,6 @@ from mo_dots.objects import DataObject
 
 # EXPORT
 import mo_dots.nones as temp
-temp.wrap = wrap
+temp.to_data = to_data
 temp.is_sequence = is_sequence
 del temp

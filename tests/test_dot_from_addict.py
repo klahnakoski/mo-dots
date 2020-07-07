@@ -35,7 +35,7 @@ from unittest import skip
 import mo_json
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import Data, set_default, unwrap
+from mo_dots import Data, set_default, from_data
 
 TEST_VAL = [1, 2, 3]
 TEST_DICT = {'a': {'b': {'c': TEST_VAL}}}
@@ -187,10 +187,10 @@ class AddictTests(FuzzyTestCase):
         dir(prop)
         self.assertTrue('__members__' in prop.keys())
 
-    def test_unwrap(self):
+    def test_from_data(self):
         nested = {'a': [{'a': 0}, 2], 'b': {}, 'c': 2}
         prop = Data(nested)
-        regular = unwrap(prop)
+        regular = from_data(prop)
         self.assertEqual(regular, prop)
         self.assertEqual(regular, nested)
         self.assertNotIsInstance(regular, Data)
@@ -206,7 +206,7 @@ class AddictTests(FuzzyTestCase):
     def test_to_dict_with_tuple(self):
         nested = {'a': ({'a': 0}, {2: 0})}
         prop = Data(nested)
-        regular = unwrap(prop)
+        regular = from_data(prop)
         self.assertEqual(regular, prop)
         self.assertEqual(regular, nested)
         self.assertIsInstance(regular['a'], tuple)

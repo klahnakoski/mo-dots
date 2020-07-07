@@ -13,7 +13,7 @@
 
 This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
 
-    >>> from mo_dots import wrap, Data
+    >>> from mo_dots import to_data, Data
 
 *See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
 
@@ -26,7 +26,7 @@ Define `Data` using named parameters, just like you would a `dict`
 
 You can also wrap existing `dict`s so they can be used like `Data`
 
-    >>> wrap({'b': 42, 'c': 'hello world'})
+    >>> to_data({'b': 42, 'c': 'hello world'})
     Data({'b': 42, 'c': 'hello world'})
 
 ### Dot Access
@@ -37,7 +37,7 @@ Access properties with attribute dots: `a.b == a["b"]`. You have probably seen t
 
 Access properties by dot-delimited path.
 
-	>>> a = wrap({"b": {"c": 42}})
+	>>> a = to_data({"b": {"c": 42}})
 	>>> a["b.c"] == 42
 	True
 
