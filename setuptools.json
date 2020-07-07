@@ -9,7 +9,7 @@
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "include_package_data": true,
-    "install_requires": ["mo-future>=3.51.20059"],
+    "install_requires": ["mo-future>=3.71.20168"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -28,7 +28,7 @@
             "",
             "This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. ",
             "",
-            "    >>> from mo_dots import wrap, Data",
+            "    >>> from mo_dots import to_data, Data",
             "",
             "*See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*",
             "",
@@ -41,7 +41,7 @@
             "",
             "You can also wrap existing `dict`s so they can be used like `Data`",
             "",
-            "    >>> wrap({'b': 42, 'c': 'hello world'})",
+            "    >>> to_data({'b': 42, 'c': 'hello world'})",
             "    Data({'b': 42, 'c': 'hello world'})",
             "",
             "### Dot Access",
@@ -52,7 +52,7 @@
             "",
             "Access properties by dot-delimited path.",
             "",
-            "\t>>> a = wrap({\"b\": {\"c\": 42}})",
+            "\t>>> a = to_data({\"b\": {\"c\": 42}})",
             "\t>>> a[\"b.c\"] == 42",
             "\tTrue",
             "",
@@ -112,6 +112,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "3.63.20108",
+    "version": "3.72.20189",
     "zip_safe": false
 }
