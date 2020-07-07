@@ -11,20 +11,18 @@ from __future__ import absolute_import, division, unicode_literals
 
 import sys
 
-from mo_future import binary_type, generator_types, is_binary, is_text, text, OrderedDict
+from mo_future import binary_type, generator_types, is_binary, is_text, text, OrderedDict, none_type
 
 from mo_dots.utils import CLASS, OBJ, get_logger, get_module
 
-none_type = type(None)
-ModuleType = type(sys.modules[__name__])
-
-
+_module_type = type(sys.modules[__name__])
 _builtin_zip = zip
-ROOT_PATH = ["."]
-
-
 _get = object.__getattribute__
 _set = object.__setattr__
+_new = object.__new__
+
+
+ROOT_PATH = ["."]
 
 
 def inverse(d):
@@ -370,7 +368,7 @@ def _get_attr(obj, path):
 
     attr_name = path[0]
 
-    if isinstance(obj, ModuleType):
+    if isinstance(obj, _module_type):
         if attr_name in obj.__dict__:
             return _get_attr(obj.__dict__[attr_name], path[1:])
         elif attr_name in dir(obj):
@@ -470,7 +468,7 @@ def dict_to_data(d):
     :param d: dict
     :return: Data
     """
-    m = object.__new__(Data)
+    m = _new(Data)
     _set(m, SLOT, d)
     return m
 
@@ -479,7 +477,7 @@ def list_to_data(v):
     """
     to_data, BUT WITHOUT CHECKS
     """
-    output = list.__new__(FlatList)
+    output = _new(FlatList)
     output.list = v
     return output
 
@@ -494,7 +492,7 @@ def to_data(v):
     type_ = _get(v, CLASS)
 
     if type_ in (dict, OrderedDict):
-        m = object.__new__(Data)
+        m = _new(Data)
         _set(m, SLOT, v)
         return m
     elif type_ is none_type:

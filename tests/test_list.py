@@ -72,3 +72,7 @@ class TestList(FuzzyTestCase):
         if PY3:
             self.assertEqual(hasattr("", "__iter__"), True)
         self.assertEqual(is_many(""), False)
+
+    def test_index(self):
+        v = to_data([{"index":v} for v in values])
+        self.assertEqual(v.index, values)

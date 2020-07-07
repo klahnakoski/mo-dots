@@ -19,6 +19,7 @@ from mo_dots.utils import CLASS
 
 _get = object.__getattribute__
 _set = object.__setattr__
+_new = object.__new__
 
 SLOT = str("_internal_dict")
 DEBUG = False
@@ -156,7 +157,7 @@ class Data(object):
 
         # OPTIMIZED to_data()
         if t is dict:
-            m = object.__new__(Data)
+            m = _new(Data)
             _set(m, SLOT, v)
             return m
         elif t in (none_type, NullType):
@@ -225,7 +226,7 @@ class Data(object):
             elif isinstance(sv, Data):
                 sv |= ov
             elif is_data(sv):
-                wv = object.__new__(Data)
+                wv = _new(Data)
                 _set(wv, SLOT, sv)
                 wv |= ov
         return self
