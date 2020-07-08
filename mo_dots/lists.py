@@ -103,7 +103,7 @@ class FlatList(object):
             Log.error("problem", cause=e)
 
     def __getattr__(self, key):
-        if key in ["__json__"]:
+        if key in ["__json__", "__call__"]:
             raise AttributeError()
         return self.get(key)
 
