@@ -79,3 +79,6 @@ class TestList(FuzzyTestCase):
 
     def test_json(self):
         self.assertEqual(hasattr(to_data(values), "__json__"), False)
+
+    def test_call(self):
+        self.assertEqual(hasattr(to_data(values), "__call__"), False)
