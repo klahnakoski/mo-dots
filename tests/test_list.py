@@ -13,10 +13,10 @@ from __future__ import unicode_literals
 
 from mo_future import PY3
 
-from mo_dots import to_data, Null
+from mo_dots import to_data, Null, listwrap
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots.lists import last, is_many
+from mo_dots.lists import last, is_many, FlatList
 
 values = [1, 2, 3]
 
@@ -82,3 +82,9 @@ class TestList(FuzzyTestCase):
 
     def test_call(self):
         self.assertEqual(hasattr(to_data(values), "__call__"), False)
+
+    def test_listwrap_FlatList(self):
+        a = listwrap(values)
+        self.assertIsInstance(a, FlatList)
+        b = listwrap(a)
+        self.assertIs(b, a)
