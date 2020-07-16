@@ -88,5 +88,3 @@ class TestList(FuzzyTestCase):
         self.assertIsInstance(a, FlatList)
         b = listwrap(a)
         self.assertIs(b, a)
-
-.leaves
