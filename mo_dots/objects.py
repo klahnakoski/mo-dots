@@ -13,12 +13,16 @@ from collections import Mapping
 from datetime import date, datetime
 from decimal import Decimal
 
-from mo_future import binary_type, generator_types, get_function_arguments, get_function_defaults, none_type, text
-
-from mo_dots import Data, FlatList, NullType, SLOT, get_attr, set_attr, unwrap, to_data
-from mo_dots.datas import register_data
+from mo_dots.datas import register_data, Data, SLOT
+from mo_dots.lists import FlatList
+from mo_dots.nones import NullType
 from mo_dots.utils import CLASS, OBJ
+from mo_future import binary_type, generator_types, get_function_arguments, get_function_defaults, none_type, text
+from mo_imports import export, expect
 
+get_attr, set_attr, list_to_data, to_data, from_data = expect("get_attr", "set_attr", "list_to_data", "to_data", "from_data")
+
+_new = object.__new__
 _get = object.__getattribute__
 _set = object.__setattr__
 WRAPPED_CLASSES = set()
@@ -106,13 +110,13 @@ def datawrap(v):
     type_ = _get(v, CLASS)
 
     if type_ is dict:
-        m = Data()
+        m = _new(Data)
         _set(m, SLOT, v)  # INJECT m.__dict__=v SO THERE IS NO COPY
         return m
     elif type_ is tuple:
         return FlatList(v)
     elif type_ is list:
-        return FlatList(v)
+        return list_to_data(v)
     elif type_ in (Data, DataObject, FlatList, NullType):
         return v
     elif type_ in (none_type, text, binary_type, int, float, Decimal, datetime, date):
@@ -167,3 +171,4 @@ def params_pack(params, *args):
     return output
 
 
+export("mo_dots.lists", datawrap)
