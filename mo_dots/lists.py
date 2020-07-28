@@ -12,10 +12,10 @@ from __future__ import absolute_import, division, unicode_literals
 import types
 from copy import deepcopy
 
-from mo_dots.utils import CLASS
-
 from mo_future import generator_types, first, is_text
 from mo_imports import expect, delay_import
+
+from mo_dots.utils import CLASS
 
 Log = delay_import("mo_logs.Log")
 datawrap, coalesce, list_to_data, to_data, from_data, Null = expect("datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null")
