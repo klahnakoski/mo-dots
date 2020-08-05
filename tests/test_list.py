@@ -74,7 +74,7 @@ class TestList(FuzzyTestCase):
         self.assertEqual(is_many(""), False)
 
     def test_index(self):
-        v = to_data([{"index":v} for v in values])
+        v = to_data([{"index": v} for v in values])
         self.assertEqual(v.index, values)
 
     def test_json(self):
@@ -88,3 +88,39 @@ class TestList(FuzzyTestCase):
         self.assertIsInstance(a, FlatList)
         b = listwrap(a)
         self.assertIs(b, a)
+
+    def test_flatten(self):
+        v = listwrap(
+            [
+                {"a": [{"b": 1}, {"b": 2}, {"b": 3}]},
+                {"a": [{"b": 4}, {"b": 5}, {"b": 6}]},
+                {"a": [{"b": 7}, {"b": 8}, {"b": 9}]},
+            ]
+        )
+
+        level1 = v.a
+        self.assertEqual(level1, [
+            [{"b": 1}, {"b": 2}, {"b": 3}],
+            [{"b": 4}, {"b": 5}, {"b": 6}],
+            [{"b": 7}, {"b": 8}, {"b": 9}]
+        ])
+        self.assertEqual(level1.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        self.assertEqual(v.a.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        v["a.b"] = 3
+        self.assertEqual(v.a.b, [3, 3, 3, 3, 3, 3, 3, 3, 3])
+
+        self.assertEqual(
+            v,
+            [
+                {"a": [{"b": 3}, {"b": 3}, {"b": 3}]},
+                {"a": [{"b": 3}, {"b": 3}, {"b": 3}]},
+                {"a": [{"b": 3}, {"b": 3}, {"b": 3}]},
+            ],
+        )
+
+        v.a["b"] = 4
+        self.assertEqual(v.a.b, [4, 4, 4, 4, 4, 4, 4, 4, 4])
+
+        v.a.b = 5
+        self.assertEqual(v.a.b, [5, 5, 5, 5, 5, 5, 5, 5, 5])
