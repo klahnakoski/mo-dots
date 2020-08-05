@@ -122,3 +122,5 @@ class TestList(FuzzyTestCase):
         v.a["b"] = 4
         self.assertEqual(v.a.b, [4, 4, 4, 4, 4, 4, 4, 4, 4])
 
+        v.a.b = 5
+        self.assertEqual(v.a.b, [5, 5, 5, 5, 5, 5, 5, 5, 5])
