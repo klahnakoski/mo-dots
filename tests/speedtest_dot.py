@@ -13,11 +13,10 @@ from __future__ import unicode_literals
 
 import cProfile
 import pstats
+import random
 from collections import Mapping
 
-from mo_math import randoms
-
-from mo_dots import Data, to_data, Null
+from mo_dots import Data, to_data, Null, split_field
 from mo_future import text
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -112,13 +111,32 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertGreater(m_time.duration, s_time.duration)
 
     def test_compare_split_replace_vs_lists(self):
-        data = [
-            for i in range(1000):
-                for r in random.random():
-                    if r<0.9:
-                        field =
+        data = []
+        for i in range(1000):
+            r = random.random()
+            if r < 0.9:
+                field = Random.base64(9)
+            else:
+                num = int((1.0 - r) * 10) + 2
+                field = [Random.base64(4, extra = "..") for _ in range(num)].join(".")
+            data.append(field)
 
-        ]
+        with Timer("using standard") as s_time:
+            s_result = [split_field(d) for d in data]
+
+        with Timer("using replace") as r_time:
+            r_result = [split_field_using_replace(d) for d in data]
+
+        with Timer("using double replace") as d_time:
+            d_result = [split_field_using_double_replace(d) for d in data]
+
+        with Timer("using list") as l_time:
+            l_result = [split_field_using_list(d) for d in data]
+
+        self.assertEqual(r_result, s_result)
+        self.assertEqual(d_result, s_result)
+        self.assertEqual(l_result, s_result)
+
 
 MAPPING_TYPES = (Data, dict)
 
@@ -142,7 +160,7 @@ def split_field_using_replace(field):
     return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
 
 
-def split_field_using_split(field):
+def split_field_using_list(field):
     subs = field.split("\\.")
     prev = subs[0].split(".")
     acc = []
