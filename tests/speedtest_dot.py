@@ -15,6 +15,8 @@ import cProfile
 import pstats
 from collections import Mapping
 
+from mo_math import randoms
+
 from mo_dots import Data, to_data, Null
 from mo_future import text
 from mo_math.randoms import Random
@@ -109,6 +111,14 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertGreater(i_time.duration, s_time.duration)
         self.assertGreater(m_time.duration, s_time.duration)
 
+    def test_compare_split_replace_vs_lists(self):
+        data = [
+            for i in range(1000):
+                for r in random.random():
+                    if r<0.9:
+                        field =
+
+        ]
 
 MAPPING_TYPES = (Data, dict)
 
@@ -123,3 +133,23 @@ def is_mapping(d):
 
 def is_instance(d, type_):
     return d.__class__.__name__ == type_.__name__
+
+
+def split_field_using_double_replace(field):
+    return [k.replace("\a\a", ".") for k in field.replace("\\.", "\a\a").split(".")]
+
+def split_field_using_replace(field):
+    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
+
+
+def split_field_using_split(field):
+    subs = field.split("\\.")
+    prev = subs[0].split(".")
+    acc = []
+    for p in subs[1:]:
+        parts = p.split(".")
+        acc.extend(prev[1:-1])
+        acc.append(prev[-1] + "." + parts[0])
+        prev = parts[1:]
+    return acc
+
