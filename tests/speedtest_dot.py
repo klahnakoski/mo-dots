@@ -25,7 +25,6 @@ from mo_times import Timer
 
 
 class SpeedTestDot(FuzzyTestCase):
-
     def test_simple_access(self):
         """
         THIS WILL WRITE A STATS FILE TO THE PROJECT DIRECTORY
@@ -47,8 +46,7 @@ class SpeedTestDot(FuzzyTestCase):
             1: lambda: Data(),
             2: lambda: Null,
             3: lambda: 6,
-            4: lambda: "string"
-
+            4: lambda: "string",
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
 
@@ -83,7 +81,6 @@ class SpeedTestDot(FuzzyTestCase):
             # 2: lambda: {},
             # 3: lambda: Data(),
             # 4: lambda: Null,
-
         }
         data = [options[Random.int(len(options))]() for _ in range(num)]
 
@@ -110,33 +107,6 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertGreater(i_time.duration, s_time.duration)
         self.assertGreater(m_time.duration, s_time.duration)
 
-    def test_compare_split_replace_vs_lists(self):
-        data = []
-        for i in range(1000):
-            r = random.random()
-            if r < 0.9:
-                field = Random.base64(9)
-            else:
-                num = int((1.0 - r) * 10) + 2
-                field = [Random.base64(4, extra = "..") for _ in range(num)].join(".")
-            data.append(field)
-
-        with Timer("using standard") as s_time:
-            s_result = [split_field(d) for d in data]
-
-        with Timer("using replace") as r_time:
-            r_result = [split_field_using_replace(d) for d in data]
-
-        with Timer("using double replace") as d_time:
-            d_result = [split_field_using_double_replace(d) for d in data]
-
-        with Timer("using list") as l_time:
-            l_result = [split_field_using_list(d) for d in data]
-
-        self.assertEqual(r_result, s_result)
-        self.assertEqual(d_result, s_result)
-        self.assertEqual(l_result, s_result)
-
 
 MAPPING_TYPES = (Data, dict)
 
@@ -151,23 +121,3 @@ def is_mapping(d):
 
 def is_instance(d, type_):
     return d.__class__.__name__ == type_.__name__
-
-
-def split_field_using_double_replace(field):
-    return [k.replace("\a\a", ".") for k in field.replace("\\.", "\a\a").split(".")]
-
-def split_field_using_replace(field):
-    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
-
-
-def split_field_using_list(field):
-    subs = field.split("\\.")
-    prev = subs[0].split(".")
-    acc = []
-    for p in subs[1:]:
-        parts = p.split(".")
-        acc.extend(prev[1:-1])
-        acc.append(prev[-1] + "." + parts[0])
-        prev = parts[1:]
-    return acc
-

@@ -18,7 +18,7 @@ from mo_imports import expect, delay_import
 from mo_dots.utils import CLASS
 
 Log = delay_import("mo_logs.Log")
-datawrap, coalesce, list_to_data, to_data, from_data, Null = expect("datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null")
+datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect("datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY")
 
 
 LIST = str("list")
@@ -338,5 +338,3 @@ def is_many(value):
         Log.warning("is_many() can not detect generator {{type}}", type=type_.__name__)
         return True
     return False
-
-

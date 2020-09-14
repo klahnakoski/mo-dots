@@ -115,7 +115,6 @@ def tail_field(field):
         return field, "."
 
 
-
 def split_field(field):
     """
     RETURN field AS ARRAY OF DOT-SEPARATED FIELDS
@@ -128,12 +127,6 @@ def split_field(field):
             back = len(field) - len(remainder) - 1
             return [-1]*back + [k.replace("\a", ".") for k in remainder.replace("\\.", "\a").split(".")]
         else:
-            acc = []
-            subs = field.split("\\.")
-            prev = subs[0].split(".")
-            for p in subs[1:]:
-                parts in p.split(".")
-
             return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
     else:
         return [field]
