@@ -299,3 +299,4 @@ def _setdefault(obj, key, value):
 
 
 export("mo_dots.lists", Null)
+export("mo_dots.lists", "EMPTY", Null)

@@ -5,3 +5,4 @@ mo-testing
 pyLibrar
 mo-math
 mo-times
+jx-elasticsearch
