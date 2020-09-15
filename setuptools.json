@@ -12,7 +12,7 @@
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "include_package_data": true,
-    "install_requires": ["mo-future>=3.89.20246", "mo-imports>=3.87.20218"],
+    "install_requires": ["mo-future>=3.89.20246", "mo-imports>=3.93.20259"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -115,6 +115,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "3.92.20258",
+    "version": "3.93.20259",
     "zip_safe": false
 }

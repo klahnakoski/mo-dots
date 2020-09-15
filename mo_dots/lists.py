@@ -71,17 +71,16 @@ class FlatList(object):
 
     def __setitem__(self, key, value):
         _list = _get(self, LIST)
-        if is_text(key):
-            for v in _list:
-                to_data(v)[key] = value
-            return
-        elif isinstance(key, int):
+        if isinstance(key, int):
             if key <= len(_list):
                 for key in range(len(_list), key):
                     _list.append(None)
             _list[key] = from_data(value)
-        else:
-            Log.error("can not set index of type {{type}}", type=key.__class__.__name__)
+            return
+
+        for v in _list:
+            to_data(v)[key] = value
+        return
 
     def __setattr__(self, key, value):
         _list = _get(self, LIST)
