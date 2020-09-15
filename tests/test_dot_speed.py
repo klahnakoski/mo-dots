@@ -9,8 +9,10 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+import os
 import random
 from collections import Mapping, deque
+from unittest import skipIf
 
 from mo_future import text, none_type
 from mo_logs import Log
@@ -29,7 +31,10 @@ from mo_dots import (
     from_data, split_field, join_field,
 )
 
+IS_TRAVIS = bool(os.environ.get('TRAVIS'))
 
+
+@skipIf(IS_TRAVIS, "no need to test speed on Travis")
 class TestDotSpeed(FuzzyTestCase):
     def test_simple_access(self):
         times = range(1000 * 1000)
