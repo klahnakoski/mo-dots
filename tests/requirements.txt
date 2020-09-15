@@ -2,7 +2,7 @@ mo-logs
 mo-json
 mo-threads
 mo-testing
-pyLibrar
+pyLibrary
 mo-math
 mo-times
 jx-elasticsearch
