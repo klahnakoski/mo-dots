@@ -71,7 +71,7 @@ class FlatList(object):
 
     def __setitem__(self, key, value):
         _list = _get(self, LIST)
-        if is_text(key):
+        if key.__class__ is str:
             for v in _list:
                 to_data(v)[key] = value
             return
