@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_future import PY3
 
-from mo_dots import to_data, Null, listwrap
+from mo_dots import to_data, Null, listwrap, is_missing, is_null
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots.lists import last, is_many, FlatList
@@ -124,3 +124,25 @@ class TestList(FuzzyTestCase):
 
         v.a.b = 5
         self.assertEqual(v.a.b, [5, 5, 5, 5, 5, 5, 5, 5, 5])
+
+    def test_nulls(self):
+        self.assertEqual(is_null(None), True)
+        self.assertEqual(is_null(Null), True)
+        self.assertEqual(is_null({}), False)
+        self.assertEqual(is_null([]), False)
+        self.assertEqual(is_null(FlatList()), True)
+        self.assertEqual(is_null(to_data([0])), False)
+        self.assertEqual(is_null(set()), False)
+        self.assertEqual(is_null(tuple()), False)
+
+    def test_missing(self):
+        self.assertEqual(is_missing(None), True)
+        self.assertEqual(is_missing(Null), True)
+        self.assertEqual(is_missing({}), False)
+        self.assertEqual(is_missing([]), True)
+        self.assertEqual(is_missing(FlatList()), True)
+        self.assertEqual(is_missing(to_data([0])), False)
+        self.assertEqual(is_missing(set()), True)
+        self.assertEqual(is_missing(tuple()), True)
+
+

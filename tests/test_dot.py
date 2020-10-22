@@ -19,7 +19,8 @@ from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import to_data, Null, set_default, Data, literal_field, NullType, leaves_to_data, from_data
+from mo_dots import to_data, Null, set_default, Data, literal_field, NullType, leaves_to_data, from_data, is_null, \
+    FlatList
 from mo_dots.objects import datawrap
 
 
