@@ -83,8 +83,19 @@ Use `+=` with a list ([]) to append to a list; default empty list (`[]`)
     >>> a.b.c += [42]
     a == {"b": {"c": [1, 42]}}
 
+## Serializing to JSON
 
-## Transforming JSON Data in Python
+The standard Python JSON library does not recognize `Data` as serializable.  You may overcome this by providing `default=from_data`; which converts the data structures in this module into Python primitives of the same. 
+
+    from mo_dots import from_data, to_data
+    
+    s = to_data({"a": ["b", 1]})
+    result = json.dumps(s, default=from_data)  
+
+Alternatively, you may consider [mo-json](https://pypi.org/project/mo-json/) which has a function `value2json` that converts a larger number of data structures into JSON.
+
+
+## Summary
 
 This library is the basis for a data transformation algebra: We want a succinct way of transforming data in Python. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. 
 
