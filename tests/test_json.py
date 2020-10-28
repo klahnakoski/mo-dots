@@ -22,3 +22,9 @@ class TestJson(FuzzyTestCase):
         result = json.dumps(a, default=from_data)
         expected = '{"a": ["b", 1]}'
         self.assertEqual(result, expected)
+
+    def test_flatlist(self):
+        a = to_data(["b", 1])
+        result = json.dumps(a, default=from_data)
+        expected = '["b", 1]'
+        self.assertEqual(result, expected)

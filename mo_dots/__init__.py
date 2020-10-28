@@ -156,6 +156,18 @@ def join_field(path):
     """
     RETURN field SEQUENCE AS STRING
     """
+    if path.__class__ in generator_types:
+        path = list(path)
+
+    if not path:
+        return "."
+
+    if path[0] == -1:
+        for i, step in enumerate(path):
+            if step != -1:
+                parents = "." + ("." * i)
+                return parents + ".".join([f.replace(".", "\\.") for f in path[i:] if f != None])
+        return "." + ("." * len(path))
     output = ".".join([f.replace(".", "\\.") for f in path if f != None])
     return output if output else "."
 
@@ -258,7 +270,7 @@ def _all_default(d, default, seen=None):
     if default is None:
         return
     if _get(default, CLASS) is Data:
-        default = object.__getattribute__(default, SLOT)  # REACH IN AND GET THE dict
+        default = _get(default, SLOT)  # REACH IN AND GET THE dict
         # Log = _late_import()
         # Log.error("strictly dict (or object) allowed: got {{type}}", type=_get(default, CLASS).__name__)
 
