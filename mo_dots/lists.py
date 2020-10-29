@@ -299,6 +299,7 @@ def last(values):
 
 list_types = (list, FlatList)
 container_types = (list, FlatList, set)
+finite_types = (list, FlatList, set, tuple)
 sequence_types = (list, FlatList, tuple) + generator_types
 many_types = tuple(set(list_types + container_types + sequence_types))
 

@@ -12,7 +12,7 @@
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "include_package_data": true,
-    "install_requires": ["mo-future>=3.89.20246", "mo-imports>=3.93.20259"],
+    "install_requires": ["mo-future==3.130.20302", "mo-imports==3.135.20303"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -101,8 +101,19 @@
             "    >>> a.b.c += [42]",
             "    a == {\"b\": {\"c\": [1, 42]}}",
             "",
+            "## Serializing to JSON",
             "",
-            "## Transforming JSON Data in Python",
+            "The standard Python JSON library does not recognize `Data` as serializable.  You may overcome this by providing `default=from_data`; which converts the data structures in this module into Python primitives of the same. ",
+            "",
+            "    from mo_dots import from_data, to_data",
+            "    ",
+            "    s = to_data({\"a\": [\"b\", 1]})",
+            "    result = json.dumps(s, default=from_data)  ",
+            "",
+            "Alternatively, you may consider [mo-json](https://pypi.org/project/mo-json/) which has a function `value2json` that converts a larger number of data structures into JSON.",
+            "",
+            "",
+            "## Summary",
             "",
             "This library is the basis for a data transformation algebra: We want a succinct way of transforming data in Python. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. ",
             "",
@@ -115,6 +126,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "3.93.20259",
+    "version": "3.135.20303",
     "zip_safe": false
 }

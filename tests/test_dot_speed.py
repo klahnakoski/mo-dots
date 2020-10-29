@@ -28,7 +28,7 @@ from mo_dots import (
     data_types,
     is_data,
     to_data,
-    from_data, split_field, join_field,
+    from_data, split_field, join_field, is_null,
 )
 
 IS_TRAVIS = bool(os.environ.get('TRAVIS'))
@@ -231,20 +231,6 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(r_result, s_result)
         self.assertEqual(d_result, s_result)
         self.assertEqual(i_result, s_result)
-
-
-def is_null(t):
-    class_ = t.__class__
-    if class_ in (none_type, NullType):
-        return True
-    elif class_ in data_types:
-        return False
-    elif class_ in (FlatList,) and not t:
-        return True
-    elif class_ is list:
-        return False
-    else:
-        return t == None
 
 
 def is_text(t):
