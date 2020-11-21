@@ -293,9 +293,10 @@ class Data(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def get(self, key, default=None):
-        d = self._internal_dict
-        return d.get(key, default)
+    get = __getitem__
+    # def get(self, key, default=None):
+    #     d = self._internal_dict
+    #     return d.get(key, default)
 
     def items(self):
         d = self._internal_dict
