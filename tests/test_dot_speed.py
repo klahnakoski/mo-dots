@@ -28,10 +28,13 @@ from mo_dots import (
     data_types,
     is_data,
     to_data,
-    from_data, split_field, join_field, is_null,
+    from_data,
+    split_field,
+    join_field,
+    is_null,
 )
 
-IS_TRAVIS = bool(os.environ.get('TRAVIS'))
+IS_TRAVIS = bool(os.environ.get("TRAVIS"))
 
 
 @skipIf(IS_TRAVIS, "no need to test speed on Travis")
@@ -263,7 +266,7 @@ def split_field_using_iterator(field):
     word = []
     for c in field:
         if escape:
-            if c == '.':
+            if c == ".":
                 word.append(".")
             else:
                 word.append("\\")
@@ -272,7 +275,7 @@ def split_field_using_iterator(field):
         else:
             if c == "\\":
                 escape = True
-            elif c == '.':
+            elif c == ".":
                 output.append("".join(word))
                 word = []
             else:

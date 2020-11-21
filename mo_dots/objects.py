@@ -14,12 +14,22 @@ from decimal import Decimal
 
 from mo_dots.datas import register_data, Data, SLOT
 from mo_dots.lists import FlatList
-from mo_dots.nones import NullType
+from mo_dots.nones import NullType, Null
 from mo_dots.utils import CLASS, OBJ
-from mo_future import binary_type, generator_types, get_function_arguments, get_function_defaults, none_type, text, Mapping
+from mo_future import (
+    binary_type,
+    generator_types,
+    get_function_arguments,
+    get_function_defaults,
+    none_type,
+    text,
+    Mapping,
+)
 from mo_imports import export, expect
 
-get_attr, set_attr, list_to_data, to_data, from_data = expect("get_attr", "set_attr", "list_to_data", "to_data", "from_data")
+get_attr, set_attr, list_to_data, to_data, from_data = expect(
+    "get_attr", "set_attr", "list_to_data", "to_data", "from_data"
+)
 
 _new = object.__new__
 _get = object.__getattribute__
@@ -62,9 +72,7 @@ class DataObject(Mapping):
             return obj.__dict__.items()
         except Exception as e:
             return [
-                (k, getattr(obj, k, None))
-                for k in dir(obj)
-                if not k.startswith("__")
+                (k, getattr(obj, k, None)) for k in dir(obj) if not k.startswith("__")
             ]
 
     def iteritems(self):
@@ -72,11 +80,13 @@ class DataObject(Mapping):
         try:
             return obj.__dict__.iteritems()
         except Exception as e:
+
             def output():
                 for k in dir(obj):
                     if k.startswith("__"):
                         continue
                     yield k, getattr(obj, k, None)
+
             return output()
 
     def __data__(self):
@@ -118,12 +128,12 @@ def datawrap(v):
         return list_to_data(v)
     elif type_ in (Data, DataObject, FlatList, NullType):
         return v
-    elif type_ in (none_type, text, binary_type, int, float, Decimal, datetime, date):
+    elif type_ in (text, binary_type, int, float, Decimal, datetime, date):
         return v
     elif type_ in generator_types:
         return (to_data(vv) for vv in v)
-    elif isinstance(v, (text, binary_type, int, float, Decimal, datetime, date, FlatList, NullType, Mapping, none_type)):
-        return v
+    elif v == None:
+        return Null
     elif hasattr(v, "__data__"):
         return v.__data__()
     else:
@@ -153,7 +163,9 @@ class DictClass(object):
 
         ordered_params = dict(zip(params, args))
 
-        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
+        output = self.class_(
+            **params_pack(params, ordered_params, kwargs, settings, defaults)
+        )
         return DataObject(output)
 
 
