@@ -17,7 +17,6 @@ from mo_dots import relative_field, tail_field
 
 
 class TestFields(FuzzyTestCase):
-
     def test_relative(self):
         self.assertEqual(relative_field("testing", "testing"), ".")
 

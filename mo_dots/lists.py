@@ -18,7 +18,9 @@ from mo_imports import expect, delay_import
 from mo_dots.utils import CLASS
 
 Log = delay_import("mo_logs.Log")
-datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect("datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY")
+datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
+    "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY"
+)
 
 
 LIST = str("list")
@@ -99,7 +101,7 @@ class FlatList(object):
         """
         output = []
         for v in _get(self, LIST):
-            element = coalesce(datawrap(v), Null).get(key)
+            element = datawrap(v).get(key)
             if element.__class__ == FlatList:
                 output.extend(from_data(element))
             else:
@@ -110,13 +112,14 @@ class FlatList(object):
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return FlatList(
-            vals=[from_data(u) for u in (to_data(v) for v in _get(self, LIST)) if _filter(u)]
-        )
+        return FlatList(vals=[
+            from_data(u) for u in (to_data(v) for v in _get(self, LIST)) if _filter(u)
+        ])
 
     def __delslice__(self, i, j):
         Log.error(
-            "Can not perform del on slice: modulo arithmetic was performed on the parameters.  You can try using clear()"
+            "Can not perform del on slice: modulo arithmetic was performed on the"
+            " parameters.  You can try using clear()"
         )
 
     def __clear__(self):
@@ -145,7 +148,8 @@ class FlatList(object):
         if _emit_slice_warning:
             _emit_slice_warning = False
             Log.warning(
-                "slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes. Use [start:stop:step] (see "
+                "slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes."
+                " Use [start:stop:step] (see "
                 "https://github.com/klahnakoski/mo-dots/tree/dev/docs#the-slice-operator-in-python27-is-inconsistent"
                 ")"
             )

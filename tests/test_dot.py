@@ -19,17 +19,26 @@ from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import to_data, Null, set_default, Data, literal_field, NullType, leaves_to_data, from_data, is_null, \
-    FlatList
+from mo_dots import (
+    to_data,
+    Null,
+    set_default,
+    Data,
+    literal_field,
+    NullType,
+    leaves_to_data,
+    from_data,
+    is_null,
+    FlatList,
+)
 from mo_dots.objects import datawrap
 
 
 class TestDot(FuzzyTestCase):
-
     def test_set_union_w_null(self):
-        s = set('a')
+        s = set("a")
         s |= Null
-        self.assertAlmostEqual(s, set('a'))
+        self.assertAlmostEqual(s, set("a"))
 
     def test_null_class(self):
         self.assertFalse(isinstance(Null, Mapping))
@@ -102,7 +111,7 @@ class TestDot(FuzzyTestCase):
 
     def test_null_access(self):
         a = Data()
-        c = a.b[b'test']
+        c = a.b[b"test"]
         self.assertTrue(c == None, "Expecting Null to accept str() for item access")
 
     def test_null(self):
@@ -204,18 +213,9 @@ class TestDot(FuzzyTestCase):
 
         expected = {
             "c": "test1",
-            "d": {
-                "e": "test2"
-            },
-            "f": {
-                "g": {
-                    "h": "test3"
-                },
-                "i": "test4"
-            },
-            "k": {
-                "l": {"m": {"n": "test5"}}
-            }
+            "d": {"e": "test2"},
+            "f": {"g": {"h": "test3"}, "i": "test4"},
+            "k": {"l": {"m": {"n": "test5"}}},
         }
         self.assertEqual(a, expected)
 
@@ -228,12 +228,7 @@ class TestDot(FuzzyTestCase):
 
         b_c.e = "test2"
 
-        expected = {
-            "c": {
-                "d": "test1",
-                "e": "test2"
-            }
-        }
+        expected = {"c": {"d": "test1", "e": "test2"}}
         self.assertEqual(a, expected)
 
     def test_assign3(self):
@@ -309,9 +304,7 @@ class TestDot(FuzzyTestCase):
 
         b["a"][literal_field(literal_field("b.html"))]["z"] = 3
 
-        expected = {"a": {
-            "b\\.html": {"z": 3}
-        }}
+        expected = {"a": {"b\\.html": {"z": 3}}}
         self.assertEqual(a, expected)
 
     def test_assign9(self):
@@ -366,16 +359,25 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c\\.a"].d += 1
 
-        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
+        self.assertEqual(
+            a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
+        )
 
         b.c1.d += 2
         b.c2.e += "f"
         b.c3.f += ["g"]
         b["c\\.a"].d += 3
-        self.assertEqual(a, {"c1": {"d": 3}, "c2": {"e": "ef"}, "c3": {"f": ["f", "g"]}, "c.a": {"d": 4}})
+        self.assertEqual(
+            a,
+            {
+                "c1": {"d": 3},
+                "c2": {"e": "ef"},
+                "c3": {"f": ["f", "g"]},
+                "c.a": {"d": 4},
+            },
+        )
 
     def test_slicing(self):
-
         def diff(record, index, records):
             """
             WINDOW FUNCTIONS TAKE THE CURRENT record, THE index THAT RECORD HAS
@@ -383,13 +385,23 @@ class TestDot(FuzzyTestCase):
             """
             # COMPARE CURRENT VALUE TO MAX OF PAST 5, BUT NOT THE VERY LAST ONE
             try:
-                return record - MAX(records[index - 6:index - 1:])
+                return record - MAX(records[index - 6 : index - 1 :])
             except Exception as e:
                 return None
 
         data1_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         result1 = [diff(r, i, data1_list) for i, r in enumerate(data1_list)]
-        assert result1 == [-7, None, None, None, None, None, 2, 2, 2]  # WHAT IS EXPECTED, BUT NOT WHAT WE WANT
+        assert result1 == [
+            -7,
+            None,
+            None,
+            None,
+            None,
+            None,
+            2,
+            2,
+            2,
+        ]  # WHAT IS EXPECTED, BUT NOT WHAT WE WANT
 
         data2_list = to_data(data1_list)
         result2 = [diff(r, i, data2_list) for i, r in enumerate(data2_list)]
@@ -487,8 +499,8 @@ class TestDot(FuzzyTestCase):
         a.a.b = {"b": 2}
 
         leaves = to_data(dict(a.leaves()))
-        self.assertEqual(a.a.a['a'], leaves["a\.a\.a"], "expecting 1")
-        self.assertEqual(a.a.b['b'], leaves["a\.b\.b"], "expecting 2")
+        self.assertEqual(a.a.a["a"], leaves["a\.a\.a"], "expecting 1")
+        self.assertEqual(a.a.b["b"], leaves["a\.b\.b"], "expecting 2")
 
     def test_null_set_index(self):
         temp = Null
@@ -501,7 +513,9 @@ class TestDot(FuzzyTestCase):
         e = temp.e
         e.s.t = 1
         e.s.s = 2
-        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
+        self.assertEqual(
+            temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical"
+        )
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
@@ -549,12 +563,18 @@ class TestDot(FuzzyTestCase):
     def test_set_default_unicode_and_list(self):
         a = {"a": "test"}
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid")
+        self.assertAlmostEqual(
+            set_default(a, b),
+            {"a": ["test", 1, 2]},
+            "expecting string, not list, nor some hybrid",
+        )
 
     def test_unicode_or_list(self):
         a = to_data({"a": "test"})
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
+        self.assertAlmostEqual(
+            a | b, {"a": "test"}, "expecting string, not list, nor some hybrid"
+        )
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
@@ -590,7 +610,9 @@ class TestDot(FuzzyTestCase):
     def test_add_null_to_list(self):
         expected = to_data(["test", "list"])
         test = expected + None
-        self.assertEqual(test, expected, "expecting adding None to list does not change list")
+        self.assertEqual(
+            test, expected, "expecting adding None to list does not change list"
+        )
 
     def test_pop_list(self):
         l = to_data([1, 2, 3, 4])
@@ -716,10 +738,7 @@ class TestDot(FuzzyTestCase):
         self.assertIn(None, [Null])
 
     def test_none_and_null_in_dict(self):
-        d = {
-            None: None,
-            Null: None
-        }
+        d = {None: None, Null: None}
         self.assertEqual(len(d), 1)
 
     def test_none_and_null_compare_with_list(self):
@@ -760,7 +779,6 @@ class _TestMapping(object):
 
 
 class SampleData(object):
-
     def __init__(self):
         self.a = 20
         self.b = 30
