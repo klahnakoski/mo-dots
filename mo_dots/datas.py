@@ -511,5 +511,3 @@ def is_data(d):
     :return: True IF d IS A TYPE THAT HOLDS DATA
     """
     return d.__class__ in data_types
-
-

@@ -31,7 +31,8 @@ from mo_dots.lists import (
     is_many,
     LIST,
     list_types,
-    container_types, finite_types,
+    container_types,
+    finite_types,
 )
 from mo_dots.nones import Null, NullType
 from mo_dots.objects import DataObject
@@ -166,7 +167,9 @@ def join_field(path):
         for i, step in enumerate(path):
             if step != -1:
                 parents = "." + ("." * i)
-                return parents + ".".join([f.replace(".", "\\.") for f in path[i:] if f != None])
+                return parents + ".".join([
+                    f.replace(".", "\\.") for f in path[i:] if f != None
+                ])
         return "." + ("." * len(path))
     output = ".".join([f.replace(".", "\\.") for f in path if f != None])
     return output if output else "."
