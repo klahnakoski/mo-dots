@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import relative_field, tail_field
+from mo_dots import relative_field, tail_field, split_field, join_field
 
 
 class TestFields(FuzzyTestCase):
@@ -25,3 +25,31 @@ class TestFields(FuzzyTestCase):
         expected = "meta.stats"
 
         self.assertEqual(value, expected, "expecting identical")
+
+
+    # split - "." - "\\." - ("\\." + split)
+    # .    "\\."
+
+
+    def test_split_w_slashes(self):
+        self.assertEqual(split_field("a\\.b"), ["a.b"])
+        self.assertEqual(split_field("a\\\\.b"), ["a\\.b"])
+        self.assertEqual(split_field("a\\\\\\.b"), ["a\\\\.b"])
+        self.assertEqual(split_field("a.\\.b"), ["a", ".b"])
+        self.assertEqual(split_field("a\b\\.b"), ["a\\", ".b"])
+        self.assertEqual(split_field("a\\\b\\.b"), ["a\\\\", ".b"])
+        self.assertEqual(split_field("a.b"), ["a", "b"])
+        self.assertEqual(split_field("a\bb"), ["a\\", "b"])
+        self.assertEqual(split_field("a\\\bb"), ["a\\\\", "b"])
+
+    def test_join_with_slashes(self):
+        self.assertEqual("a.b", join_field(["a", "b"]))
+        self.assertEqual("a\\.b", join_field(["a.b"]))
+        self.assertEqual("a\\\\.b", join_field(["a\\.b"]))
+        self.assertEqual("a\\\\\\.b", join_field(["a\\\\.b"]))
+        self.assertEqual("a.\\.b", join_field(["a", ".b"]))
+        self.assertEqual("a\b\\.b", join_field(["a\\", ".b"]))
+        self.assertEqual("a\\\b\\.b", join_field(["a\\\\", ".b"]))
+        self.assertEqual("a.b", join_field(["a", "b"]))
+        self.assertEqual("a\bb", join_field(["a\\", "b"]))
+        self.assertEqual("a\\\bb", join_field(["a\\\\", "b"]))

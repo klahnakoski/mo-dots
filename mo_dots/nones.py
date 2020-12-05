@@ -10,7 +10,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
 from mo_dots.lists import is_sequence
-from mo_dots.utils import CLASS, OBJ
+from mo_dots.utils import CLASS, OBJ, KEY
 from mo_future import is_binary, text, none_type
 from mo_imports import expect, export
 
@@ -31,18 +31,24 @@ class NullType(object):
     Null INSTANCES WILL TRACK THEIR OWN DEREFERENCE PATH SO
     ASSIGNMENT CAN BE DONE
     """
+    __slots__ = [OBJ, KEY]
 
     def __init__(self, obj=None, key=None):
         """
         obj - VALUE BEING DEREFERENCED
         key - THE dict ITEM REFERENCE (DOT(.) IS NOT ESCAPED)
         """
-        d = _get(self, "__dict__")
-        d[OBJ] = obj
-        d["__key__"] = key
+        _set(self, OBJ, obj)
+        _set(self, KEY, key)
 
     def __bool__(self):
         return False
+
+    def __int__(self):
+        return None
+
+    def __float__(self):
+        return None
 
     def __nonzero__(self):
         return False
@@ -60,11 +66,10 @@ class NullType(object):
 
     def __iadd__(self, other):
         try:
-            d = _get(self, "__dict__")
-            o = d[OBJ]
+            o = _get(self, OBJ)
             if o is None:
                 return self
-            key = d["__key__"]
+            key = _get(self, KEY)
 
             _assign_to_null(o, [key], other)
         except Exception as e:
@@ -84,6 +89,12 @@ class NullType(object):
         return Null
 
     def __rmul__(self, other):
+        return Null
+
+    def __int__(self):
+        return Null
+
+    def __float__(self):
         return Null
 
     def __div__(self, other):
@@ -178,18 +189,15 @@ class NullType(object):
     def __getattr__(self, key):
         key = text(key)
 
-        d = _get(self, "__dict__")
-        o = to_data(d[OBJ])
-        k = d["__key__"]
-        if o is None:
-            return Null
-        elif _get(o, CLASS) is NullType:
+        o = to_data(_get(self, OBJ))
+        k = _get(self, KEY)
+        if o == None:
             return NullType(self, key)
         v = o.get(k)
         if v == None:
             return NullType(self, key)
         try:
-            return to_data(v.get(key))
+            return v.get(key)
         except Exception as e:
             from mo_logs import Log
 
@@ -197,20 +205,16 @@ class NullType(object):
 
     def __setattr__(self, key, value):
         key = text(key)
-
-        d = _get(self, "__dict__")
-        o = to_data(d[OBJ])
-        k = d["__key__"]
-
+        o = _get(self, OBJ)
+        k = _get(self, KEY)
         seq = [k] + [key]
         _assign_to_null(o, seq, value)
 
     def __setitem__(self, key, value):
-        d = _get(self, "__dict__")
-        o = d[OBJ]
+        o = _get(self, OBJ)
         if o is None:
             return
-        k = d["__key__"]
+        k = _get(self, KEY)
 
         if o is None:
             return
@@ -253,9 +257,8 @@ def _assign_to_null(obj, path, value, force=True):
         if obj is Null:
             return
         if _get(obj, CLASS) is NullType:
-            d = _get(obj, "__dict__")
-            o = d[OBJ]
-            p = d["__key__"]
+            o = _get(obj, OBJ)
+            p = _get(obj, KEY)
             s = [p] + path
             return _assign_to_null(o, s, value)
 
@@ -287,7 +290,7 @@ def _split_field(field):
     if field == ".":
         return []
     else:
-        return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
+        return [k.replace("\a", ".") for k in field.replace("\\.", "\a".replace("\b", "\\.")).split(".")]
 
 
 def _setdefault(obj, key, value):

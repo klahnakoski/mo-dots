@@ -35,6 +35,8 @@ from mo_imports import expect
     literal_field,
     from_data,
     to_data,
+    list_to_data,
+    dict_to_data,
 ) = expect(
     "_getdefault",
     "coalesce",
@@ -43,6 +45,8 @@ from mo_imports import expect
     "literal_field",
     "from_data",
     "to_data",
+    "list_to_data",
+    "dict_to_data",
 )
 
 
@@ -190,13 +194,11 @@ class Data(object):
 
         # OPTIMIZED to_data()
         if t is dict:
-            m = _new(Data)
-            _set(m, SLOT, v)
-            return m
+            return dict_to_data(v)
         elif t in (none_type, NullType):
             return NullType(d, key)
         elif t is list:
-            return FlatList(v)
+            return list_to_data(v)
         elif t in generator_types:
             return FlatList(list(from_data(vv) for vv in v))
         else:
@@ -293,10 +295,13 @@ class Data(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    get = __getitem__
-    # def get(self, key, default=None):
-    #     d = self._internal_dict
-    #     return d.get(key, default)
+    def get(self, key, default=Null):
+        v = self[key]
+        if _get(v, CLASS) == NullType:
+            if default is Null:
+                return NullType(self, key)
+            return default
+        return v
 
     def items(self):
         d = self._internal_dict
@@ -317,9 +322,34 @@ class Data(object):
         d = self._internal_dict
         return ((k, to_data(v)) for k, v in iteritems(d))
 
-    def pop(self, item, default=None):
+    def pop(self, key, default=Null):
+        if key == None:
+            return Null
+        if key == ".":
+            raise NotImplemented()
+
+        key = text(key)
         d = self._internal_dict
-        return d.pop(item, default)
+
+        if key.find(".") >= 0:
+            seq = _split_field(key)
+            for n in seq[:-1]:
+                if _get(d, CLASS) is NullType:
+                    d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
+                elif is_list(d):
+                    d = [_getdefault(dd, n) for dd in d]
+                else:
+                    d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
+            key = seq[-1]
+
+        o = d.get(key)
+        if o == None:
+            if default is Null:
+                return NullType(d, key)
+            return default
+
+        d[key] = None
+        return to_data(o)
 
     def keys(self):
         d = self._internal_dict
@@ -372,9 +402,11 @@ class Data(object):
         d.pop(key, None)
 
     def setdefault(self, k, d=None):
-        if self[k] == None:
+        v = self[k]
+        if v == None:
             self[k] = d
-        return self
+            return d
+        return v
 
     def __str__(self):
         try:
@@ -422,7 +454,7 @@ def _split_field(field):
     """
     SIMPLE SPLIT, NO CHECKS
     """
-    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
+    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").replace("\b", "\\.").split(".")]
 
 
 def _str(value, depth):

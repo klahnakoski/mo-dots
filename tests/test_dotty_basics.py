@@ -2,16 +2,17 @@
 
 # SNAGED FROM https://github.com/pawelzny/dotty_dict/blob/98984911a61ae9f1aa4da3f6c4808da991b89847/tests/test_dotty_basics.py
 # UNDER THe MIT LICENSE
+from __future__ import unicode_literals
 
-import unittest
+from unittest import skip
 
 from mo_dots import to_data
+from mo_testing.fuzzytestcase import FuzzyTestCase
 
 
-@unittest.skip("not reviewed yet")
-class TestDottyBasics(unittest.TestCase):
+class TestDottyBasics(FuzzyTestCase):
     def test_create_empty_instance(self):
-        dot = to_data()
+        dot = to_data({})
         self.assertEqual(dot, {})
 
     def test_create_non_empty_instance(self):
@@ -21,7 +22,7 @@ class TestDottyBasics(unittest.TestCase):
         self.assertEqual(dot, plain_dict)
         self.assertIsNot(dot, plain_dict)
 
-    # noinspection PyTypeChecker
+    @skip("mo-dots returns Null rather than raise exceptions")
     def test_raise_attr_error_if_input_is_not_dict(self):
         with self.assertRaises(AttributeError):
             to_data(["not", "valid"])
@@ -52,7 +53,7 @@ class TestDottyBasics(unittest.TestCase):
         self.assertNotEqual(dot, "a:1, b:2")
 
     def test_pop_with_default_value(self):
-        dot = to_data()
+        dot = to_data({})
         self.assertEqual(dot.pop("does.not.exist", None), None)
         self.assertEqual(dot.pop("does.not.exist", 55), 55)
         self.assertEqual(dot.pop("does.not.exist", "my_value"), "my_value")

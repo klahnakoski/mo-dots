@@ -16,6 +16,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
 
 `Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, while at the same time keeping them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
 
+
  1. `a.b == a["b"]`
  2. missing property names are handled gracefully, which is beneficial when being used in
     set operations (database operations) without raising exceptions <pre>
@@ -32,9 +33,9 @@ True</pre>
     checks: **You must always use <code>a == None</code> instead**.
  3. Accessing missing properties does not change the data; unlike `defaultdict`
  4. Remove an attribute by assigning `None` (eg `a.b = None`)
- 5. Access paths as a variable: `a["b.c"] == a.b.c`. Of course,
- this creates a need to refer to literal dot (`.`), which can be done by
- escaping with backslash: `a["b\\.c"] == a["b\.c"]`
+ 5. Dot-separated path access: `a["b.c"] == a.b.c`.
+    * Refer to literal dot (`.`) by escaping with a backslash (`\\.`). Eg `to_data(a)['c\\.b'] == from_data(a)['c.b']`
+    * Use bell (`\b`) to refer to literal (`\\.`), which allows backslash to be last character in a key (`a['c\bd'] == a['c\\']['d']`)
  6. you can set paths to values, missing dicts along the path are created:<pre>
 &gt;&gt;&gt; a = to_data({})
 a == {}
@@ -346,6 +347,7 @@ is expected to have.
 `Data` is a common pattern in many frameworks even though it goes by
 different names and slightly different variations, some examples are:
 
+ * [dotty-dict](https://pypi.org/project/dotty-dict/) supports attribute access and dot-delimited path access
  * [PEP 0505] uses ["safe navigation"](https://www.python.org/dev/peps/pep-0505/), but still treats None as a *missing value*. This is good for interacting with Nones coming out of libraries that share this meaning, but does not improve the manipulation of the data coming from those libraries.  
  * `jinja2.environment.Environment.getattr()` to allow convenient dot notation
  * `argparse.Environment()` - code performs `setattr(e, name, value)` on

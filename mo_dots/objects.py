@@ -134,10 +134,12 @@ def datawrap(v):
         return (to_data(vv) for vv in v)
     elif v == None:
         return Null
-    elif hasattr(v, "__data__"):
+    try:
         return v.__data__()
-    else:
-        return DataObject(v)
+    except Exception:
+        pass
+
+    return DataObject(v)
 
 
 class DictClass(object):
