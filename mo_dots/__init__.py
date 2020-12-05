@@ -9,6 +9,7 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+import re
 import sys
 
 from mo_future import (
@@ -123,7 +124,7 @@ def tail_field(field):
         return ".", "."
     elif "." in field:
         if "\\." in field:
-            path = field.replace("\\.", "\a").split(".", 1)
+            path = field.replace("\\.", "\a").replace("\b", "\\.").split(".", 1)
             if len(path) == 1:
                 return path[0].replace("\a", "."), "."
             else:
@@ -140,15 +141,15 @@ def split_field(field):
     """
     if field == "." or field == None:
         return []
-    elif is_text(field) and "." in field:
+    elif is_text(field) and ("." in field or "\b" in field):
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
             return [-1] * back + [
-                k.replace("\a", ".") for k in remainder.replace("\\.", "\a").split(".")
+                k.replace("\a", ".") for k in remainder.replace("\\.", "\a").replace("\b", "\\.").split(".")
             ]
         else:
-            return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
+            return [k.replace("\a", ".") for k in field.replace("\\.", "\a").replace("\b", "\\.").split(".")]
     else:
         return [field]
 
@@ -168,10 +169,10 @@ def join_field(path):
             if step != -1:
                 parents = "." + ("." * i)
                 return parents + ".".join([
-                    f.replace(".", "\\.") for f in path[i:] if f != None
-                ])
+                    f.replace(".", "\a") for f in path[i:] if f != None
+                ]).replace("\\.", "\b").replace("\a", "\\.")
         return "." + ("." * len(path))
-    output = ".".join([f.replace(".", "\\.") for f in path if f != None])
+    output = ".".join(f.replace(".", "\a") for f in path if f != None).replace("\\.", "\b").replace("\a", "\\.")
     return output if output else "."
 
     # potent = [f for f in path if f != "."]
@@ -243,6 +244,12 @@ def hash_value(v):
         return hash(v)
     else:
         return hash(tuple(sorted(hash_value(vv) for vv in v.values())))
+
+
+def fromkeys(keys, value=None):
+    if value == None:
+        return dict_to_data({})
+    return dict_to_data(dict.fromkeys(keys, value))
 
 
 def set_default(*dicts):
@@ -752,6 +759,8 @@ def is_missing(t):
 # EXPORT
 export("mo_dots.nones", to_data)
 
+export("mo_dots.datas", list_to_data)
+export("mo_dots.datas", dict_to_data)
 export("mo_dots.datas", to_data)
 export("mo_dots.datas", from_data)
 export("mo_dots.datas", coalesce)

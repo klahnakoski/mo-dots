@@ -75,8 +75,7 @@ class FlatList(object):
         _list = _get(self, LIST)
         if isinstance(key, int):
             if key <= len(_list):
-                for key in range(len(_list), key):
-                    _list.append(None)
+                _list.extend([None] * (key - len(_list)))
             _list[key] = from_data(value)
             return
 

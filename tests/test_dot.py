@@ -15,6 +15,7 @@ from collections import Mapping
 from copy import deepcopy, copy
 
 from mo_future import UserDict
+from mo_json import value2json
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -328,6 +329,10 @@ class TestDot(FuzzyTestCase):
         a = to_data({})
         agg = a.b
         agg.c = []
+
+        v = agg.c
+        print(str(v))
+        print(str(v.append))
         agg.c.append("test value")
 
         self.assertEqual(a, {"b": {"c": ["test value"]}})
@@ -339,6 +344,15 @@ class TestDot(FuzzyTestCase):
         agg = a.b.c
         agg += []
         agg.append("test value")
+
+        self.assertEqual(a, {"b": {"c": ["test value"]}})
+        self.assertEqual(a.b, {"c": ["test value"]})
+        self.assertEqual(a.b.c, ["test value"])
+
+    def test_assign_and_use3(self):
+        a = to_data({})
+        agg = a.b
+        agg.c += ["test value"]
 
         self.assertEqual(a, {"b": {"c": ["test value"]}})
         self.assertEqual(a.b, {"c": ["test value"]})
@@ -748,6 +762,11 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(empty == Null)
         self.assertTrue(empty == None)
 
+    def test_none_and_magic(self):
+        # self.assertIs(int(Null), Null)
+        # self.assertIs(float(Null), Null)
+        self.assertEqual(list(Null), Null)
+
     def test_keys(self):
         a = to_data({"a.b": "c"})
         self.assertEqual(a.keys(), {"a.b"})
@@ -770,6 +789,8 @@ class TestDot(FuzzyTestCase):
         result = leaves_to_data("test")
         self.assertNotIsInstance(result, Data)
         self.assertEqual(result, "test")
+
+
 
 
 class _TestMapping(object):
