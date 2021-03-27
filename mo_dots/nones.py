@@ -11,10 +11,10 @@ from __future__ import absolute_import, division, unicode_literals
 
 from mo_dots.lists import is_sequence
 from mo_dots.utils import CLASS, OBJ, KEY
-from mo_future import is_binary, text, none_type
+from mo_future import is_binary, text
 from mo_imports import expect, export
 
-to_data = expect("to_data")
+to_data, null_types = expect("to_data", "null_types")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -48,7 +48,7 @@ class NullType(object):
         return None
 
     def __float__(self):
-        return None
+        return Null
 
     def __nonzero__(self):
         return False
@@ -123,7 +123,7 @@ class NullType(object):
 
     def __eq__(self, other):
         class_ = _get(other, CLASS)
-        if class_ in (none_type, NullType):
+        if class_ in null_types:
             return True
         elif class_ is list and not other:
             return True

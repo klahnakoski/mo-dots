@@ -43,7 +43,7 @@ _builtin_zip = zip
 _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
-
+_dict_zip = zip
 
 ROOT_PATH = ["."]
 
@@ -71,13 +71,11 @@ def coalesce(*args):
 def zip(keys, values):
     """
     CONVERT LIST OF KEY/VALUE PAIRS TO Data
-    PLEASE `import dot`, AND CALL `dot.zip()`
+    PLEASE `import mo_dots`, AND CALL `mo_dots.zip()`
     """
     output = Data()
-    for i, k in enumerate(keys):
-        if i >= len(values):
-            break
-        output[k] = values[i]
+    for k, v in _dict_zip(keys, values):
+        output[k] = v
     return output
 
 
@@ -534,7 +532,7 @@ def lower_match(value, candidates):
 
 def dict_to_data(d):
     """
-    DO NOT CHECK TYPE
+    FASTEST WAY TO MAKE Data, DO NOT CHECK TYPE
     :param d: dict
     :return: Data
     """
@@ -733,7 +731,7 @@ def tuplewrap(value):
 def is_null(t):
     # RETURN True IF EFFECTIVELY NOTHING
     class_ = t.__class__
-    if class_ in (none_type, NullType):
+    if class_ in null_types:
         return True
     else:
         try:
@@ -742,10 +740,23 @@ def is_null(t):
             return False
 
 
+def is_not_null(t):
+    # RETURN True IF EFFECTIVELY SOMETHING
+    class_ = t.__class__
+    if class_ in null_types:
+        return False
+    elif class_ in data_types:
+        return True
+    elif class_ in finite_types and t:
+        return True
+    else:
+        return t != None
+
+
 def is_missing(t):
     # RETURN True IF EFFECTIVELY NOTHING
     class_ = t.__class__
-    if class_ in (none_type, NullType):
+    if class_ in null_types:
         return True
     elif class_ in data_types:
         return False
@@ -755,8 +766,11 @@ def is_missing(t):
         return t == None
 
 
+null_types = (none_type, NullType)
+
 # EXPORT
 export("mo_dots.nones", to_data)
+export("mo_dots.nones", null_types)
 
 export("mo_dots.datas", list_to_data)
 export("mo_dots.datas", dict_to_data)
@@ -767,6 +781,7 @@ export("mo_dots.datas", _getdefault)
 export("mo_dots.datas", hash_value)
 export("mo_dots.datas", listwrap)
 export("mo_dots.datas", literal_field)
+export("mo_dots.datas", null_types)
 
 export("mo_dots.lists", list_to_data)
 export("mo_dots.lists", to_data)
