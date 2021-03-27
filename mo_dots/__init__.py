@@ -762,6 +762,8 @@ def is_missing(t):
         return False
     elif class_ in finite_types and not t:
         return True
+    elif class_ is text and not t:
+        return True
     else:
         return t == None
 
