@@ -155,7 +155,7 @@ class TestList(FuzzyTestCase):
         self.assertEqual(is_not_null(""), True)
         self.assertEqual(is_not_null({}), True)
         self.assertEqual(is_not_null([]), True)
-        self.assertEqual(is_not_null(FlatList()), True)
+        self.assertEqual(is_not_null(FlatList()), False)
         self.assertEqual(is_not_null(to_data([0])), True)
         self.assertEqual(is_not_null(set()), True)
         self.assertEqual(is_not_null(tuple()), True)
