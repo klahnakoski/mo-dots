@@ -173,3 +173,12 @@ class TestList(FuzzyTestCase):
         self.assertEqual(is_missing(to_data([0])), False)
         self.assertEqual(is_missing(set()), True)
         self.assertEqual(is_missing(tuple()), True)
+
+    def test_extend(self):
+        v = to_data([])
+
+        v[0] = "a"
+        v[5] = "b"
+        v[4] = "c"
+        v[3] = "d"
+        self.assertEqual(v, ["a", None, None, "d", "c", "b"])

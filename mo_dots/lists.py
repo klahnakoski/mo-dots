@@ -74,8 +74,8 @@ class FlatList(object):
     def __setitem__(self, key, value):
         _list = _get(self, LIST)
         if isinstance(key, int):
-            if key <= len(_list):
-                _list.extend([None] * (key - len(_list)))
+            if key >= len(_list):
+                _list.extend([None] * (key - len(_list) + 1))
             _list[key] = from_data(value)
             return
 
