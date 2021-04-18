@@ -54,7 +54,7 @@ class TestDotSpeed(FuzzyTestCase):
 
         with Timer("property access access") as prop:
             for i in times:
-                k = x.a
+                k = x['a']
 
         Log.note(
             "attribute access is {{t|round(places=2)}}x faster",
@@ -157,7 +157,7 @@ class TestDotSpeed(FuzzyTestCase):
         )
 
         Log.note(
-            "is_text check is {{t|round(places=2)}}x faster than isinstance",
+            "is_text check is {{t|round(places=2)}}x slower than isinstance",
             t=m_time.duration.seconds / i_time.duration.seconds,
         )
 
@@ -179,11 +179,11 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertAlmostEqual(me_result, eq_result, "expecting compare to be the same")
 
         Log.note(
-            "is_null compare is {{t|round(places=2)}}x faster",
+            "is_null compare is {{t|round(places=2)}}x slower",
             t=me_time.duration.seconds / eq_time.duration.seconds,
         )
         Log.note(
-            "is compare is {{t|round(places=2)}}x faster",
+            "is compare is {{t|round(places=2)}}x slower",
             t=me_time.duration.seconds / is_time.duration.seconds,
         )
 

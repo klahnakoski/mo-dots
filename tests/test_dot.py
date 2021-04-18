@@ -791,8 +791,6 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(result, "test")
 
 
-
-
 class _TestMapping(object):
     def __init__(self):
         self.a = None

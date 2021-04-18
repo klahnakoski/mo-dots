@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_future import PY3
 
-from mo_dots import to_data, Null, listwrap, is_missing, is_null
+from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots.lists import last, is_many, FlatList
@@ -135,6 +135,10 @@ class TestList(FuzzyTestCase):
     def test_nulls(self):
         self.assertEqual(is_null(None), True)
         self.assertEqual(is_null(Null), True)
+        self.assertEqual(is_null(True), False)
+        self.assertEqual(is_null(False), False)
+        self.assertEqual(is_null(0), False)
+        self.assertEqual(is_null(""), False)
         self.assertEqual(is_null({}), False)
         self.assertEqual(is_null([]), False)
         self.assertEqual(is_null(FlatList()), True)
@@ -142,8 +146,26 @@ class TestList(FuzzyTestCase):
         self.assertEqual(is_null(set()), False)
         self.assertEqual(is_null(tuple()), False)
 
+    def test_exists(self):
+        self.assertEqual(is_not_null(None), False)
+        self.assertEqual(is_not_null(Null), False)
+        self.assertEqual(is_not_null(True), True)
+        self.assertEqual(is_not_null(False), True)
+        self.assertEqual(is_not_null(0), True)
+        self.assertEqual(is_not_null(""), True)
+        self.assertEqual(is_not_null({}), True)
+        self.assertEqual(is_not_null([]), True)
+        self.assertEqual(is_not_null(FlatList()), False)
+        self.assertEqual(is_not_null(to_data([0])), True)
+        self.assertEqual(is_not_null(set()), True)
+        self.assertEqual(is_not_null(tuple()), True)
+
     def test_missing(self):
         self.assertEqual(is_missing(None), True)
+        self.assertEqual(is_missing(True), False)
+        self.assertEqual(is_missing(False), False)
+        self.assertEqual(is_missing(0), False)
+        self.assertEqual(is_missing(""), True)
         self.assertEqual(is_missing(Null), True)
         self.assertEqual(is_missing({}), False)
         self.assertEqual(is_missing([]), True)
@@ -151,3 +173,12 @@ class TestList(FuzzyTestCase):
         self.assertEqual(is_missing(to_data([0])), False)
         self.assertEqual(is_missing(set()), True)
         self.assertEqual(is_missing(tuple()), True)
+
+    def test_extend(self):
+        v = to_data([])
+
+        v[0] = "a"
+        v[5] = "b"
+        v[4] = "c"
+        v[3] = "d"
+        self.assertEqual(v, ["a", None, None, "d", "c", "b"])

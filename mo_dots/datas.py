@@ -20,7 +20,6 @@ from mo_future import (
     generator_types,
     iteritems,
     long,
-    none_type,
     text,
     MutableMapping,
     OrderedDict,
@@ -35,6 +34,7 @@ from mo_imports import expect
     literal_field,
     from_data,
     to_data,
+    null_types,
     list_to_data,
     dict_to_data,
 ) = expect(
@@ -45,6 +45,7 @@ from mo_imports import expect
     "literal_field",
     "from_data",
     "to_data",
+    "null_types",
     "list_to_data",
     "dict_to_data",
 )
@@ -195,7 +196,7 @@ class Data(object):
         # OPTIMIZED to_data()
         if t is dict:
             return dict_to_data(v)
-        elif t in (none_type, NullType):
+        elif t in null_types:
             return NullType(d, key)
         elif t is list:
             return list_to_data(v)
