@@ -197,6 +197,9 @@ class FlatList(object):
         except Exception:
             return False
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __add__(self, value):
         if value == None:
             return self
