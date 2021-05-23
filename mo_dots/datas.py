@@ -61,34 +61,16 @@ DEBUG = False
 
 class Data(object):
     """
-    Please see README.md
+    Please see https://github.com/klahnakoski/mo-dots/tree/dev/docs#data-replaces-pythons-dict
     """
 
     __slots__ = [SLOT]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
-        CALLING Data(**something) WILL RESULT IN A COPY OF something, WHICH
-        IS UNLIKELY TO BE USEFUL. USE to_data() INSTEAD
+        CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
-        if DEBUG:
-            d = self._internal_dict
-            for k, v in kwargs.items():
-                d[literal_field(k)] = from_data(v)
-        else:
-            if args:
-                args0 = args[0]
-                class_ = _get(args0, CLASS)
-                if class_ is dict:
-                    _set(self, SLOT, args0)
-                elif class_ is Data:
-                    _set(self, SLOT, _get(args0, SLOT))
-                else:
-                    _set(self, SLOT, dict(args0))
-            elif kwargs:
-                _set(self, SLOT, from_data(kwargs))
-            else:
-                _set(self, SLOT, {})
+        _set(self, SLOT, kwargs)
 
     def __bool__(self):
         d = self._internal_dict
