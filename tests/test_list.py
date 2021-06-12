@@ -160,9 +160,9 @@ class TestList(FuzzyTestCase):
         self.assertEqual(
             v,
             [
-                {"a": [{"b": 3}, {"b": 3}, {"b": 3}]},
+                [{"b": 3}, {"b": 3}, {"b": 3}],
                 {"b": 3},
-                {"a": [{"b": 3}, {"b": 3}]},
+                [{"b": 3}, {"b": 3}],
             ],
         )
 
