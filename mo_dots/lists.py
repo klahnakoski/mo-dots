@@ -23,7 +23,7 @@ datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
 )
 
 
-LIST = str("list")
+LIST = str("_internal_value")
 _get = object.__getattribute__
 _set = object.__setattr__
 _emit_slice_warning = True
@@ -35,6 +35,8 @@ class FlatList(object):
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS
     https://github.com/klahnakoski/mo-dots/tree/dev/docs#flatlist-is-flat
     """
+    __slots__ = [LIST]
+
 
     def __init__(self, vals=None):
         """ USE THE vals, NOT A COPY """
@@ -99,7 +101,15 @@ class FlatList(object):
         simple `select`
         """
         if key == ".":
-            return self
+            output = []
+            for v in _get(self, LIST):
+                if is_many(v):
+                    element = from_data(datawrap(v).get(key))
+                    output.extend(element)
+                else:
+                    output.append(from_data(v))
+
+            return list_to_data(output)
         output = []
         for v in _get(self, LIST):
             element = datawrap(v).get(key)
@@ -157,7 +167,7 @@ class FlatList(object):
         return self[i:j:]
 
     def __list__(self):
-        return self.list
+        return _get(self, LIST)
 
     def copy(self):
         return FlatList(list(_get(self, LIST)))
@@ -328,6 +338,11 @@ def is_container(l):
 def is_sequence(l):
     # HAS AN ORDER, INCLUDES GENERATORS
     return l.__class__ in sequence_types
+
+
+def is_finite(l):
+    # CAN PERFORM len(l); NOT A GENERATOR
+    return l.__class__ in finite_types
 
 
 def is_many(value):
