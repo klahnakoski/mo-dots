@@ -151,25 +151,6 @@ class TestDottyValueAccess(FuzzyTestCase):
         result = dot["deep.deeper.escaped\bdot_key"]
         self.assertEqual(result, "it works!")
 
-    @skip("mo-dots only deals with dots")
-    def test_use_custom_separator_and_custom_escape_char(self):
-        sep = ","
-        esc = "$"
-        dot = Data({}, separator=sep, esc_char=esc)
-        dot["abcd,efg,hij"] = "test"
-        dot["abcd,efg$,hij"] = "test2"
-        dot[r"abcd,efg\$,hij"] = "test3"
-        self.assertDictEqual(
-            dot._data,
-            {
-                "abcd": {
-                    "efg": {"hij": "test",},
-                    "efg,hij": "test2",
-                    "efg$": {"hij": "test3",},
-                },
-            },
-        )
-
     def test_string_digit_key(self):
         dot = to_data({"field": {"1": "one", "5": "five"}})
 

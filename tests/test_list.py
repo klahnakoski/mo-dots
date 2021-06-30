@@ -132,6 +132,46 @@ class TestList(FuzzyTestCase):
         v.a.b = 5
         self.assertEqual(v.a.b, [5, 5, 5, 5, 5, 5, 5, 5, 5])
 
+    def test_flatten_w_dot(self):
+        v = listwrap([
+            [{"b": 1}, {"b": 2}, {"b": 3}],
+            {"b": 4},
+            [{"b": 7}, {"b": 8}],
+        ])
+
+        level1 = v.get(".")
+        self.assertEqual(
+            level1,
+            [
+                {"b": 1},
+                {"b": 2},
+                {"b": 3},
+                {"b": 4},
+                {"b": 7},
+                {"b": 8},
+            ],
+        )
+        self.assertEqual(level1.b, [1, 2, 3, 4, 7, 8])
+        self.assertEqual(v.b, [1, 2, 3, 4, 7, 8])
+
+        v["b"] = 3
+        self.assertEqual(v.b, [3, 3, 3, 3, 3, 3])
+
+        self.assertEqual(
+            v,
+            [
+                [{"b": 3}, {"b": 3}, {"b": 3}],
+                {"b": 3},
+                [{"b": 3}, {"b": 3}],
+            ],
+        )
+
+        v["b"] = 4
+        self.assertEqual(v.b, [4, 4, 4, 4, 4, 4])
+
+        v.b = 5
+        self.assertEqual(v.b, [5, 5, 5, 5, 5, 5])
+
     def test_nulls(self):
         self.assertEqual(is_null(None), True)
         self.assertEqual(is_null(Null), True)

@@ -80,11 +80,25 @@ def zip(keys, values):
 
 
 def missing(value):
-    return value == None or value == ""
+    raise NotImplementedError("use is_missing")
 
+
+def is_missing(t):
+    # RETURN True IF EFFECTIVELY NOTHING
+    class_ = t.__class__
+    if class_ in null_types:
+        return True
+    elif class_ in data_types:
+        return False
+    elif class_ in finite_types and not t:
+        return True
+    elif class_ is text and not t:
+        return True
+    else:
+        return t == None
 
 def exists(value):
-    return value != None and value != ""
+    return not is_missing(value)
 
 
 def literal_field(field):
@@ -245,7 +259,7 @@ def hash_value(v):
 
 def fromkeys(keys, value=None):
     if value == None:
-        return dict_to_data({})
+        return Data()
     return dict_to_data(dict.fromkeys(keys, value))
 
 
@@ -647,7 +661,7 @@ def from_data(v):
         d = _get(v, SLOT)
         return d
     elif _type is FlatList:
-        return v.list
+        return _get(v, LIST)
     elif _type is DataObject:
         d = _get(v, OBJ)
         if _get(d, CLASS) in data_types:
@@ -751,21 +765,6 @@ def is_not_null(t):
         return True
     else:
         return t != None
-
-
-def is_missing(t):
-    # RETURN True IF EFFECTIVELY NOTHING
-    class_ = t.__class__
-    if class_ in null_types:
-        return True
-    elif class_ in data_types:
-        return False
-    elif class_ in finite_types and not t:
-        return True
-    elif class_ is text and not t:
-        return True
-    else:
-        return t == None
 
 
 null_types = (none_type, NullType)

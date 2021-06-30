@@ -502,9 +502,9 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
 
-    def test_Dict_of_Dict(self):
+    def test_Data_of_Data(self):
         value = {"a": 1}
-        wrapped = Data(Data(value))
+        wrapped = to_data(to_data(value))
         self.assertTrue(value is from_data(wrapped), "expecting identical object")
 
     def test_leaves_of_mappings(self):

@@ -32,10 +32,11 @@ from collections import Mapping
 from copy import deepcopy
 from unittest import skip
 
+import mo_dots
 import mo_json
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import Data, set_default, from_data
+from mo_dots import Data, set_default, from_data, to_data
 
 TEST_VAL = [1, 2, 3]
 TEST_DICT = {"a": {"b": {"c": TEST_VAL}}}
@@ -75,39 +76,48 @@ class AddictTests(FuzzyTestCase):
         self.assertEqual(prop, TEST_DICT)
 
     def test_init_with_dict(self):
-        self.assertEqual(TEST_DICT, Data(TEST_DICT))
+        self.assertEqual(TEST_DICT, to_data(TEST_DICT))
 
     def test_init_with_kws(self):
         prop = Data(a=2, b={"a": 2}, c=[{"a": 2}])
         self.assertEqual(prop, {"a": 2, "b": {"a": 2}, "c": [{"a": 2}]})
 
     def test_init_with_list(self):
-        prop = Data([("0", 1), ("1", 2), ("2", 3)])
+        kv_pairs = [("0", 1), ("1", 2), ("2", 3)]
+        prop = to_data(dict(kv_pairs))
         self.assertEqual(prop, {"0": 1, "1": 2, "2": 3})
 
     def test_init_raises(self):
-        def init():
+        def init1():
             Data(5)
 
         def init2():
             Data("a")
 
-        self.assertRaises(Exception, init)
+        def init3():
+            Data({})
+
+        def init4():
+            Data([])
+
+        self.assertRaises(Exception, init1)
         self.assertRaises(Exception, init2)
+        self.assertRaises(Exception, init3)
+        self.assertRaises(Exception, init4)
 
     def test_init_with_empty_stuff(self):
-        a = Data({})
-        b = Data([])
+        a = to_data({})
+        b = to_data([])
         self.assertEqual(a, {})
-        self.assertEqual(b, {})
+        self.assertEqual(b, [])
 
     def test_init_with_list_of_dicts(self):
-        a = Data({"a": [{"b": 2}]})
+        a = to_data({"a": [{"b": 2}]})
         self.assertIsInstance(a.a[0], Data)
         self.assertEqual(a.a[0].b, 2)
 
     def test_getitem(self):
-        prop = Data(TEST_DICT)
+        prop = to_data(TEST_DICT)
         self.assertEqual(prop["a"]["b"]["c"], TEST_VAL)
 
     def test_empty_getitem(self):
@@ -116,14 +126,14 @@ class AddictTests(FuzzyTestCase):
         self.assertEqual(prop, {})
 
     def test_getattr(self):
-        prop = Data(TEST_DICT)
+        prop = to_data(TEST_DICT)
         self.assertEqual(prop.a.b.c, TEST_VAL)
 
     def test_isinstance(self):
         self.assertIsInstance(Data(), Mapping)
 
     def test_str(self):
-        prop = Data(TEST_DICT)
+        prop = to_data(TEST_DICT)
         self.assertEqual(str(prop), str(TEST_DICT))
 
     def test_json(self):
@@ -135,27 +145,27 @@ class AddictTests(FuzzyTestCase):
         self.assertEqual(some_json, prop_json)
 
     def test_delitem(self):
-        prop = Data({"a": 2})
+        prop = to_data({"a": 2})
         del prop["a"]
         self.assertEqual(prop, {})
 
     def test_delitem_nested(self):
-        prop = Data(deepcopy(TEST_DICT))
+        prop = to_data(deepcopy(TEST_DICT))
         del prop["a"]["b"]["c"]
         self.assertEqual(prop, {"a": {"b": {}}})
 
     def test_delattr(self):
-        prop = Data({"a": 2})
+        prop = to_data({"a": 2})
         del prop.a
         self.assertEqual(prop, {})
 
     def test_delattr_nested(self):
-        prop = Data(deepcopy(TEST_DICT))
+        prop = to_data(deepcopy(TEST_DICT))
         del prop.a.b.c
         self.assertEqual(prop, {"a": {"b": {}}})
 
     def test_delitem_delattr(self):
-        prop = Data(deepcopy(TEST_DICT))
+        prop = to_data(deepcopy(TEST_DICT))
         del prop.a["b"]
         self.assertEqual(prop, {"a": {}})
 
@@ -172,7 +182,7 @@ class AddictTests(FuzzyTestCase):
         ALL CLASS ATTRIBUTES SHOULD SHOW UP IN THE INSTANCES
         """
         key = "a"
-        prop = Data({key: 1})
+        prop = to_data({key: 1})
         dir_prop = dir(prop)
 
         dir_dict = dir(Data)
@@ -183,13 +193,13 @@ class AddictTests(FuzzyTestCase):
         self.assertTrue("__members__" not in dir_prop)
 
     def test_dir_with_members(self):
-        prop = Data({"__members__": 1})
+        prop = to_data({"__members__": 1})
         dir(prop)
         self.assertTrue("__members__" in prop.keys())
 
     def test_from_data(self):
         nested = {"a": [{"a": 0}, 2], "b": {}, "c": 2}
-        prop = Data(nested)
+        prop = to_data(nested)
         regular = from_data(prop)
         self.assertEqual(regular, prop)
         self.assertEqual(regular, nested)
@@ -207,7 +217,7 @@ class AddictTests(FuzzyTestCase):
 
     def test_to_dict_with_tuple(self):
         nested = {"a": ({"a": 0}, {2: 0})}
-        prop = Data(nested)
+        prop = to_data(nested)
         regular = from_data(prop)
         self.assertEqual(regular, prop)
         self.assertEqual(regular, nested)
@@ -283,7 +293,7 @@ class AddictTests(FuzzyTestCase):
         self.assertEqual(org, expected)
 
     def test_hook_in_constructor(self):
-        a_dict = Data(TEST_DICT)
+        a_dict = to_data(TEST_DICT)
         self.assertIsInstance(a_dict["a"], Data)
 
     def test_copy(self):
@@ -372,6 +382,5 @@ class AddictTests(FuzzyTestCase):
     def test_init_from_zip(self):
         keys = ["a"]
         values = [42]
-        items = zip(keys, values)
-        d = Data(items)
+        d = mo_dots.zip(keys, values)
         self.assertEqual(d.a, 42)
