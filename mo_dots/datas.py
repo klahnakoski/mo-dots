@@ -71,7 +71,9 @@ class Data(object):
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception("only keywords are allowed")
+            # TEMPORARY WHILE WE BOOTSTRAP mo-logs
+            _set(self, SLOT, args[0])
+            # raise Exception("only keywords are allowed")
         _set(self, SLOT, kwargs)
 
     def __bool__(self):
