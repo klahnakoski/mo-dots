@@ -17,6 +17,10 @@ This library defines a `Data` class that can serve as a replacement for `dict`, 
 
 *See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
 
+### Changes in version 5.x.x
+
+The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input. 
+  
 ### Easy Definition
 
 Define `Data` using named parameters, just like you would a `dict`

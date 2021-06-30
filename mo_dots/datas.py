@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, unicode_literals
 from copy import copy, deepcopy
 from decimal import Decimal
 
-from mo_dots.lists import is_list, FlatList, is_sequence
+from mo_dots.lists import is_list, FlatList, is_sequence, is_many, LIST
 from mo_dots.nones import Null, NullType
 from mo_dots.utils import CLASS
 from mo_dots.utils import get_logger
@@ -55,50 +55,34 @@ _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
 
-SLOT = str("_internal_dict")
+SLOT = str("_internal_value")
 DEBUG = False
 
 
 class Data(object):
     """
-    Please see README.md
+    Please see https://github.com/klahnakoski/mo-dots/tree/dev/docs#data-replaces-pythons-dict
     """
 
     __slots__ = [SLOT]
 
     def __init__(self, *args, **kwargs):
         """
-        CALLING Data(**something) WILL RESULT IN A COPY OF something, WHICH
-        IS UNLIKELY TO BE USEFUL. USE to_data() INSTEAD
+        CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
-        if DEBUG:
-            d = self._internal_dict
-            for k, v in kwargs.items():
-                d[literal_field(k)] = from_data(v)
-        else:
-            if args:
-                args0 = args[0]
-                class_ = _get(args0, CLASS)
-                if class_ is dict:
-                    _set(self, SLOT, args0)
-                elif class_ is Data:
-                    _set(self, SLOT, _get(args0, SLOT))
-                else:
-                    _set(self, SLOT, dict(args0))
-            elif kwargs:
-                _set(self, SLOT, from_data(kwargs))
-            else:
-                _set(self, SLOT, {})
+        if args:
+            get_logger().error("only keywords are allowed")
+        _set(self, SLOT, kwargs)
 
     def __bool__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
             return bool(d)
         else:
             return d != None
 
     def __nonzero__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
             return True if d else False
         else:
@@ -111,21 +95,21 @@ class Data(object):
         return False
 
     def __iter__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return d.__iter__()
 
     def __getitem__(self, key):
         if key == None:
             return Null
         if key == ".":
-            output = self._internal_dict
+            output = _get(self, SLOT)
             if _get(output, CLASS) in data_types:
                 return self
             else:
                 return output
 
         key = text(key)
-        d = self._internal_dict
+        d = _get(self, SLOT)
 
         if key.find(".") >= 0:
             seq = _split_field(key)
@@ -154,11 +138,12 @@ class Data(object):
             # SOMETHING TERRIBLE HAPPENS WHEN value IS NOT A Mapping;
             # HOPEFULLY THE ONLY OTHER METHOD RUN ON self IS from_data()
             v = from_data(value)
+            if is_many(v):
+                _set(self, CLASS, FlatList)
             _set(self, SLOT, v)
-            return v
-
+            return self
         try:
-            d = self._internal_dict
+            d = _get(self, SLOT)
             value = from_data(value)
             if key.find(".") == -1:
                 if value is None:
@@ -189,7 +174,7 @@ class Data(object):
             Log.error("can not set key={{key}}", key=key, cause=e)
 
     def __getattr__(self, key):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         v = d.get(key)
         t = _get(v, CLASS)
 
@@ -206,10 +191,10 @@ class Data(object):
             return v
 
     def __setattr__(self, key, value):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         value = from_data(value)
         if value is None:
-            d = self._internal_dict
+            d = _get(self, SLOT)
             d.pop(key, None)
         else:
             d[key] = value
@@ -231,7 +216,7 @@ class Data(object):
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting Data")
 
-        d = self._internal_dict
+        d = _get(self, SLOT)
         output = Data(**d)  # COPY
         output.__ior__(other)
         return output
@@ -251,7 +236,7 @@ class Data(object):
         """
         if not _get(other, CLASS) in data_types:
             get_logger().error("Expecting Data")
-        d = self._internal_dict
+        d = _get(self, SLOT)
         for ok, ov in other.items():
             if ov == None:
                 continue
@@ -268,14 +253,14 @@ class Data(object):
         return self
 
     def __hash__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return hash_value(d)
 
     def __eq__(self, other):
         if self is other:
             return True
 
-        d = self._internal_dict
+        d = _get(self, SLOT)
         if _get(d, CLASS) is not dict:
             return d == other
 
@@ -305,7 +290,7 @@ class Data(object):
         return v
 
     def items(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return [
             (k, to_data(v))
             for k, v in d.items()
@@ -320,7 +305,7 @@ class Data(object):
 
     def iteritems(self):
         # LOW LEVEL ITERATION, NO WRAPPING
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return ((k, to_data(v)) for k, v in iteritems(d))
 
     def pop(self, key, default=Null):
@@ -330,7 +315,7 @@ class Data(object):
             raise NotImplemented()
 
         key = text(key)
-        d = self._internal_dict
+        d = _get(self, SLOT)
 
         if key.find(".") >= 0:
             seq = _split_field(key)
@@ -353,45 +338,45 @@ class Data(object):
         return to_data(o)
 
     def keys(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return set(d.keys())
 
     def values(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return listwrap(list(d.values()))
 
     def clear(self):
         get_logger().error("clear() not supported")
 
     def __len__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return dict.__len__(d)
 
     def copy(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
             return Data(**d)
         else:
             return copy(d)
 
     def __copy__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
             return Data(**self)
         else:
             return copy(d)
 
     def __deepcopy__(self, memo):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return to_data(deepcopy(d, memo))
 
     def __delitem__(self, key):
         if key.find(".") == -1:
-            d = self._internal_dict
+            d = _get(self, SLOT)
             d.pop(key, None)
             return
 
-        d = self._internal_dict
+        d = _get(self, SLOT)
         seq = _split_field(key)
         for k in seq[:-1]:
             d = d[k]
@@ -399,7 +384,7 @@ class Data(object):
 
     def __delattr__(self, key):
         key = text(key)
-        d = self._internal_dict
+        d = _get(self, SLOT)
         d.pop(key, None)
 
     def setdefault(self, k, d=None):
@@ -411,17 +396,17 @@ class Data(object):
 
     def __str__(self):
         try:
-            return dict.__str__(self._internal_dict)
+            return dict.__str__(_get(self, SLOT))
         except Exception:
             return "{}"
 
     def __dir__(self):
-        d = self._internal_dict
+        d = _get(self, SLOT)
         return d.keys()
 
     def __repr__(self):
         try:
-            return "Data(" + dict.__repr__(self._internal_dict) + ")"
+            return "Data(" + dict.__repr__(_get(self, SLOT)) + ")"
         except Exception as e:
             return "Data()"
 

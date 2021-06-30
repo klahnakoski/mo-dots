@@ -34,6 +34,10 @@
             "",
             "*See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*",
             "",
+            "### Changes in version 5.x.x",
+            "",
+            "The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input. ",
+            "  ",
             "### Easy Definition",
             "",
             "Define `Data` using named parameters, just like you would a `dict`",
@@ -125,6 +129,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "4.41.21142",
+    "version": "5.1.21181",
     "zip_safe": false
 }
