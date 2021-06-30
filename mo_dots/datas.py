@@ -73,8 +73,9 @@ class Data(object):
         if args and isinstance(args[0], dict) and args[0]:
             # TEMPORARY WHILE WE BOOTSTRAP mo-logs
             _set(self, SLOT, args[0])
+            return
         if args:
-            Exception("only keywords are allowed, not "+args[0].__class__.__name__)
+            raise Exception("only keywords are allowed, not "+args[0].__class__.__name__)
         _set(self, SLOT, kwargs)
 
     def __bool__(self):
