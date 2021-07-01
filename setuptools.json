@@ -2,7 +2,7 @@
     "author": "Kyle Lahnakoski",
     "author_email": "kyle@lahnakoski.com",
     "classifiers": [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
