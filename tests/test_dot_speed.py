@@ -11,10 +11,11 @@ from __future__ import absolute_import, division, unicode_literals
 
 import os
 import random
-from collections import Mapping, deque
+import sys
+from collections import deque
 from unittest import skipIf
 
-from mo_future import text, none_type
+from mo_future import text, Mapping
 from mo_logs import Log
 from mo_math import randoms
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -23,7 +24,6 @@ from mo_times import Timer
 from mo_dots import (
     Data,
     Null,
-    NullType,
     FlatList,
     data_types,
     is_data,
@@ -35,6 +35,9 @@ from mo_dots import (
 )
 
 IS_TRAVIS = bool(os.environ.get("TRAVIS"))
+
+PY37 = sys.version_info[0]==3 and sys.version_info[1]==7
+PY39 = sys.version_info[0]==3 and sys.version_info[1]==9
 
 
 @skipIf(IS_TRAVIS, "no need to test speed on Travis")
@@ -150,6 +153,7 @@ class TestDotSpeed(FuzzyTestCase):
             s_time.duration,
             msg="isinstance should be slower than __class__ in set",
         )
+
         self.assertGreater(
             m_time.duration,
             s_time.duration,
