@@ -15,7 +15,6 @@ from collections import Mapping
 from copy import deepcopy, copy
 
 from mo_future import UserDict
-from mo_json import value2json
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -29,13 +28,12 @@ from mo_dots import (
     NullType,
     leaves_to_data,
     from_data,
-    is_null,
-    FlatList,
 )
 from mo_dots.objects import datawrap
 
 
 class TestDot(FuzzyTestCase):
+
     def test_set_union_w_null(self):
         s = set("a")
         s |= Null
@@ -331,8 +329,6 @@ class TestDot(FuzzyTestCase):
         agg.c = []
 
         v = agg.c
-        print(str(v))
-        print(str(v.append))
         agg.c.append("test value")
 
         self.assertEqual(a, {"b": {"c": ["test value"]}})

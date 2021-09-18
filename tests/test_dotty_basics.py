@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from unittest import skip
 
-from mo_dots import to_data
+from mo_dots import to_data, Data
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 
@@ -22,10 +22,9 @@ class TestDottyBasics(FuzzyTestCase):
         self.assertEqual(dot, plain_dict)
         self.assertIsNot(dot, plain_dict)
 
-    @skip("mo-dots returns Null rather than raise exceptions")
     def test_raise_attr_error_if_input_is_not_dict(self):
-        with self.assertRaises(AttributeError):
-            to_data(["not", "valid"])
+        with self.assertRaises(Exception):
+            Data(["not", "valid"])
 
     def test_two_dotty_with_the_same_input_should_be_equal(self):
         first = to_data({"is": "valid"})
