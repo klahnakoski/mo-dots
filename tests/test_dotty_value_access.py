@@ -4,8 +4,9 @@
 # UNDER THe MIT LICENSE
 from unittest import skip
 
-from mo_dots import to_data
 from mo_testing.fuzzytestcase import FuzzyTestCase
+
+from mo_dots import to_data
 
 
 class TestDottyValueAccess(FuzzyTestCase):
@@ -21,10 +22,9 @@ class TestDottyValueAccess(FuzzyTestCase):
     def test_access_flat_value(self):
         self.assertEqual(self.dot["flat_key"], "flat value")
 
-    @skip("mo-dots returns Null rather than raise exceptions")
     def test_raise_key_error_if_key_does_not_exist(self):
-        with self.assertRaises(KeyError):
-            val = self.dot["not_existing"]  # noqa
+        result = self.dot["not_existing"]
+        self.assertTrue(result == None)
 
     def test_access_deep_nested_value(self):
         self.assertEqual(self.dot["deep.nested"], 12)
@@ -99,10 +99,8 @@ class TestDottyValueAccess(FuzzyTestCase):
             },
         )
 
-    @skip("mo-dots returns Null rather than raise exceptions")
     def test_raise_key_error_on_delete_not_existing_key(self):
-        with self.assertRaises(KeyError):
-            del self.dot["deep.deeper.key"]
+        del self.dot["deep.deeper.key"]
 
     def test_set_value_with_escaped_separator(self):
         self.dot[r"deep.deeper.escaped\.dot_key"] = "it works!"
@@ -186,7 +184,7 @@ class TestDottyValueAccess(FuzzyTestCase):
         self.assertEqual(nested_dict_string, "nested_string_value")
         self.assertEqual(nested_dict_int, "nested_int_value")
 
-    @skip("mo-dots only deals with dots")
+    @skip("mo-dots only deals with string keys")
     def test_non_standard_key_types(self):
         dot = Data(
             {3.3: "float", True: "bool", None: "None", "nested": {4.4: "nested_float"}},
