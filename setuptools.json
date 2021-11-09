@@ -15,7 +15,7 @@
                "pyLibrary",          "mo-math",         "mo-times", "jx-elasticsearch"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==6.2.21303", "mo-imports==6.2.21303"],
+    "install_requires": ["mo-future==6.2.21303", "mo-imports==7.3.21313"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -25,8 +25,8 @@
             "",
             "|Branch      |Status   |",
             "|------------|---------|",
-            "|master      | [![Build Status](https://travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/klahnakoski/mo-dots) |",
-            "|dev         | [![Build Status](https://travis-ci.com/klahnakoski/mo-dots.svg?branch=dev)](https://travis-ci.com/klahnakoski/mo-dots)  [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)  |",
+            "|master      | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-dots) |",
+            "|dev         | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=dev)](https://travis-ci.com/github/klahnakoski/mo-dots)  [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)  |",
             "",
             "",
             "",
@@ -133,6 +133,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "6.2.21303",
+    "version": "7.4.21313",
     "zip_safe": false
 }
