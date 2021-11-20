@@ -1,12 +1,9 @@
 
 # More Dots!
 
-
-|Branch      |Status   |
-|------------|---------|
-|master      | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-dots) |
-|dev         | [![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=dev)](https://travis-ci.com/github/klahnakoski/mo-dots)  [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)  |
-
+[![PyPI Latest Release](https://img.shields.io/pypi/v/mo-dots.svg)](https://pypi.org/project/mo-dots/)
+[![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-dots)
+ [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
 
 
 ## Overview
