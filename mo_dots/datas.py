@@ -12,9 +12,9 @@ from __future__ import absolute_import, division, unicode_literals
 from copy import copy, deepcopy
 from decimal import Decimal
 
-from mo_dots.lists import is_list, FlatList, is_sequence, is_many, LIST
+from mo_dots.lists import is_list, FlatList, is_sequence, is_many
 from mo_dots.nones import Null, NullType
-from mo_dots.utils import CLASS
+from mo_dots.utils import CLASS, SLOT
 from mo_dots.utils import get_logger
 from mo_future import (
     generator_types,
@@ -55,7 +55,6 @@ _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
 
-SLOT = str("_internal_value")
 DEBUG = False
 
 

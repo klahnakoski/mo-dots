@@ -10,7 +10,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
 from mo_dots.lists import is_sequence
-from mo_dots.utils import CLASS, OBJ, KEY
+from mo_dots.utils import CLASS, KEY, SLOT
 from mo_future import is_binary, text
 from mo_imports import expect, export
 
@@ -31,14 +31,14 @@ class NullType(object):
     Null INSTANCES WILL TRACK THEIR OWN DEREFERENCE PATH SO
     ASSIGNMENT CAN BE DONE
     """
-    __slots__ = [OBJ, KEY]
+    __slots__ = [SLOT, KEY]
 
     def __init__(self, obj=None, key=None):
         """
         obj - VALUE BEING DEREFERENCED
         key - THE dict ITEM REFERENCE (DOT(.) IS NOT ESCAPED)
         """
-        _set(self, OBJ, obj)
+        _set(self, SLOT, obj)
         _set(self, KEY, key)
 
     def __bool__(self):
@@ -66,7 +66,7 @@ class NullType(object):
 
     def __iadd__(self, other):
         try:
-            o = _get(self, OBJ)
+            o = _get(self, SLOT)
             if o is None:
                 return self
             key = _get(self, KEY)
@@ -189,7 +189,7 @@ class NullType(object):
     def __getattr__(self, key):
         key = text(key)
 
-        o = to_data(_get(self, OBJ))
+        o = to_data(_get(self, SLOT))
         k = _get(self, KEY)
         if o == None:
             return NullType(self, key)
@@ -205,13 +205,13 @@ class NullType(object):
 
     def __setattr__(self, key, value):
         key = text(key)
-        o = _get(self, OBJ)
+        o = _get(self, SLOT)
         k = _get(self, KEY)
         seq = [k] + [key]
         _assign_to_null(o, seq, value)
 
     def __setitem__(self, key, value):
-        o = _get(self, OBJ)
+        o = _get(self, SLOT)
         if o is None:
             return
         k = _get(self, KEY)
@@ -257,7 +257,7 @@ def _assign_to_null(obj, path, value, force=True):
         if obj is Null:
             return
         if _get(obj, CLASS) is NullType:
-            o = _get(obj, OBJ)
+            o = _get(obj, SLOT)
             p = _get(obj, KEY)
             s = [p] + path
             return _assign_to_null(o, s, value)

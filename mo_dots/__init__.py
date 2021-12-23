@@ -22,21 +22,20 @@ from mo_future import (
 )
 from mo_imports import export
 
-from mo_dots.datas import Data, SLOT, data_types, is_data
+from mo_dots.datas import Data, data_types, is_data
 from mo_dots.lists import (
     FlatList,
     is_list,
     is_sequence,
     is_container,
     is_many,
-    LIST,
     list_types,
     container_types,
     finite_types,
 )
 from mo_dots.nones import Null, NullType
 from mo_dots.objects import DataObject
-from mo_dots.utils import CLASS, OBJ, get_logger, get_module
+from mo_dots.utils import CLASS, SLOT, get_logger, get_module
 
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip
@@ -560,7 +559,7 @@ def list_to_data(v):
     to_data, BUT WITHOUT CHECKS
     """
     output = _new(FlatList)
-    _set(output, LIST, v)
+    _set(output, SLOT, v)
     return output
 
 
@@ -661,13 +660,9 @@ def from_data(v):
         d = _get(v, SLOT)
         return d
     elif _type is FlatList:
-        return _get(v, LIST)
+        return _get(v, SLOT)
     elif _type is DataObject:
-        d = _get(v, OBJ)
-        if _get(d, CLASS) in data_types:
-            return d
-        else:
-            return v
+        return _get(v, SLOT)
     elif _type in generator_types:
         return (from_data(vv) for vv in v)
     else:

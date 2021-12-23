@@ -15,7 +15,7 @@ from copy import deepcopy
 from mo_future import generator_types, first, is_text
 from mo_imports import expect, delay_import
 
-from mo_dots.utils import CLASS
+from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
 datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
@@ -23,7 +23,6 @@ datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
 )
 
 
-LIST = str("_internal_value")
 _get = object.__getattribute__
 _set = object.__setattr__
 _emit_slice_warning = True
@@ -35,18 +34,18 @@ class FlatList(object):
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS
     https://github.com/klahnakoski/mo-dots/tree/dev/docs#flatlist-is-flat
     """
-    __slots__ = [LIST]
+    __slots__ = [SLOT]
 
 
     def __init__(self, vals=None):
         """ USE THE vals, NOT A COPY """
         # list.__init__(self)
         if vals == None:
-            _set(self, LIST, [])
+            _set(self, SLOT, [])
         elif vals.__class__ is FlatList:
-            _set(self, LIST, vals.list)
+            _set(self, SLOT, vals.list)
         else:
-            _set(self, LIST, vals)
+            _set(self, SLOT, vals)
 
     def __getitem__(self, index):
         if _get(index, CLASS) is slice:
@@ -55,7 +54,7 @@ class FlatList(object):
                 Log.error(
                     "slice step must be None, do not know how to deal with values"
                 )
-            length = len(_get(self, LIST))
+            length = len(_get(self, SLOT))
 
             i = index.start
             if i is None:
@@ -67,14 +66,14 @@ class FlatList(object):
                 j = length
             else:
                 j = max(min(j, length), 0)
-            return FlatList(_get(self, LIST)[i:j])
+            return FlatList(_get(self, SLOT)[i:j])
 
-        if not isinstance(index, int) or index < 0 or len(_get(self, LIST)) <= index:
+        if not isinstance(index, int) or index < 0 or len(_get(self, SLOT)) <= index:
             return Null
-        return to_data(_get(self, LIST)[index])
+        return to_data(_get(self, SLOT)[index])
 
     def __setitem__(self, key, value):
-        _list = _get(self, LIST)
+        _list = _get(self, SLOT)
         if isinstance(key, int):
             if key >= len(_list):
                 _list.extend([None] * (key - len(_list) + 1))
@@ -86,7 +85,7 @@ class FlatList(object):
         return
 
     def __setattr__(self, key, value):
-        _list = _get(self, LIST)
+        _list = _get(self, SLOT)
         for v in _list:
             to_data(v)[key] = value
         return
@@ -102,7 +101,7 @@ class FlatList(object):
         """
         if key == ".":
             output = []
-            for v in _get(self, LIST):
+            for v in _get(self, SLOT):
                 if is_many(v):
                     element = from_data(datawrap(v).get(key))
                     output.extend(element)
@@ -111,7 +110,7 @@ class FlatList(object):
 
             return list_to_data(output)
         output = []
-        for v in _get(self, LIST):
+        for v in _get(self, SLOT):
             element = datawrap(v).get(key)
             if element.__class__ == FlatList:
                 output.extend(from_data(element))
@@ -124,7 +123,7 @@ class FlatList(object):
 
     def filter(self, _filter):
         return FlatList(vals=[
-            from_data(u) for u in (to_data(v) for v in _get(self, LIST)) if _filter(u)
+            from_data(u) for u in (to_data(v) for v in _get(self, SLOT)) if _filter(u)
         ])
 
     def __delslice__(self, i, j):
@@ -134,24 +133,24 @@ class FlatList(object):
         )
 
     def __clear__(self):
-        _set(self, LIST, [])
+        _set(self, SLOT, [])
 
     def __iter__(self):
-        temp = [to_data(v) for v in _get(self, LIST)]
+        temp = [to_data(v) for v in _get(self, SLOT)]
         return iter(temp)
 
     def __contains__(self, item):
-        return list.__contains__(_get(self, LIST), item)
+        return list.__contains__(_get(self, SLOT), item)
 
     def append(self, val):
-        _get(self, LIST).append(from_data(val))
+        _get(self, SLOT).append(from_data(val))
         return self
 
     def __str__(self):
-        return _get(self, LIST).__str__()
+        return _get(self, SLOT).__str__()
 
     def __len__(self):
-        return _get(self, LIST).__len__()
+        return _get(self, SLOT).__len__()
 
     def __getslice__(self, i, j):
         global _emit_slice_warning
@@ -167,36 +166,36 @@ class FlatList(object):
         return self[i:j:]
 
     def __list__(self):
-        return _get(self, LIST)
+        return _get(self, SLOT)
 
     def copy(self):
-        return FlatList(list(_get(self, LIST)))
+        return FlatList(list(_get(self, SLOT)))
 
     def __copy__(self):
-        return FlatList(list(_get(self, LIST)))
+        return FlatList(list(_get(self, SLOT)))
 
     def __deepcopy__(self, memo):
-        d = _get(self, LIST)
+        d = _get(self, SLOT)
         return to_data(deepcopy(d, memo))
 
     def remove(self, x):
-        _get(self, LIST).remove(x)
+        _get(self, SLOT).remove(x)
         return self
 
     def extend(self, values):
-        lst = _get(self, LIST)
+        lst = _get(self, SLOT)
         for v in values:
             lst.append(from_data(v))
         return self
 
     def pop(self, index=None):
         if index is None:
-            return to_data(_get(self, LIST).pop())
+            return to_data(_get(self, SLOT).pop())
         else:
-            return to_data(_get(self, LIST).pop(index))
+            return to_data(_get(self, SLOT).pop(index))
 
     def __eq__(self, other):
-        lst = _get(self, LIST)
+        lst = _get(self, SLOT)
         if other == None:
             return len(lst) == 0
 
@@ -213,18 +212,18 @@ class FlatList(object):
     def __add__(self, value):
         if value == None:
             return self
-        output = list(_get(self, LIST))
+        output = list(_get(self, SLOT))
         output.extend(value)
         return FlatList(vals=output)
 
     def __or__(self, value):
-        output = list(_get(self, LIST))
+        output = list(_get(self, SLOT))
         output.append(value)
         return FlatList(vals=output)
 
     def __radd__(self, other):
         output = list(other)
-        output.extend(_get(self, LIST))
+        output.extend(_get(self, SLOT))
         return FlatList(vals=output)
 
     def __iadd__(self, other):
@@ -243,7 +242,7 @@ class FlatList(object):
         if num <= 0:
             return Null
 
-        return FlatList(_get(self, LIST)[-num:])
+        return FlatList(_get(self, SLOT)[-num:])
 
     def limit(self, num=None):
         """
@@ -254,7 +253,7 @@ class FlatList(object):
         if num <= 0:
             return Null
 
-        return FlatList(_get(self, LIST)[:num])
+        return FlatList(_get(self, SLOT)[:num])
 
     def not_right(self, num):
         """
@@ -265,7 +264,7 @@ class FlatList(object):
         if num <= 0:
             return Null
 
-        return FlatList(_get(self, LIST)[:-num:])
+        return FlatList(_get(self, SLOT)[:-num:])
 
     def not_left(self, num):
         """
@@ -276,22 +275,22 @@ class FlatList(object):
         if num <= 0:
             return self
 
-        return FlatList(_get(self, LIST)[num::])
+        return FlatList(_get(self, SLOT)[num::])
 
     def last(self):
         """
         RETURN LAST ELEMENT IN FlatList [-1]
         """
-        lst = _get(self, LIST)
+        lst = _get(self, SLOT)
         if lst:
             return to_data(lst[-1])
         return Null
 
     def map(self, oper, includeNone=True):
         if includeNone:
-            return FlatList([oper(v) for v in _get(self, LIST)])
+            return FlatList([oper(v) for v in _get(self, SLOT)])
         else:
-            return FlatList([oper(v) for v in _get(self, LIST) if v != None])
+            return FlatList([oper(v) for v in _get(self, SLOT) if v != None])
 
 
 def last(values):
@@ -350,7 +349,7 @@ def is_many(value):
     # TODO: CLEAN UP THIS LOGIC
     # THIS IS COMPLICATED BECAUSE I AM UNSURE ABOUT ALL THE "PRIMITIVE TYPES"
     # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
-    # UNTIL WE HAVE A COMPLETE LIST, WE KEEP ALL THIS warning() CODE
+    # UNTIL WE HAVE A COMPLETE SLOT, WE KEEP ALL THIS warning() CODE
     global many_types
     type_ = value.__class__
     if type_ in many_types:
