@@ -13,8 +13,8 @@ import importlib
 
 from mo_future import STDOUT, STDERR
 
-OBJ = str("_obj")
 KEY = str("_key")
+SLOT = str("_internal_value")
 CLASS = str("__class__")
 
 _Log = None
