@@ -10,7 +10,6 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import os
-import random
 import sys
 from collections import deque
 from unittest import skipIf
@@ -30,14 +29,13 @@ from mo_dots import (
     to_data,
     from_data,
     split_field,
-    join_field,
     is_null,
 )
 
 IS_TRAVIS = bool(os.environ.get("TRAVIS"))
 
-PY37 = sys.version_info[0]==3 and sys.version_info[1]==7
-PY39 = sys.version_info[0]==3 and sys.version_info[1]==9
+PY37 = sys.version_info[0] == 3 and sys.version_info[1] == 7
+PY39 = sys.version_info[0] == 3 and sys.version_info[1] == 9
 
 
 @skipIf(IS_TRAVIS, "no need to test speed on Travis")
@@ -57,7 +55,7 @@ class TestDotSpeed(FuzzyTestCase):
 
         with Timer("property access access") as prop:
             for i in times:
-                k = x['a']
+                k = x["a"]
 
         Log.note(
             "attribute access is {{t|round(places=2)}}x faster",
@@ -192,7 +190,7 @@ class TestDotSpeed(FuzzyTestCase):
         )
 
     def test_from_data(self):
-        num = 1 * 1000 * 1000
+        num = 100 * 1000
         options = {0: Data(), 1: {}, 2: "string", 3: None, 4: Null}
         data = [options[randoms.int(len(options))] for _ in range(num)]
 
@@ -201,14 +199,20 @@ class TestDotSpeed(FuzzyTestCase):
 
     def test_compare_split_replace_vs_lists(self):
         data = []
-        for i in range(1000000):
-            r = random.random()
-            if r < 0.9:
-                field = randoms.base64(9)
-            else:
-                num = int((1.0 - r) * 10) + 2
-                field = join_field([randoms.base64(4, extra="..") for _ in range(num)])
-            data.append(field)
+        for i in range(1_000_000):
+            d = "".join(randoms.sample("ab.\b\\", 8))
+
+            try:
+                s_result = split_field(d)
+                data.append(d)
+            except Exception:
+                continue
+
+            r_result = split_field_using_replace(d)
+            d_result = split_using_double_replace(d)
+
+            self.assertEqual(s_result, r_result, msg=f"problem with {d}")
+            self.assertEqual(s_result, d_result, msg=f"problem with {d}")
 
         with Timer("using standard") as s_time:
             s_result = [split_field(d) for d in data]
@@ -217,10 +221,10 @@ class TestDotSpeed(FuzzyTestCase):
             r_result = [split_field_using_replace(d) for d in data]
 
         with Timer("using double replace") as d_time:
-            d_result = [split_field_using_double_replace(d) for d in data]
+            d_result = [split_using_double_replace(d) for d in data]
 
         with Timer("using iterator") as i_time:
-            i_result = [split_field_using_double_replace(d) for d in data]
+            i_result = [split_using_double_replace(d) for d in data]
 
         # SECOND TIME TO VERIFY SPEED
         with Timer("using standard") as s_time:
@@ -230,10 +234,10 @@ class TestDotSpeed(FuzzyTestCase):
             r_result = [split_field_using_replace(d) for d in data]
 
         with Timer("using double replace") as d_time:
-            d_result = [split_field_using_double_replace(d) for d in data]
+            d_result = [split_using_double_replace(d) for d in data]
 
         with Timer("using iterator") as i_time:
-            i_result = [split_field_using_double_replace(d) for d in data]
+            i_result = [split_using_double_replace(d) for d in data]
 
         self.assertEqual(r_result, s_result)
         self.assertEqual(d_result, s_result)
@@ -256,12 +260,34 @@ class Dummy(object):
         self.a = a
 
 
-def split_field_using_double_replace(field):
-    return [k.replace("\a\a", ".") for k in field.replace("\\.", "\a\a").split(".")]
+def split_using_double_replace(field):
+    """
+    RETURN field AS ARRAY OF DOT-SEPARATED FIELDS
+    """
+    try:
+        if field.startswith(".."):
+            remainder = field.lstrip(".")
+            back = len(field) - len(remainder) - 1
+            return [-1] * back + [k.replace("\a\a", ".").replace("\b", ".") for k in remainder.replace("..", "\a\a").split(".") if k]
+        else:
+            return [k.replace("\a\a", ".").replace("\b", ".") for k in field.replace("..", "\a\a").split(".") if k]
+    except Exception as cause:
+        return []
 
 
 def split_field_using_replace(field):
-    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").split(".")]
+    """
+    RETURN field AS ARRAY OF DOT-SEPARATED FIELDS
+    """
+    try:
+        if field.startswith(".."):
+            remainder = field.lstrip(".")
+            back = len(field) - len(remainder) - 1
+            return [-1] * back + [k.replace("\b", ".") for k in remainder.replace("..", "\b").split(".") if k]
+        else:
+            return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".") if k]
+    except Exception as cause:
+        return []
 
 
 def split_field_using_iterator(field):

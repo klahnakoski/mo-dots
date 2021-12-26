@@ -31,6 +31,7 @@ class NullType(object):
     Null INSTANCES WILL TRACK THEIR OWN DEREFERENCE PATH SO
     ASSIGNMENT CAN BE DONE
     """
+
     __slots__ = [SLOT, KEY]
 
     def __init__(self, obj=None, key=None):
@@ -290,7 +291,7 @@ def _split_field(field):
     if field == ".":
         return []
     else:
-        return [k.replace("\a", ".") for k in field.replace("\\.", "\a".replace("\b", "\\.")).split(".")]
+        return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
 
 
 def _setdefault(obj, key, value):

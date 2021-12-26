@@ -103,7 +103,7 @@ class TestDottyValueAccess(FuzzyTestCase):
         del self.dot["deep.deeper.key"]
 
     def test_set_value_with_escaped_separator(self):
-        self.dot[r"deep.deeper.escaped\.dot_key"] = "it works!"
+        self.dot[r"deep.deeper.escaped..dot_key"] = "it works!"
         self.assertEqual(
             self.dot,
             {
@@ -131,10 +131,10 @@ class TestDottyValueAccess(FuzzyTestCase):
                 },
             },
         })
-        result = dot[r"deep.deeper.escaped\.dot_key"]
+        result = dot[r"deep.deeper.escaped..dot_key"]
         self.assertEqual(result, "it works!")
 
-    def test_get_value_with_escaped_escape_separator(self):
+    def test_get_value_with_escaped_escape_separator1(self):
         dot = to_data({
             "flat_key": "flat value",
             "deep": {
@@ -146,7 +146,12 @@ class TestDottyValueAccess(FuzzyTestCase):
                 },
             },
         })
-        result = dot["deep.deeper.escaped\bdot_key"]
+        result = dot["deep.deeper.escaped\\.dot_key"]
+        self.assertEqual(result, "it works!")
+
+    def test_get_value_with_escaped_escape_separator2(self):
+        dot = to_data({"deep": {"deeper": {"escaped.": {"dot_key": "it works!"}},},})
+        result = dot["deep.deeper.escaped\b.dot_key"]
         self.assertEqual(result, "it works!")
 
     def test_string_digit_key(self):
@@ -175,7 +180,7 @@ class TestDottyValueAccess(FuzzyTestCase):
         })
 
         dict_string = dot["2"]
-        dict_int = dot[2]   # KEYS MUST BE STRINGS. THEY WILL BE CAST
+        dict_int = dot[2]  # KEYS MUST BE STRINGS. THEY WILL BE CAST
         nested_dict_string = dot["nested.2"]
         nested_dict_int = dot["nested.3"]
 

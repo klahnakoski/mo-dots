@@ -70,7 +70,9 @@ class Data(object):
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception("only keywords are allowed, not "+args[0].__class__.__name__)
+            raise Exception(
+                "only keywords are allowed, not " + args[0].__class__.__name__
+            )
         _set(self, SLOT, kwargs)
 
     def __bool__(self):
@@ -439,7 +441,7 @@ def _split_field(field):
     """
     SIMPLE SPLIT, NO CHECKS
     """
-    return [k.replace("\a", ".") for k in field.replace("\\.", "\a").replace("\b", "\\.").split(".")]
+    return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
 
 
 def _str(value, depth):
