@@ -146,7 +146,7 @@ class Data(object):
         try:
             d = _get(self, SLOT)
             value = from_data(value)
-            if key.find(".") == -1:
+            if "." not in key:
                 if value is None:
                     d.pop(key, None)
                 else:
@@ -372,7 +372,7 @@ class Data(object):
         return to_data(deepcopy(d, memo))
 
     def __delitem__(self, key):
-        if key.find(".") == -1:
+        if "." not in key:
             d = _get(self, SLOT)
             d.pop(key, None)
             return
