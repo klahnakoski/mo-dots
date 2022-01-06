@@ -4,7 +4,7 @@
 [![PyPI Latest Release](https://img.shields.io/pypi/v/mo-dots.svg)](https://pypi.org/project/mo-dots/)
 [![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-dots)
  [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
-
+[![Downloads](https://pepy.tech/badge/mo-dots)](https://pepy.tech/project/mo-dots)
 
 ## Overview
 
@@ -13,6 +13,10 @@ This library defines a `Data` class that can serve as a replacement for `dict`, 
     >>> from mo_dots import to_data, Data
 
 *See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
+
+### Changes in version 9.x.x
+
+Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot ('..')
 
 ### Changes in version 5.x.x
 
