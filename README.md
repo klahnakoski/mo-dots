@@ -8,7 +8,7 @@
 
 #### Changes in version 9.x.x
 
-Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot ('..')
+Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot (`..`)
 
 #### Changes in version 5.x.x
 
