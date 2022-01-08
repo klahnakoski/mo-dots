@@ -197,7 +197,12 @@ class TestDictSpecificMethods(FuzzyTestCase):
         self.assertIsNot(first, second)
         self.assertIsNot(first._data, second._data)
 
-    def test_fromkeys(self):
+    def test_fromkeys1(self):
         dot = mo_dots.fromkeys({"a", "b", "c"}, value=10)
         self.assertEqual(from_data(dot), {"a": 10, "b": 10, "c": 10})
         self.assertIsInstance(dot, Data)
+
+    def test_fromkeys2(self):
+        dot = mo_dots.fromkeys({"a", "b", "c"}, value=None)
+        self.assertEqual(len(from_data(dot).keys()), 0)
+

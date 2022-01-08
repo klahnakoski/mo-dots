@@ -34,8 +34,8 @@ True</pre>
  3. Accessing missing properties does not change the data; unlike `defaultdict`
  4. Remove an attribute by assigning `None` (eg `a.b = None`)
  5. Dot-separated path access: `a["b.c"] == a.b.c`.
-    * Refer to literal dot (`.`) by escaping with a backslash (`\\.`). Eg `to_data(a)['c\\.b'] == from_data(a)['c.b']`
-    * Use bell (`\b`) to refer to literal (`\\.`), which allows backslash to be last character in a key (`a['c\bd'] == a['c\\']['d']`)
+    * Use double-dot (`..`) to refer to literal dot (`.`) - Eg `to_data(a)['c..b'] == from_data(a)['c.b']`
+    * Alternativly, use bell (`\b`) to refer to literal dot (`.`) - this allows dots to be the last character in a key (`a['c\b.d'] == a['c.']['d']`)
  6. you can set paths to values, missing dicts along the path are created:<pre>
 &gt;&gt;&gt; a = to_data({})
 a == {}

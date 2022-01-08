@@ -33,7 +33,6 @@ from mo_dots.objects import datawrap
 
 
 class TestDot(FuzzyTestCase):
-
     def test_set_union_w_null(self):
         s = set("a")
         s |= Null
@@ -273,7 +272,7 @@ class TestDot(FuzzyTestCase):
         a = {}
         b = to_data(a)
 
-        b.c["d\.e"].f = 2
+        b.c["d..e"].f = 2
         expected = {"c": {"d.e": {"f": 2}}}
         self.assertEqual(a, expected)
 
@@ -281,8 +280,8 @@ class TestDot(FuzzyTestCase):
         a = {}
         b = to_data(a)
 
-        b["c.d.e\.f"] = 1
-        b["c.d.e\.g"] = 2
+        b["c.d.e..f"] = 1
+        b["c.d.e..g"] = 2
 
         expected = {"c": {"d": {"e.f": 1, "e.g": 2}}}
         self.assertEqual(a, expected)
@@ -291,8 +290,8 @@ class TestDot(FuzzyTestCase):
         a = {}
         b = to_data(a)
 
-        b["c.d.e\.f"] = 1
-        b["c.d.g\.h"] = 2
+        b["c.d.e..f"] = 1
+        b["c.d.g..h"] = 2
 
         expected = {"c": {"d": {"e.f": 1, "g.h": 2}}}
         self.assertEqual(a, expected)
@@ -303,7 +302,7 @@ class TestDot(FuzzyTestCase):
 
         b["a"][literal_field(literal_field("b.html"))]["z"] = 3
 
-        expected = {"a": {"b\\.html": {"z": 3}}}
+        expected = {"a": {"b..html": {"z": 3}}}
         self.assertEqual(a, expected)
 
     def test_assign9(self):
@@ -367,7 +366,7 @@ class TestDot(FuzzyTestCase):
         b.c1.d += 1
         b.c2.e += "e"
         b.c3.f += ["f"]
-        b["c\\.a"].d += 1
+        b["c..a"].d += 1
 
         self.assertEqual(
             a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
@@ -376,7 +375,7 @@ class TestDot(FuzzyTestCase):
         b.c1.d += 2
         b.c2.e += "f"
         b.c3.f += ["g"]
-        b["c\\.a"].d += 3
+        b["c..a"].d += 3
         self.assertEqual(
             a,
             {
@@ -509,8 +508,8 @@ class TestDot(FuzzyTestCase):
         a.a.b = {"b": 2}
 
         leaves = to_data(dict(a.leaves()))
-        self.assertEqual(a.a.a["a"], leaves["a\.a\.a"], "expecting 1")
-        self.assertEqual(a.a.b["b"], leaves["a\.b\.b"], "expecting 2")
+        self.assertEqual(a.a.a["a"], leaves["a..a..a"], "expecting 1")
+        self.assertEqual(a.a.b["b"], leaves["a..b..b"], "expecting 2")
 
     def test_null_set_index(self):
         temp = Null
@@ -564,11 +563,11 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(None > Null, None)
 
     def test_escape_dot(self):
-        self.assertAlmostEqual(literal_field("."), "\\.")
-        self.assertAlmostEqual(literal_field("\\."), "\\\\.")
-        self.assertAlmostEqual(literal_field("\\\\."), "\\\\\\.")
-        self.assertAlmostEqual(literal_field("a.b"), "a\.b")
-        self.assertAlmostEqual(literal_field("a\\.html"), "a\\\\.html")
+        self.assertAlmostEqual(literal_field("."), "\b")
+        self.assertAlmostEqual(literal_field(".."), "\b\b")
+        self.assertAlmostEqual(literal_field("..."), "\b..\b")
+        self.assertAlmostEqual(literal_field("a.b"), "a..b")
+        self.assertAlmostEqual(literal_field("a..html"), "a....html")
 
     def test_set_default_unicode_and_list(self):
         a = {"a": "test"}

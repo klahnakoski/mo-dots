@@ -34,8 +34,8 @@ class FlatList(object):
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS
     https://github.com/klahnakoski/mo-dots/tree/dev/docs#flatlist-is-flat
     """
-    __slots__ = [SLOT]
 
+    __slots__ = [SLOT]
 
     def __init__(self, vals=None):
         """ USE THE vals, NOT A COPY """

@@ -9,13 +9,13 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+import re
 import sys
 
 from mo_future import (
     binary_type,
     generator_types,
     is_binary,
-    is_text,
     text,
     OrderedDict,
     none_type,
@@ -96,8 +96,16 @@ def is_missing(t):
     else:
         return t == None
 
+
 def exists(value):
     return not is_missing(value)
+
+
+ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
+ESCAPE_DOTS2 = re.compile(r"(?<!^)\.(?!$)")  # INTERNAL DOTS
+ILLEGAL_DOTS = re.compile(r"[^.]\.(?:\.\.)+")  # ODD DOTS ARE NOT ALLOWED
+SPLIT_DOTS = re.compile(r"(?<!\.)\.(?!\.)")  # SINGLE DOTS
+UNESCAPE_DOTS = re.compile(r"\x08|(?:\.\.)")  # ENCODED DOTS
 
 
 def literal_field(field):
@@ -105,7 +113,7 @@ def literal_field(field):
     RETURN SAME WITH DOTS (`.`) ESCAPED
     """
     try:
-        return field.replace(".", "\\.")
+        return ESCAPE_DOTS2.sub("..", ESCAPE_DOTS1.sub("\b", field))
     except Exception as e:
         get_logger().error("bad literal", e)
 
@@ -120,9 +128,7 @@ def unliteral_field(field):
     :param field: THE STRING TO DE-literal IZE
     :return: SIMPLER STRING
     """
-    if len(split_field(field)) > 1:
-        get_logger().error("Bad call! Dude!")
-    return field.replace("\\.", ".")
+    return UNESCAPE_DOTS.sub(".", field)
 
 
 def tail_field(field):
@@ -133,14 +139,8 @@ def tail_field(field):
     if field == "." or field == None:
         return ".", "."
     elif "." in field:
-        if "\\." in field:
-            path = field.replace("\\.", "\a").replace("\b", "\\.").split(".", 1)
-            if len(path) == 1:
-                return path[0].replace("\a", "."), "."
-            else:
-                return tuple(k.replace("\a", ".") for k in path)
-        else:
-            return field.split(".", 1)
+        path = split_field(field)
+        return path[0], join_field(path[1:])
     else:
         return field, "."
 
@@ -149,19 +149,17 @@ def split_field(field):
     """
     RETURN field AS ARRAY OF DOT-SEPARATED FIELDS
     """
-    if field == "." or field == None:
-        return []
-    elif is_text(field) and ("." in field or "\b" in field):
+    if ILLEGAL_DOTS.search(field):
+        get_logger().error("Odd number of dots is not allowed")
+    try:
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
-            return [-1] * back + [
-                k.replace("\a", ".") for k in remainder.replace("\\.", "\a").replace("\b", "\\.").split(".")
-            ]
+            return [-1] * back + [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k]
         else:
-            return [k.replace("\a", ".") for k in field.replace("\\.", "\a").replace("\b", "\\.").split(".")]
-    else:
-        return [field]
+            return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
+    except Exception as cause:
+        return []
 
 
 def join_field(path):
@@ -178,17 +176,10 @@ def join_field(path):
         for i, step in enumerate(path):
             if step != -1:
                 parents = "." + ("." * i)
-                return parents + ".".join([
-                    f.replace(".", "\a") for f in path[i:] if f != None
-                ]).replace("\\.", "\b").replace("\a", "\\.")
+                return parents + ".".join(literal_field(f) for f in path if f != None)
         return "." + ("." * len(path))
-    output = ".".join(f.replace(".", "\a") for f in path if f != None).replace("\\.", "\b").replace("\a", "\\.")
+    output = ".".join(literal_field(f) for f in path if f != None)
     return output if output else "."
-
-    # potent = [f for f in path if f != "."]
-    # if not potent:
-    #     return "."
-    # return ".".join([f.replace(".", "\\.") for f in potent])
 
 
 def concat_field(prefix, suffix):
@@ -334,26 +325,6 @@ def _all_default(d, default, seen=None):
             else:
                 seen[id(default_value)] = existing_value
                 _all_default(existing_value, default_value, seen)
-
-
-def _get_dict_default(obj, key):
-    """
-    obj MUST BE A DICT
-    key IS EXPECTED TO BE LITERAL (NO ESCAPING)
-    TRY BOTH ATTRIBUTE AND ITEM ACCESS, OR RETURN Null
-    """
-    try:
-        return obj[key]
-    except Exception as f:
-        pass
-
-    try:
-        if float(key) == round(float(key), 0):
-            return obj[int(key)]
-    except Exception as f:
-        pass
-
-    return NullType(obj, key)
 
 
 def _getdefault(obj, key):
@@ -623,7 +594,7 @@ def _leaves_to_data(value):
                 key = key.decode("utf8")
 
             d = output
-            if key.find(".") == -1:
+            if "." not in key:
                 if value is None:
                     d.pop(key, None)
                 else:

@@ -40,6 +40,7 @@ class DataObject(Mapping):
     """
     TREAT AN OBJECT LIKE DATA
     """
+
     __slots__ = [SLOT]
 
     def __init__(self, obj):
