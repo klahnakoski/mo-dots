@@ -7,21 +7,17 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import cProfile
 import pstats
-import random
 from collections import Mapping
 
-from mo_dots import Data, to_data, Null, split_field
 from mo_future import text
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_threads import profiles
 from mo_times import Timer
+
+from mo_dots import Data, to_data, Null
 
 
 class SpeedTestDot(FuzzyTestCase):
