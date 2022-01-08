@@ -8,4 +8,4 @@
 #
 from mo_dots import Data
 
-d = Data(a=42
+d = Data(a=42)
