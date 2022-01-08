@@ -147,7 +147,7 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(n_result, i_result)
 
         self.assertGreater(
-            i_time.duration,
+            i_time.duration*1.1,
             s_time.duration,
             msg="isinstance should be slower than __class__ in set",
         )
