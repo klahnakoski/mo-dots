@@ -6,6 +6,15 @@
  [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
 [![Downloads](https://pepy.tech/badge/mo-dots)](https://pepy.tech/project/mo-dots)
 
+#### Changes in version 9.x.x
+
+Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot ('..')
+
+#### Changes in version 5.x.x
+
+The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input. 
+  
+
 ## Overview
 
 This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
@@ -14,15 +23,7 @@ This library defines a `Data` class that can serve as a replacement for `dict`, 
 
 *See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
 
-### Changes in version 9.x.x
-
-Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot ('..')
-
-### Changes in version 5.x.x
-
-The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input. 
-  
-### Easy Definition
+### Create instances
 
 Define `Data` using named parameters, just like you would a `dict`
 
