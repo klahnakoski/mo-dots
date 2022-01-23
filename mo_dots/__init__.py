@@ -155,7 +155,9 @@ def split_field(field):
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
-            return [-1] * back + [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k]
+            return [".."] * back + [
+                UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
+            ]
         else:
             return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
     except Exception as cause:
@@ -172,27 +174,21 @@ def join_field(path):
     if not path:
         return "."
 
-    if path[0] == -1:
-        for i, step in enumerate(path):
-            if step != -1:
-                parents = "." + ("." * i)
-                return parents + ".".join(literal_field(f) for f in path if f != None)
-        return "." + ("." * len(path))
-    output = ".".join(literal_field(f) for f in path if f != None)
-    return output if output else "."
+    prefix = ""
+    while True:
+        try:
+            i = path.index("..")
+            if i==0:
+                prefix += "."
+                path = path[1:]
+            else:
+                path = path[: i - 1] + path[i + 1 :]
+        except ValueError:
+            return  ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
 
 
 def concat_field(prefix, suffix):
-    if suffix.startswith(".."):
-        remainder = suffix.lstrip(".")
-        back = len(suffix) - len(remainder) - 1
-        prefix_path = split_field(prefix)
-        if len(prefix_path) >= back:
-            return join_field(split_field(prefix)[:-back] + split_field(remainder))
-        else:
-            return "." * (back - len(prefix_path)) + "." + remainder
-    else:
-        return join_field(split_field(prefix) + split_field(suffix))
+    return join_field(split_field(prefix) + split_field(suffix))
 
 
 def startswith_field(field, prefix):

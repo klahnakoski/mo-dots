@@ -268,7 +268,7 @@ def split_using_double_replace(field):
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
-            return [-1] * back + [k.replace("\a\a", ".").replace("\b", ".") for k in remainder.replace("..", "\a\a").split(".") if k]
+            return [".."] * back + [k.replace("\a\a", ".").replace("\b", ".") for k in remainder.replace("..", "\a\a").split(".") if k]
         else:
             return [k.replace("\a\a", ".").replace("\b", ".") for k in field.replace("..", "\a\a").split(".") if k]
     except Exception as cause:
@@ -283,7 +283,7 @@ def split_field_using_replace(field):
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
-            return [-1] * back + [k.replace("\b", ".") for k in remainder.replace("..", "\b").split(".") if k]
+            return [".."] * back + [k.replace("\b", ".") for k in remainder.replace("..", "\b").split(".") if k]
         else:
             return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".") if k]
     except Exception as cause:
