@@ -147,14 +147,14 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(n_result, i_result)
 
         self.assertGreater(
-            i_time.duration.total_seconds(),
-            s_time.duration.total_seconds() * 1.1,
+            i_time.duration.total_seconds() * 1.1,
+            s_time.duration.total_seconds(),
             msg="isinstance should be slower than __class__ in set",
         )
 
         self.assertGreater(
-            m_time.duration.total_seconds(),
-            s_time.duration.total_seconds()*1.1,
+            m_time.duration.total_seconds() * 1.1,
+            s_time.duration.total_seconds(),
             "is_text should be slower than isinstance check",
         )
 
