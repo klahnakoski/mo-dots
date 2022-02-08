@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 from collections import Mapping
 from copy import deepcopy, copy
 
-from mo_future import UserDict
+from mo_future import UserDict, first
 from mo_logs import Log
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
@@ -27,7 +27,7 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data,
+    from_data, FlatList,
 )
 from mo_dots.objects import datawrap
 
@@ -784,6 +784,10 @@ class TestDot(FuzzyTestCase):
         result = leaves_to_data("test")
         self.assertNotIsInstance(result, Data)
         self.assertEqual(result, "test")
+
+    def test_leaves_returns_flat_list(self):
+        x = to_data({"a":[1,  2, 3]})
+        self.assertIsInstance(first(x.leaves())[1], FlatList)
 
 
 class _TestMapping(object):
