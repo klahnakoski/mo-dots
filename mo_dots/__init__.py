@@ -133,7 +133,7 @@ def unliteral_field(field):
 
 def tail_field(field):
     """
-    RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAIL
+    RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
     IN (first, rest) PAIR
     """
     if field == "." or field == None:
@@ -160,7 +160,7 @@ def split_field(field):
             ]
         else:
             return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
-    except Exception as cause:
+    except Exception:
         return []
 
 
@@ -184,7 +184,7 @@ def join_field(path):
             else:
                 path = path[: i - 1] + path[i + 1 :]
         except ValueError:
-            return  ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
+            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
 
 
 def concat_field(prefix, suffix):
@@ -464,14 +464,13 @@ def _get_attr(obj, path):
         obj = obj[attr_name]
         return _get_attr(obj, path[1:])
     except Exception as f:
-        return None
+        return NullType(obj, attr_name)
 
 
 def _set_attr(obj_, path, value):
     obj = _get_attr(obj_, path[:-1])
-    if (
-        obj is None
-    ):  # DELIBERATE USE OF `is`: WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
+    if obj is None:
+        # DELIBERATE USE OF `is`: WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
         obj = _get_attr(obj_, path[:-1])
         if obj is None:
             get_logger().error(PATH_NOT_FOUND + " tried to get attribute of None")
@@ -734,6 +733,7 @@ null_types = (none_type, NullType)
 # EXPORT
 export("mo_dots.nones", to_data)
 export("mo_dots.nones", null_types)
+export("mo_dots.nones", get_attr)
 
 export("mo_dots.datas", list_to_data)
 export("mo_dots.datas", dict_to_data)

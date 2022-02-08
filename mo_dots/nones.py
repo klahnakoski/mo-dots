@@ -14,7 +14,7 @@ from mo_dots.utils import CLASS, KEY, SLOT
 from mo_future import is_binary, text
 from mo_imports import expect, export
 
-to_data, null_types = expect("to_data", "null_types")
+to_data, null_types, get_attr = expect("to_data", "null_types", "get_attr")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -272,7 +272,7 @@ def _assign_to_null(obj, path, value, force=True):
                 _setdefault(obj, path0, value)
             return
 
-        old_value = obj.get(path0)
+        old_value = get_attr(obj, path0)
         if old_value == None:
             if value == None:
                 return

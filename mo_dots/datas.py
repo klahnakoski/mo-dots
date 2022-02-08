@@ -425,16 +425,14 @@ def leaves(value, prefix=None):
     :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
     """
     prefix = coalesce(prefix, "")
-    output = []
     for k, v in value.items():
         try:
             if _get(v, CLASS) in data_types:
-                output.extend(leaves(v, prefix=prefix + literal_field(k) + "."))
+                yield from leaves(v, prefix=prefix + literal_field(k) + ".")
             else:
-                output.append((prefix + literal_field(k), from_data(v)))
+                yield prefix + literal_field(k), to_data(v)
         except Exception as e:
             get_logger().error("Do not know how to handle", cause=e)
-    return output
 
 
 def _split_field(field):

@@ -29,11 +29,11 @@
             "",
             "#### Changes in version 9.x.x",
             "",
-            "Escaping a literal dot (`.`) is no longer (`\\\\.`) rather double-dot (`..`)",
+            "Escaping a literal dot (`.`) is no longer (`\\\\.`) rather double-dot (`..`). Escaping a literal dot can still be done with bell (`\\b`) ",
             "",
             "#### Changes in version 5.x.x",
             "",
-            "The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input. ",
+            "The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input.  Replace `Data(my_var)` with `to_data(my_var)`",
             "  ",
             "",
             "## Overview",
@@ -135,6 +135,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "9.128.22026",
+    "version": "9.132.22039",
     "zip_safe": false
 }
