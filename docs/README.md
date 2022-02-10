@@ -59,9 +59,8 @@ a == {"b": {"c": [1, 42]}}</pre>
 &gt;&gt;&gt; a = to_data({"a":42, "b":["hello"]})
 &gt;&gt;&gt; b = {"a":24, "b":["world"]}
 &gt;&gt;&gt; c = a + b
-c == {"a":66, "b":["hello", "world"]}
-</pre>
- 10. property names are coerced to unicode - it appears Python2.7
+c == {"a":66, "b":["hello", "world"]}</pre>
+ 10. property names are coerced to unicode - it appears Python2.7 
  `object.getattribute()` is called with `str()` even when using `from __future__
  import unicode_literals`
 
@@ -89,7 +88,7 @@ set(['b.c'])
 >>> a["b.c"]
 Null    # because b.c path does not exist
 
->>> a["b\.c"]
+>>> a["b..c"]
 42      # escaping the dot (`.`) makes it literal
 ```
 
@@ -165,7 +164,7 @@ simplifying iteration over deep inner object structures.
 >>> from mo_dots import to_data
 >>> a = to_data({"b": {"c": 42}})
 >>> for k, v in a.leaves():
-...     print k + ": " + unicode(v)
+...     print(f"{k}: {v}")
 
 b.c: 42
 ```
