@@ -35,7 +35,8 @@ from mo_dots import (
     unliteral_field,
     tail_field,
     join_field,
-    set_attr, PATH_NOT_FOUND,
+    set_attr,
+    PATH_NOT_FOUND,
 )
 from mo_dots.objects import datawrap
 from tests import ambiguous_test
@@ -403,7 +404,7 @@ class TestDot(FuzzyTestCase):
             """
             # COMPARE CURRENT VALUE TO MAX OF PAST 5, BUT NOT THE VERY LAST ONE
             try:
-                return record - MAX(records[index - 6: index - 1:])
+                return record - MAX(records[index - 6 : index - 1 :])
             except Exception as e:
                 return None
 
@@ -861,7 +862,10 @@ class TestDot(FuzzyTestCase):
         self.assertIs(x, y)
 
     def test_set_module_attr(self):
-        x = set_attr(ambiguous_test, "d1", "test")
+        old, Log.main_log = Log.main_log, StructuredLogger_usingList()
+        set_attr(ambiguous_test, "d1", "test")
+        new, Log.main_log = Log.main_log, old
+        self.assertIn(PATH_NOT_FOUND, new.lines[0])
         self.assertEqual(ambiguous_test.d1, "test")
 
     def test_relative(self):
@@ -998,6 +1002,18 @@ class TestDot(FuzzyTestCase):
         set_attr(x, "a", 42)
         self.assertEqual(x.a.a, 42)
 
+    def test_none_item(self):
+        self.assertIsInstance(to_data({"a": 1})[None], NullType)
+
+    def test_assign_to_dot(self):
+        x = to_data({"a": 1})
+        x["."] = 42
+        self.assertEqual(x["."], 42)
+
+    def test_assign_list_to_dot(self):
+        x = to_data({"a": 1})
+        x["."] = ['a', 'b']
+        self.assertEqual(x["."], ['a', 'b'])
 
 
 class _TestMapping(object):

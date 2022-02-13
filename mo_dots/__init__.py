@@ -18,7 +18,8 @@ from mo_future import (
     is_binary,
     text,
     OrderedDict,
-    none_type, first,
+    none_type,
+    first,
 )
 from mo_imports import export
 
@@ -136,7 +137,7 @@ def tail_field(field):
     RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
     IN (first, rest) PAIR
     """
-    if field == "." or field == None or field=="":
+    if field == "." or field == None or field == "":
         return ".", "."
     elif "." in field:
         path = split_field(field)
@@ -175,13 +176,17 @@ def join_field(path):
     while True:
         try:
             i = path.index("..")
-            if i==0:
+            if i == 0:
                 prefix += "."
                 path = path[1:]
             else:
                 path = path[: i - 1] + path[i + 1 :]
         except ValueError:
-            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
+            return (
+                ("." if prefix else "")
+                + prefix
+                + ".".join(literal_field(f) for f in path)
+            )
 
 
 def concat_field(prefix, suffix):

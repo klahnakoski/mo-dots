@@ -19,7 +19,14 @@ from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
 datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
-    "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value"
+    "datawrap",
+    "coalesce",
+    "list_to_data",
+    "to_data",
+    "from_data",
+    "Null",
+    "EMPTY",
+    "hash_value",
 )
 
 
@@ -47,6 +54,9 @@ class FlatList(object):
             _set(self, SLOT, vals)
 
     def __getitem__(self, index):
+        if index == ".":
+            return self
+
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
