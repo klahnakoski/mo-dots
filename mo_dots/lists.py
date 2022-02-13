@@ -29,7 +29,7 @@ datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = 
     "hash_value",
 )
 
-
+_null_hash = hash(None)
 _get = object.__getattribute__
 _set = object.__setattr__
 
@@ -135,9 +135,6 @@ class FlatList(object):
             from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
         ])
 
-    def __delslice__(self, i, j):
-        del _get(self, SLOT)[i:j]
-
     def __delitem__(self, i):
         del _get(self, SLOT)[i]
 
@@ -160,9 +157,6 @@ class FlatList(object):
 
     def __len__(self):
         return _get(self, SLOT).__len__()
-
-    def __list__(self):
-        return _get(self, SLOT)
 
     def copy(self):
         return FlatList(list(_get(self, SLOT)))
@@ -193,7 +187,7 @@ class FlatList(object):
     def __hash__(self):
         lst = _get(self, SLOT)
         if not lst:
-            return 0
+            return _null_hash
         return hash_value(lst[0])
 
     def __eq__(self, other):

@@ -14,10 +14,9 @@ from __future__ import unicode_literals
 from copy import copy, deepcopy
 
 from mo_future import PY3
-
-from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
+from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
 from mo_dots.lists import last, is_many, FlatList
 
 values = [1, 2, 3]
@@ -395,3 +394,37 @@ class TestList(FuzzyTestCase):
         b.remove("c")
         self.assertEqual(b, ["a", "b"])
         self.assertEqual(a, ["a", "b", "c"])
+
+    def test_null_hash(self):
+        x = to_data([])
+        y = Null
+        z = None
+
+        a = {x: 42}
+        b = {y: 42}
+        c = {z: 42}
+
+        self.assertEqual(a, b)
+        self.assertEqual(b, c)
+        self.assertEqual(c, a)
+
+    def test_eq1(self):
+        x = to_data(["a", "b"])
+        y = to_data(["a"])
+
+        self.assertFalse(x==y)
+
+    def test_eq2(self):
+        x = to_data([Bad(), "b"])
+        y = to_data(["a", "b"])
+
+        self.assertFalse(x == y)
+
+
+class Bad:
+
+    def __eq__(self, other):
+        raise Exception()
+
+    def __req__(self, other):
+        raise Exception()
