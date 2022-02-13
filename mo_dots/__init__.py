@@ -18,7 +18,7 @@ from mo_future import (
     is_binary,
     text,
     OrderedDict,
-    none_type,
+    none_type, first,
 )
 from mo_imports import export
 
@@ -151,17 +151,14 @@ def split_field(field):
     """
     if ILLEGAL_DOTS.search(field):
         get_logger().error("Odd number of dots is not allowed")
-    try:
-        if field.startswith(".."):
-            remainder = field.lstrip(".")
-            back = len(field) - len(remainder) - 1
-            return [".."] * back + [
-                UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
-            ]
-        else:
-            return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
-    except Exception:
-        return []
+    if field.startswith(".."):
+        remainder = field.lstrip(".")
+        back = len(field) - len(remainder) - 1
+        return [".."] * back + [
+            UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
+        ]
+    else:
+        return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
 
 
 def join_field(path):
@@ -240,11 +237,11 @@ def relative_field(field, parent):
 
 def hash_value(v):
     if is_many(v):
-        return hash(tuple(hash_value(vv) for vv in v))
-    elif _get(v, CLASS) not in data_types:
-        return hash(v)
+        return hash_value(first(v))
+    elif _get(v, CLASS) in data_types:
+        return hash_value(first(v.values()))
     else:
-        return hash(tuple(sorted(hash_value(vv) for vv in v.values())))
+        return hash(v)
 
 
 def fromkeys(keys, value=None):
@@ -253,19 +250,18 @@ def fromkeys(keys, value=None):
     return dict_to_data(dict.fromkeys(keys, value))
 
 
-def set_default(*dicts):
+def set_default(d, *dicts):
     """
     RECURSIVE MERGE OF MULTIPLE dicts MOST IMPORTANT FIRST
 
-    UPDATES dicts[0] WITH THE MERGE RESULT, WHERE MERGE RESULT IS DEFINED AS:
+    UPDATES d WITH THE MERGE RESULT, WHERE MERGE RESULT IS DEFINED AS:
     FOR EACH LEAF, RETURN THE FIRST NOT-NULL LEAF VALUE
 
-    :param dicts: dicts IN PRIORITY ORDER, HIHEST TO LOWEST
-    :return: dicts[0]
+    :param dicts: dicts IN PRIORITY ORDER, HIGHEST TO LOWEST
+    :return: d
     """
-    p0 = dicts[0]
-    agg = p0 if p0 or _get(p0, CLASS) in data_types else {}
-    for p in dicts[1:]:
+    agg = d if d or _get(d, CLASS) in data_types else {}
+    for p in dicts:
         p = from_data(p)
         if p is None:
             continue
@@ -282,8 +278,6 @@ def _all_default(d, default, seen=None):
         return
     if _get(default, CLASS) is Data:
         default = _get(default, SLOT)  # REACH IN AND GET THE dict
-        # Log = _late_import()
-        # Log.error("strictly dict (or object) allowed: got {{type}}", type=_get(default, CLASS).__name__)
 
     for k, default_value in default.items():
         default_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED

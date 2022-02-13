@@ -28,10 +28,10 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND, relative_field, unliteral_field, tail_field,
+    from_data, FlatList, get_attr, relative_field, unliteral_field, tail_field, join_field,
 )
 from mo_dots.objects import datawrap
-from tests import smoke_test, ambiguous_test
+from tests import ambiguous_test
 
 
 class TestDot(FuzzyTestCase):
@@ -476,12 +476,39 @@ class TestDot(FuzzyTestCase):
         test = d["a.b.c"]
         self.assertEqual(test, [1, 2])
 
-    def test_set_default(self):
+    def test_set_default1(self):
         a = {"x": {"y": 1}}
         b = {"x": {"z": 2}}
         c = {}
         d = set_default(c, a, b)
 
+        self.assertIs(from_data(d), c)
+        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
+        self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
+        self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
+
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+
+    def test_set_default2(self):
+        a = {"x": {"y": 1}}
+        b = {"x": {"z": 2}}
+        c = {}
+        d = set_default(c, None, a, b)
+
+        self.assertIs(from_data(d), c)
+        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
+        self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
+        self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
+
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+
+    def test_set_default3(self):
+        a = {"x": {"y": 1}}
+        b = {"x": {"z": 2}}
+        c = {}
+        d = set_default(None, c, a, b)
+
+        self.assertIsNot(from_data(d), c)
         self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
@@ -851,6 +878,20 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(tail_field("a"), ("a", "."))
         self.assertEqual(tail_field("a.b"), ("a", "b"))
         self.assertEqual(tail_field("a.b.c."), ("a", "b.c"))
+
+    def test_join_field_generator(self):
+        def gen():
+            yield "a",
+            yield "b"
+
+        self.assertEqual(join_field(gen()), "a.b")
+
+    def test_hash(self):
+        k1 = to_data({"a": 1, "b": 2})
+        k2 = to_data({"a": 1, "b": 2})
+        x = {k1: "42"}
+
+        self.assertEqual(x[k1], x[k2])
 
 
 class _TestMapping(object):
