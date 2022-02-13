@@ -227,11 +227,15 @@ def relative_field(field, parent):
             break
         common += 1
 
-    if len(parent_path) == common:
+    tail = join_field(field_path[common:])
+    if len(parent_path) <= common:
         return join_field(field_path[common:])
+
+    dots = "." * (len(parent_path) - common)
+    if tail == ".":
+        return "." + dots
     else:
-        dots = "." * (len(parent_path) - common)
-        return dots + "." + join_field(field_path[common:])
+        return "." + dots + tail
 
 
 def hash_value(v):

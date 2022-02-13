@@ -28,7 +28,7 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND,
+    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND, relative_field,
 )
 from mo_dots.objects import datawrap
 from tests import smoke_test, ambiguous_test
@@ -825,8 +825,17 @@ class TestDot(FuzzyTestCase):
         y = get_attr(ambiguous_test, "D")
         self.assertIs(x, y)
 
+    def test_relative(self):
+        self.assertEqual(relative_field("a.b.c", "."), "a.b.c")
+        self.assertEqual(relative_field("a.b.c", "a"), "b.c")
+        self.assertEqual(relative_field("a.b.c", "a.b"), "c")
+        self.assertEqual(relative_field("a.b.c", "a.b.c"), ".")
+        self.assertEqual(relative_field("a.b.c", "a.b.c.d"), "..")
+        self.assertEqual(relative_field("a.b.c", "a.b.c.d.e"), "...")
 
-
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c"), "k")
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c.d"), "..k")
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c.d.e"), "...k")
 
 
 class _TestMapping(object):
