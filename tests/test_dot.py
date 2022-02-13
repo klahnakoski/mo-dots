@@ -815,6 +815,10 @@ class TestDot(FuzzyTestCase):
         x = to_data({"a":[1,  2, 3]})
         self.assertIsInstance(first(x.leaves())[1], FlatList)
 
+    def test_leaves_returns_flat_list(self):
+        x = to_data([{"a":[1,  2, 3]}])
+        self.assertIsInstance(x, FlatList)
+
     def test_leaves_returns_inner(self):
         x = leaves_to_data({"a.b.c": 3, "\b": 42, "d": None})
         self.assertEqual(x, {"a":{"b":{"c":3}}, ".":42})
