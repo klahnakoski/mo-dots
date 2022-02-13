@@ -333,3 +333,8 @@ class TestList(FuzzyTestCase):
     def lest_last(self):
         self.assertEqual(to_data([]).last(), [])
         self.assertEqual(to_data([]).last(), None)
+
+    def test_filter(self):
+        x = to_data(["a", "b"])
+        y = x.filter(lambda i: i=="a")
+        self.assertEqual(y, ['a'])

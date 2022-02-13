@@ -25,7 +25,6 @@ datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
 
 _get = object.__getattribute__
 _set = object.__setattr__
-_emit_slice_warning = True
 
 
 class FlatList(object):
@@ -122,8 +121,8 @@ class FlatList(object):
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return FlatList(vals=[
-            from_data(u) for u in (to_data(v) for v in _get(self, SLOT)) if _filter(u)
+        return list_to_data([
+            from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
         ])
 
     def __delslice__(self, i, j):
@@ -151,19 +150,6 @@ class FlatList(object):
 
     def __len__(self):
         return _get(self, SLOT).__len__()
-
-    def __getslice__(self, i, j):
-        global _emit_slice_warning
-
-        if _emit_slice_warning:
-            _emit_slice_warning = False
-            Log.warning(
-                "slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes."
-                " Use [start:stop:step] (see "
-                "https://github.com/klahnakoski/mo-dots/tree/dev/docs#the-slice-operator-in-python27-is-inconsistent"
-                ")"
-            )
-        return self[i:j:]
 
     def __list__(self):
         return _get(self, SLOT)
