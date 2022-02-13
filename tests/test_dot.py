@@ -898,6 +898,29 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(x[k1], x[k2])
 
+    def test_bool(self):
+        a = to_data({})
+        b = to_data([])
+        c = to_data("")
+        d = Data()
+        d["."] = None
+        e = Data()
+        e["."] = 0
+
+        self.assertEqual(bool(a), True)
+        self.assertEqual(bool(b), False)
+        self.assertEqual(bool(c), False)
+        self.assertEqual(bool(d), False)
+        self.assertEqual(bool(e), True)
+
+    def test_iter(self):
+        a = to_data({})
+        self.assertEqual(list(a), [])
+
+        b = to_data({"a":42})
+        self.assertEqual(list(iter(b)), [("a", 42)])
+
+
 
 class _TestMapping(object):
     def __init__(self):

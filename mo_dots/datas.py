@@ -78,16 +78,11 @@ class Data(object):
     def __bool__(self):
         d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
-            return bool(d)
+            return True
         else:
             return d != None
 
-    def __nonzero__(self):
-        d = _get(self, SLOT)
-        if _get(d, CLASS) is dict:
-            return True if d else False
-        else:
-            return d != None
+    __nonzero__ = __bool__
 
     def __contains__(self, item):
         value = Data.__getitem__(self, item)
@@ -97,7 +92,10 @@ class Data(object):
 
     def __iter__(self):
         d = _get(self, SLOT)
-        return d.__iter__()
+        if _get(d, CLASS) is dict:
+            yield from d.items()
+        else:
+            yield from d.__iter__()
 
     def __getitem__(self, key):
         if key == None:
@@ -440,23 +438,6 @@ def _split_field(field):
     SIMPLE SPLIT, NO CHECKS
     """
     return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
-
-
-def _str(value, depth):
-    """
-    FOR DEBUGGING POSSIBLY RECURSIVE STRUCTURES
-    """
-    output = []
-    if depth > 0 and _get(value, CLASS) in data_types:
-        for k, v in value.items():
-            output.append(str(k) + "=" + _str(v, depth - 1))
-        return "{" + ",\n".join(output) + "}"
-    elif depth > 0 and is_list(value):
-        for v in value:
-            output.append(_str(v, depth - 1))
-        return "[" + ",\n".join(output) + "]"
-    else:
-        return str(type(value))
 
 
 def _iadd(self, other):
