@@ -136,7 +136,7 @@ def tail_field(field):
     RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
     IN (first, rest) PAIR
     """
-    if field == "." or field == None:
+    if field == "." or field == None or field=="":
         return ".", "."
     elif "." in field:
         path = split_field(field)

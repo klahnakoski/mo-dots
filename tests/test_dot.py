@@ -28,7 +28,7 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND, relative_field,
+    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND, relative_field, unliteral_field, tail_field,
 )
 from mo_dots.objects import datawrap
 from tests import smoke_test, ambiguous_test
@@ -836,6 +836,21 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(relative_field("a.b.c.k", "a.b.c"), "k")
         self.assertEqual(relative_field("a.b.c.k", "a.b.c.d"), "..k")
         self.assertEqual(relative_field("a.b.c.k", "a.b.c.d.e"), "...k")
+
+    def test_unliteral(self):
+        for f in (".", "..", "a", "a.b", "..a.b", "", "a.."):
+            self.assertEqual(unliteral_field(literal_field(f)), f)
+
+    def test_tail_field(self):
+        self.assertEqual(tail_field(None), (".", "."))
+        self.assertEqual(tail_field(""), (".", "."))
+        self.assertEqual(tail_field("."), (".", "."))
+        self.assertEqual(tail_field(".."), ("..", "."))
+        self.assertEqual(tail_field("..."), ("..", ".."))
+        self.assertEqual(tail_field("...."), ("..", "..."))
+        self.assertEqual(tail_field("a"), ("a", "."))
+        self.assertEqual(tail_field("a.b"), ("a", "b"))
+        self.assertEqual(tail_field("a.b.c."), ("a", "b.c"))
 
 
 class _TestMapping(object):
