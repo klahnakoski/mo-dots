@@ -382,12 +382,12 @@ def get_attr(obj, path):
     """
     try:
         return _get_attr(obj, split_field(path))
-    except Exception as e:
+    except Exception as cause:
         Log = get_logger()
         if PATH_NOT_FOUND in e:
-            Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=e)
+            Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", e)
+            Log.error("Problem setting value", cause=cause)
 
 
 def _get_attr(obj, path):
@@ -446,7 +446,7 @@ def _get_attr(obj, path):
         elif len(matched_attr_name) > 1:
             get_logger().error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
         else:
-            return _get_attr(obj[matched_attr_name[0]], path[1:])
+            return _get_attr(obj, matched_attr_name + path[1:])
 
     try:
         obj = obj[int(attr_name)]

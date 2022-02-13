@@ -16,6 +16,7 @@ from copy import deepcopy, copy
 
 from mo_future import UserDict, first
 from mo_logs import Log
+from mo_logs.strings import expand_template
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
@@ -27,9 +28,10 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList,
+    from_data, FlatList, get_attr, AMBIGUOUS_PATH_FOUND,
 )
 from mo_dots.objects import datawrap
+from tests import smoke_test, ambiguous_test
 
 
 class TestDot(FuzzyTestCase):
@@ -801,6 +803,29 @@ class TestDot(FuzzyTestCase):
         x = leaves_to_data({"a": to_data({"b.c":42})})
         self.assertEqual(x, {"a":{"b":{"c":42}}})
 
+    def test_to_generator(self):
+        def gen():
+            yield 1
+            yield 2
+
+        x = to_data(gen())
+        self.assertIsInstance(x, FlatList)
+        self.assertEqual(len(x), 2)
+
+    def test_get_module_attr(self):
+        x = get_attr(ambiguous_test, "d")
+        self.assertEqual(x, {"a":44})
+
+    def test_get_module_attr_ambiguous(self):
+        with self.assertRaises(Exception):
+            x = get_attr(ambiguous_test, "DE")
+
+    def test_get_module_attr_lowercase(self):
+        x = get_attr(ambiguous_test, "d")
+        y = get_attr(ambiguous_test, "D")
+        self.assertIs(x, y)
+
+
 
 
 
@@ -817,3 +842,15 @@ class SampleData(object):
 
     def __str__(self):
         return str(self.a) + str(self.b)
+
+
+class StructuredLogger_usingList(object):
+
+    def __init__(self):
+        self.lines = []
+
+    def write(self, template, params):
+        self.lines.append(expand_template(template, params))
+
+    def stop(self):
+        pass
