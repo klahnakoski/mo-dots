@@ -92,7 +92,7 @@ class FlatList(object):
     def __getattr__(self, key):
         if key in ["__json__", "__call__"]:
             raise AttributeError()
-        return self.get(key)
+        return FlatList.get(self, key)
 
     def get(self, key):
         """
@@ -126,12 +126,12 @@ class FlatList(object):
         ])
 
     def __delslice__(self, i, j):
-        Log.error(
-            "Can not perform del on slice: modulo arithmetic was performed on the"
-            " parameters.  You can try using clear()"
-        )
+        del _get(self, SLOT)[i:j]
 
-    def __clear__(self):
+    def __delitem__(self, i):
+        del _get(self, SLOT)[i]
+
+    def clear(self):
         _set(self, SLOT, [])
 
     def __iter__(self):

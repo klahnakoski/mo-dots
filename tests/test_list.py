@@ -11,6 +11,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from copy import copy, deepcopy
+
 from mo_future import PY3
 
 from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
@@ -338,3 +340,58 @@ class TestList(FuzzyTestCase):
         x = to_data(["a", "b"])
         y = x.filter(lambda i: i=="a")
         self.assertEqual(y, ['a'])
+
+    def test_methods(self):
+        a = to_data(["a", "b", "c"])
+
+        with self.assertRaises(Exception):
+            a.select("b")
+
+        a = to_data(["a", "b", "c"])
+        del a[0:1]
+        self.assertEqual(a, ["b", "c"])
+        a.clear()
+        self.assertEqual(a, None)
+
+        a = to_data(["a", "b", "c"])
+        del a[1]
+        self.assertEqual(a, ["a", "c"])
+        a.clear()
+        self.assertEqual(a, None)
+
+        a = to_data(["a", "b", "c"])
+        self.assertIn("b", a)
+        str(a)  # ensure no exception
+        self.assertIsNot(list(a), a)
+
+        a = to_data(["a", "b", "c"])
+        b = copy(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = list(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = a.copy()
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = deepcopy(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
