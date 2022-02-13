@@ -575,6 +575,7 @@ def _leaves_to_data(value):
     class_ = _get(value, CLASS)
     if class_ in (text, binary_type, int, float):
         return value
+
     if class_ in data_types:
         if class_ is Data:
             value = from_data(value)
@@ -589,23 +590,18 @@ def _leaves_to_data(value):
                 key = key.decode("utf8")
 
             d = output
-            if "." not in key:
-                if value is None:
-                    d.pop(key, None)
-                else:
-                    d[key] = value
+            seq = split_field(key)
+            for k in seq[:-1]:
+                e = d.get(k, None)
+                if e is None:
+                    d[k] = {}
+                    e = d[k]
+                d = e
+
+            if value == None:
+                d.pop(seq[-1], None)
             else:
-                seq = split_field(key)
-                for k in seq[:-1]:
-                    e = d.get(k, None)
-                    if e is None:
-                        d[k] = {}
-                        e = d[k]
-                    d = e
-                if value == None:
-                    d.pop(seq[-1], None)
-                else:
-                    d[seq[-1]] = value
+                d[seq[-1]] = value
         return output
     if hasattr(value, "__iter__"):
         output = []

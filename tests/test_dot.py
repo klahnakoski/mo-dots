@@ -789,6 +789,20 @@ class TestDot(FuzzyTestCase):
         x = to_data({"a":[1,  2, 3]})
         self.assertIsInstance(first(x.leaves())[1], FlatList)
 
+    def test_leaves_returns_inner(self):
+        x = leaves_to_data({"a.b.c": 3, "\b": 42, "d": None})
+        self.assertEqual(x, {"a":{"b":{"c":3}}, ".":42})
+
+    def test_empty_string_is_bad(self):
+        with self.assertRaises(Exception):
+            leaves_to_data({"": 4})
+
+    def test_leaves_w_Data(self):
+        x = leaves_to_data({"a": to_data({"b.c":42})})
+        self.assertEqual(x, {"a":{"b":{"c":42}}})
+
+
+
 
 class _TestMapping(object):
     def __init__(self):
