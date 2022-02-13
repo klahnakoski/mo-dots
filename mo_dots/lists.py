@@ -233,7 +233,7 @@ class FlatList(object):
             self.append(other)
         return self
 
-    def right(self, num=None):
+    def right(self, num):
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE RIGHT [-num:]
         """
@@ -244,7 +244,7 @@ class FlatList(object):
 
         return FlatList(_get(self, SLOT)[-num:])
 
-    def limit(self, num=None):
+    def limit(self, num):
         """
         NOT REQUIRED, BUT EXISTS AS OPPOSITE OF right()
         """
@@ -255,13 +255,15 @@ class FlatList(object):
 
         return FlatList(_get(self, SLOT)[:num])
 
+    left = limit
+
     def not_right(self, num):
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE LEFT [:-num:]
         """
-        if num == None:
+        if not num:
             return self
-        if num <= 0:
+        if num < 0:
             return Null
 
         return FlatList(_get(self, SLOT)[:-num:])
@@ -270,9 +272,9 @@ class FlatList(object):
         """
         NOT REQUIRED, EXISTS AS OPPOSITE OF not_right()
         """
-        if num == None:
+        if not num:
             return self
-        if num <= 0:
+        if num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[num::])
