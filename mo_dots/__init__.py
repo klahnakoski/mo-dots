@@ -366,12 +366,12 @@ def set_attr(obj, path, value):
     """
     try:
         return _set_attr(obj, split_field(path), value)
-    except Exception as e:
+    except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in e:
-            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=e)
+        if PATH_NOT_FOUND in cause:
+            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", cause=e)
+            Log.error("Problem setting value", cause=cause)
 
 
 def get_attr(obj, path):
@@ -469,9 +469,7 @@ def _set_attr(obj_, path, value):
     obj = _get_attr(obj_, path[:-1])
     if obj is None:
         # DELIBERATE USE OF `is`: WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
-        obj = _get_attr(obj_, path[:-1])
-        if obj is None:
-            get_logger().error(PATH_NOT_FOUND + " tried to get attribute of None")
+        get_logger().error(PATH_NOT_FOUND + " tried to get attribute of None")
 
     attr_name = path[-1]
 
@@ -742,6 +740,7 @@ export("mo_dots.lists", list_to_data)
 export("mo_dots.lists", to_data)
 export("mo_dots.lists", coalesce)
 export("mo_dots.lists", from_data)
+export("mo_dots.lists", hash_value)
 
 export("mo_dots.objects", list_to_data)
 export("mo_dots.objects", to_data)

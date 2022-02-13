@@ -12,14 +12,14 @@ from __future__ import absolute_import, division, unicode_literals
 import types
 from copy import deepcopy
 
-from mo_future import generator_types, first, is_text
+from mo_future import generator_types, first
 from mo_imports import expect, delay_import
 
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
-datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
-    "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY"
+datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
+    "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value"
 )
 
 
@@ -179,6 +179,12 @@ class FlatList(object):
             return to_data(_get(self, SLOT).pop())
         else:
             return to_data(_get(self, SLOT).pop(index))
+
+    def __hash__(self):
+        lst = _get(self, SLOT)
+        if not lst:
+            return 0
+        return hash_value(lst[0])
 
     def __eq__(self, other):
         lst = _get(self, SLOT)

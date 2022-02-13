@@ -35,7 +35,7 @@ from mo_dots import (
     unliteral_field,
     tail_field,
     join_field,
-    set_attr,
+    set_attr, PATH_NOT_FOUND,
 )
 from mo_dots.objects import datawrap
 from tests import ambiguous_test
@@ -905,6 +905,12 @@ class TestDot(FuzzyTestCase):
 
         self.assertEqual(x[k1], x[k2])
 
+        k1 = to_data([{"a": 1}, {"b": 2}])
+        k2 = to_data([{"a": 1}, {"b": 2}])
+        x = {k1: "42"}
+
+        self.assertEqual(x[k1], x[k2])
+
     def test_bool(self):
         a = to_data({})
         b = to_data([])
@@ -966,6 +972,33 @@ class TestDot(FuzzyTestCase):
         x += 3
         self.assertTrue(x == 3)
 
+    def test_get_zero(self):
+        self.assertEqual(get_attr({"a": [{"b": 2}, 2]}, "a.0.b"), 2)
+
+    def test_set_attr1(self):
+        d = {"a": [{"b": 3}, 2]}
+        set_attr(d, "a.0.b", 2)
+        self.assertEqual(to_data(d).a[0].b, 2)
+
+    def test_set_attr2(self):
+        old, Log.main_log = Log.main_log, StructuredLogger_usingList()
+        set_attr(None, "a", 2)
+        new, Log.main_log = Log.main_log, old
+        self.assertIn(PATH_NOT_FOUND, new.lines[0])
+
+    def test_set_attr3(self):
+        x = SampleData()
+        x.a = SampleData()
+        set_attr(x, "a.a", "q")
+        self.assertEqual(x.a.a, "q")
+
+        set_attr(x, "a.a", None)
+        self.assertEqual(x.a.a, None)
+
+        set_attr(x, "a", 42)
+        self.assertEqual(x.a.a, 42)
+
+
 
 class _TestMapping(object):
     def __init__(self):
@@ -974,8 +1007,8 @@ class _TestMapping(object):
 
 
 class SampleData(object):
-    def __init__(self):
-        self.a = 20
+    def __init__(self, a=None):
+        self.a = a or 20
         self.b = 30
 
     def __str__(self):
