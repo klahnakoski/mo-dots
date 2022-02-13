@@ -740,6 +740,7 @@ export("mo_dots.datas", hash_value)
 export("mo_dots.datas", listwrap)
 export("mo_dots.datas", literal_field)
 export("mo_dots.datas", null_types)
+export("mo_dots.datas", concat_field)
 
 export("mo_dots.lists", list_to_data)
 export("mo_dots.lists", to_data)

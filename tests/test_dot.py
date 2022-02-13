@@ -38,6 +38,7 @@ from mo_dots import (
     set_attr,
     PATH_NOT_FOUND,
 )
+from mo_dots.datas import leaves
 from mo_dots.objects import datawrap
 from tests import ambiguous_test
 
@@ -839,6 +840,14 @@ class TestDot(FuzzyTestCase):
         x = leaves_to_data({"a": to_data({"b.c": 42})})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
+    def test_leaves_on_dict(self):
+        x = list(leaves({"a": to_data({"b.c": 42})}))
+        self.assertEqual(x, [("a.b..c", 42)])
+
+    def test_leaves_on_dict_w_prefix(self):
+        x = leaves({"a": to_data({"b.c": 42})}, prefix="::")
+        self.assertEqual(x, [("::a.b..c", 42)])
+
     def test_to_generator(self):
         def gen():
             yield 1
@@ -1012,8 +1021,11 @@ class TestDot(FuzzyTestCase):
 
     def test_assign_list_to_dot(self):
         x = to_data({"a": 1})
-        x["."] = ['a', 'b']
-        self.assertEqual(x["."], ['a', 'b'])
+        x["."] = ["a", "b"]
+        self.assertEqual(x["."], ["a", "b"])
+
+    def test_repr(self):
+        self.assertEqual(repr(to_data({"a": 1})), "Data({'a': 1})")
 
 
 class _TestMapping(object):
