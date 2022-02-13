@@ -28,7 +28,7 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList, get_attr, relative_field, unliteral_field, tail_field, join_field,
+    from_data, FlatList, get_attr, relative_field, unliteral_field, tail_field, join_field, set_attr,
 )
 from mo_dots.objects import datawrap
 from tests import ambiguous_test
@@ -478,12 +478,11 @@ class TestDot(FuzzyTestCase):
 
     def test_set_default1(self):
         a = {"x": {"y": 1}}
-        b = {"x": {"z": 2}}
+        b = {"x": {"z": 2, "y": None}}
         c = {}
         d = set_default(c, a, b)
 
         self.assertIs(from_data(d), c)
-        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
@@ -496,7 +495,6 @@ class TestDot(FuzzyTestCase):
         d = set_default(c, None, a, b)
 
         self.assertIs(from_data(d), c)
-        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
@@ -509,7 +507,6 @@ class TestDot(FuzzyTestCase):
         d = set_default(None, c, a, b)
 
         self.assertIsNot(from_data(d), c)
-        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
@@ -852,6 +849,10 @@ class TestDot(FuzzyTestCase):
         y = get_attr(ambiguous_test, "D")
         self.assertIs(x, y)
 
+    def test_set_module_attr(self):
+        x = set_attr(ambiguous_test, "d1", "test")
+        self.assertEqual(ambiguous_test.d1, "test")
+
     def test_relative(self):
         self.assertEqual(relative_field("a.b.c", "."), "a.b.c")
         self.assertEqual(relative_field("a.b.c", "a"), "b.c")
@@ -881,7 +882,7 @@ class TestDot(FuzzyTestCase):
 
     def test_join_field_generator(self):
         def gen():
-            yield "a",
+            yield "a"
             yield "b"
 
         self.assertEqual(join_field(gen()), "a.b")
