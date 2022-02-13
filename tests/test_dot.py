@@ -1027,6 +1027,37 @@ class TestDot(FuzzyTestCase):
     def test_repr(self):
         self.assertEqual(repr(to_data({"a": 1})), "Data({'a': 1})")
 
+    def test_add_one_to_dict(self):
+        x = to_data({"a": {"b": 42}})
+        with self.assertRaises(Exception):
+            x += {"a": 1}
+
+    def test_add_dict_to_one(self):
+        x = to_data({"a": 1})
+        with self.assertRaises(Exception):
+            x += {"a": {"b": 42}}
+
+    def test_add_dict_to_list(self):
+        x = to_data({"a": [1]})
+        x += {"a": {"b": 42}}
+        self.assertEqual(x, {"a": [1, {"b":42}]})
+
+    def test_add_str_to_dict(self):
+        x = to_data({"a": {"b": 42}})
+        with self.assertRaises(Exception):
+            x += {"a": "test"}
+
+    def test_add_dict_to_str(self):
+        x = to_data({"a": "test"})
+        with self.assertRaises(Exception):
+            x += {"a": {"b": 42}}
+
+    def test_add_str_to_str(self):
+        x = to_data({"a": "test"})
+        with self.assertRaises("has no attribute 'append'"):
+            x += {"a": "world"}
+
+
 
 class _TestMapping(object):
     def __init__(self):
