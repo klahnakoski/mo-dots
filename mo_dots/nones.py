@@ -45,14 +45,7 @@ class NullType(object):
     def __bool__(self):
         return False
 
-    def __int__(self):
-        return None
-
-    def __float__(self):
-        return Null
-
-    def __nonzero__(self):
-        return False
+    __nonzero__ = __bool__
 
     def __add__(self, other):
         if is_sequence(other):
@@ -66,15 +59,12 @@ class NullType(object):
         return Null
 
     def __iadd__(self, other):
-        try:
-            o = _get(self, SLOT)
-            if o is None:
-                return self
-            key = _get(self, KEY)
+        o = _get(self, SLOT)
+        if o is None:
+            return self
+        key = _get(self, KEY)
 
-            _assign_to_null(o, [key], other)
-        except Exception as e:
-            raise e
+        _assign_to_null(o, [key], other)
         return other
 
     def __sub__(self, other):
@@ -93,7 +83,7 @@ class NullType(object):
         return Null
 
     def __int__(self):
-        return Null
+        return None
 
     def __float__(self):
         return Null
@@ -101,10 +91,19 @@ class NullType(object):
     def __div__(self, other):
         return Null
 
+    def __itruediv__(self, other):
+        return Null
+
     def __rdiv__(self, other):
         return Null
 
     def __truediv__(self, other):
+        return Null
+
+    def __floordiv__(self, other):
+        return Null
+
+    def __rfloordiv__(self, other):
         return Null
 
     def __rtruediv__(self, other):
@@ -137,14 +136,17 @@ class NullType(object):
         )
 
     def __or__(self, other):
-        if other is True:
-            return True
-        return Null
+        return other
 
     def __ror__(self, other):
         return other
 
     def __and__(self, other):
+        if other is False:
+            return False
+        return Null
+
+    def __rand__(self, other):
         if other is False:
             return False
         return Null

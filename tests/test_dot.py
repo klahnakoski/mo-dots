@@ -28,7 +28,14 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList, get_attr, relative_field, unliteral_field, tail_field, join_field, set_attr,
+    from_data,
+    FlatList,
+    get_attr,
+    relative_field,
+    unliteral_field,
+    tail_field,
+    join_field,
+    set_attr,
 )
 from mo_dots.objects import datawrap
 from tests import ambiguous_test
@@ -396,7 +403,7 @@ class TestDot(FuzzyTestCase):
             """
             # COMPARE CURRENT VALUE TO MAX OF PAST 5, BUT NOT THE VERY LAST ONE
             try:
-                return record - MAX(records[index - 6 : index - 1 :])
+                return record - MAX(records[index - 6: index - 1:])
             except Exception as e:
                 return None
 
@@ -812,24 +819,24 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(result, "test")
 
     def test_leaves_returns_flat_list(self):
-        x = to_data({"a":[1,  2, 3]})
+        x = to_data({"a": [1, 2, 3]})
         self.assertIsInstance(first(x.leaves())[1], FlatList)
 
     def test_leaves_returns_flat_list(self):
-        x = to_data([{"a":[1,  2, 3]}])
+        x = to_data([{"a": [1, 2, 3]}])
         self.assertIsInstance(x, FlatList)
 
     def test_leaves_returns_inner(self):
         x = leaves_to_data({"a.b.c": 3, "\b": 42, "d": None})
-        self.assertEqual(x, {"a":{"b":{"c":3}}, ".":42})
+        self.assertEqual(x, {"a": {"b": {"c": 3}}, ".": 42})
 
     def test_empty_string_is_bad(self):
         with self.assertRaises(Exception):
             leaves_to_data({"": 4})
 
     def test_leaves_w_Data(self):
-        x = leaves_to_data({"a": to_data({"b.c":42})})
-        self.assertEqual(x, {"a":{"b":{"c":42}}})
+        x = leaves_to_data({"a": to_data({"b.c": 42})})
+        self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
     def test_to_generator(self):
         def gen():
@@ -842,7 +849,7 @@ class TestDot(FuzzyTestCase):
 
     def test_get_module_attr(self):
         x = get_attr(ambiguous_test, "d")
-        self.assertEqual(x, {"a":44})
+        self.assertEqual(x, {"a": 44})
 
     def test_get_module_attr_ambiguous(self):
         with self.assertRaises(Exception):
@@ -917,9 +924,47 @@ class TestDot(FuzzyTestCase):
         a = to_data({})
         self.assertEqual(list(a), [])
 
-        b = to_data({"a":42})
+        b = to_data({"a": 42})
         self.assertEqual(list(iter(b)), [("a", 42)])
 
+    def test_null(self):
+        with self.assertRaises(Exception):
+            int(Null)
+
+        with self.assertRaises(Exception):
+            float(Null)
+
+        self.assertFalse(bool(Null))
+        self.assertFalse(len(Null))
+
+        self.assertTrue(1 + Null == None)
+        self.assertTrue(Null + 1 == None)
+        self.assertTrue(Null() == None)
+        self.assertTrue(Null - 1 == None)
+        self.assertTrue(1 - Null == None)
+        self.assertTrue(Null * 1 == None)
+        self.assertTrue(1 * Null == None)
+        self.assertTrue(Null / 1 == None)
+        self.assertTrue(1 / Null == None)
+        self.assertTrue(Null // 1 == None)
+        self.assertTrue(1 // Null == None)
+        self.assertTrue(Null | 1 == 1)
+        self.assertTrue(1 | Null == 1)
+        self.assertTrue(Null & 1 == None)
+        self.assertTrue(1 & Null == None)
+        self.assertFalse(Null & False)
+        self.assertFalse(False & Null)
+
+        self.assertTrue((1 > Null) == None)
+        self.assertTrue((1 >= Null) == None)
+        self.assertTrue((1 <= Null) == None)
+        self.assertTrue((1 < Null) == None)
+
+        self.assertTrue(-Null == None)
+
+        x = to_data({}).a.b.c
+        x += 3
+        self.assertTrue(x == 3)
 
 
 class _TestMapping(object):
@@ -938,7 +983,6 @@ class SampleData(object):
 
 
 class StructuredLogger_usingList(object):
-
     def __init__(self):
         self.lines = []
 
