@@ -115,7 +115,7 @@ def datawrap(v):
 
     if type_ is dict:
         m = _new(Data)
-        _set(m, SLOT, d)
+        _set(m, SLOT, v)
         return m
     elif type_ is tuple:
         return FlatList(v)
