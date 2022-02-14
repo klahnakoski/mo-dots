@@ -444,6 +444,9 @@ class TestList(FuzzyTestCase):
         self.assertEqual(x.map(lambda c: "::" + c, includeNone=False), ["::a", "::c"])
         self.assertEqual(x.map(lambda c: "::" + c if c is not None else None), ["::a", None, "::c"])
 
+    def test_bad_null(self):
+        self.assertFalse(is_null(Bad()))
+
 
 class Bad:
     def __eq__(self, other):

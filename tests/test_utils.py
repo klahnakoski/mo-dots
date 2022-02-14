@@ -9,7 +9,7 @@
 from unittest import TestCase
 
 import tests
-from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr
+from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr, tuplewrap
 
 
 class TestUtils(TestCase):
@@ -45,3 +45,12 @@ class TestUtils(TestCase):
         self.assertIsInstance(m, type(tests))
         v = get_attr(tests, "get_attr.D")
         self.assertEqual(v, {"unique": 1234})
+
+    def test_tuplewrap(self):
+        self.assertEqual(tuplewrap(None), tuple())
+        self.assertEqual(tuplewrap("hi"), ("hi",))
+        self.assertEqual(tuplewrap(["a", "b"]), ("a", "b"))
+
+        self.assertIsInstance(tuplewrap(None), tuple)
+        self.assertIsInstance(tuplewrap("hi"), tuple)
+        self.assertIsInstance(tuplewrap(["a", "b"]), tuple)

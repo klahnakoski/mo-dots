@@ -693,9 +693,12 @@ def tuplewrap(value):
     """
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
-    if is_many(value):
+    if value==None:
+        return tuple()
+    elif is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
-    return (from_data(value),)
+    else:
+        return from_data(value),
 
 
 def is_null(t):
