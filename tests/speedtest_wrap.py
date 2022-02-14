@@ -46,7 +46,7 @@ def test_wrap_1():
             for v in inputs:
                 results.append(baseline(v))
 
-        Log.note("Done {{i}} of {{num}}", i=i, num=NUM_REPEAT)
+        Log.info("Done {{i}} of {{num}}", i=i, num=NUM_REPEAT)
 
 
 def test_wrap_2():
@@ -78,7 +78,7 @@ def test_wrap_2():
             for v in inputs:
                 results.append(baseline(v))
 
-        Log.note("Done {{i}} of {{num}}", i=i, num=NUM_REPEAT)
+        Log.info("Done {{i}} of {{num}}", i=i, num=NUM_REPEAT)
 
 
 test_wrap_1()

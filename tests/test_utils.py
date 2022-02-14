@@ -6,13 +6,16 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from unittest import TestCase
+
+from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
-from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr, tuplewrap
+from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr, tuplewrap, \
+    utils, Data
+from mo_dots.utils import PoorLogger
 
 
-class TestUtils(TestCase):
+class TestUtils(FuzzyTestCase):
 
     def test_inverse(self):
         result = inverse({"a": "b", "b": "b"})
@@ -54,3 +57,16 @@ class TestUtils(TestCase):
         self.assertIsInstance(tuplewrap(None), tuple)
         self.assertIsInstance(tuplewrap("hi"), tuple)
         self.assertIsInstance(tuplewrap(["a", "b"]), tuple)
+
+    def test_poor_logger(self):
+        logger = PoorLogger()
+        lines = []
+        utils.STDOUT, old = Data(write=lambda t: lines.append(t)), utils.STDOUT
+
+        logger.info("test1")
+        logger.warning("test2")
+        with self.assertRaises("test3"):
+            logger.error("test3")
+
+        with self.assertRaises("test4"):
+            logger.error("test3", cause=Exception("test4"))

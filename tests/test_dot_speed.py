@@ -57,7 +57,7 @@ class TestDotSpeed(FuzzyTestCase):
             for i in times:
                 k = x["a"]
 
-        Log.note(
+        Log.info(
             "attribute access is {{t|round(places=2)}}x faster",
             t=(att.duration.seconds + prop.duration.seconds)
             / 2
@@ -158,7 +158,7 @@ class TestDotSpeed(FuzzyTestCase):
             "is_text should be slower than isinstance check",
         )
 
-        Log.note(
+        Log.info(
             "is_text check is {{t|round(places=2)}}x slower than isinstance",
             t=m_time.duration.total_seconds() / i_time.duration.total_seconds(),
         )
@@ -180,11 +180,11 @@ class TestDotSpeed(FuzzyTestCase):
 
         self.assertAlmostEqual(me_result, eq_result, "expecting compare to be the same")
 
-        Log.note(
+        Log.info(
             "is_null compare is {{t|round(places=2)}}x slower than `== None`",
             t=me_time.duration.seconds / eq_time.duration.seconds,
         )
-        Log.note(
+        Log.info(
             "is_null compare is {{t|round(places=2)}}x slower than `is None`",
             t=me_time.duration.seconds / is_time.duration.seconds,
         )

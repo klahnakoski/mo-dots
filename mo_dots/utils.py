@@ -48,7 +48,7 @@ def get_module(name):
 
 class PoorLogger(object):
     @classmethod
-    def note(cls, note, **kwargs):
+    def info(cls, note, **kwargs):
         STDOUT.write(note.encode("utf8") + b"\n")
 
     @classmethod
