@@ -420,6 +420,21 @@ class TestList(FuzzyTestCase):
 
         self.assertFalse(x == y)
 
+    def test_append(self):
+        x = to_data(["a", "b"])
+
+        xx = x | x
+        self.assertEqual(xx, ["a", "b", "a", "b"])
+
+        zx = "z" + x
+        self.assertEqual(zx, ["z", "a", "b"])
+
+        zqx = ("z", "q") + x
+        self.assertEqual(zqx, ["z", "q", "a", "b"])
+
+        x += "ok"
+        self.assertEqual(x, ["a", "b", "ok"])
+
 
 class Bad:
 

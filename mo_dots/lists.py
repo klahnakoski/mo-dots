@@ -205,26 +205,33 @@ class FlatList(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __add__(self, value):
-        if value == None:
-            return self
+    def __add__(self, other):
         output = list(_get(self, SLOT))
-        output.extend(value)
+        if other == None:
+            return self
+        elif is_many(other):
+            output.extend(from_data(other))
+        else:
+            output.append(other)
         return FlatList(vals=output)
 
-    def __or__(self, value):
-        output = list(_get(self, SLOT))
-        output.append(value)
-        return FlatList(vals=output)
+    __or__ = __add__
 
     def __radd__(self, other):
-        output = list(other)
-        output.extend(_get(self, SLOT))
+        output = list(_get(self, SLOT))
+        if other == None:
+            return self
+        elif is_many(other):
+            output = list(from_data(other)) + output
+        else:
+            output = [other] + output
         return FlatList(vals=output)
 
     def __iadd__(self, other):
-        if is_list(other):
-            self.extend(other)
+        if other == None:
+            return self
+        elif is_many(other):
+            self.extend(from_data(other))
         else:
             self.append(other)
         return self
