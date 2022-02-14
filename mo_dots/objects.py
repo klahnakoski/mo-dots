@@ -131,7 +131,7 @@ def datawrap(v):
     return DataObject(v)
 
 
-class DictClass(object):
+class DataClass(object):
     """
     ALLOW INSTANCES OF class_ TO ACT LIKE dicts
     ALLOW CONSTRUCTOR TO ACCEPT @override

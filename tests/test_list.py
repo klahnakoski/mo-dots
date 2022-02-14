@@ -17,7 +17,7 @@ from mo_future import PY3
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
-from mo_dots.lists import last, is_many, FlatList
+from mo_dots.lists import last, is_many, FlatList, datawrap
 
 values = [1, 2, 3]
 
@@ -448,9 +448,15 @@ class TestList(FuzzyTestCase):
         self.assertFalse(is_null(Bad()))
 
 
+
 class Bad:
     def __eq__(self, other):
         raise Exception()
 
     def __req__(self, other):
         raise Exception()
+
+
+def gen():
+    yield "a"
+    yield "b"

@@ -14,7 +14,8 @@ from __future__ import unicode_literals
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots import DataObject, to_data
-from mo_dots.lists import datawrap
+from mo_dots.lists import datawrap, Null
+from mo_dots.objects import DataClass
 
 values = [1, 2, 3]
 
@@ -39,6 +40,18 @@ class TestObject(FuzzyTestCase):
         self.assertEqual(datawrap((1, 2)), (1, 2))
         self.assertEqual(to_data([1, 2]), (1, 2))
         self.assertEqual(to_data(gen()), (1, 2))
+
+    def test_datawrap(self):
+        self.assertEqual(datawrap(None), Null)
+        self.assertEqual(datawrap(Null), Null)
+        self.assertEqual(datawrap(gen()), ["a", "b"])
+        self.assertEqual(to_data({"a": 3}), {"a":3})
+
+    def test_dict_class(self):
+        BetterObject = DataClass(MyObject)
+        x = BetterObject(42)
+        self.assertEqual(x.my_attr, 42)
+
 
 
 def gen():
