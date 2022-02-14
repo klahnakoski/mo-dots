@@ -270,11 +270,11 @@ def set_default(d, *dicts):
         p = from_data(p)
         if p is None:
             continue
-        _all_default(agg, p, seen={})
+        _set_default(agg, p, seen={})
     return to_data(agg)
 
 
-def _all_default(d, default, seen=None):
+def _set_default(d, default, seen=None):
     """
     ANY VALUE NOT SET WILL BE SET BY THE default
     THIS IS RECURSIVE
@@ -301,7 +301,7 @@ def _all_default(d, default, seen=None):
                         copy_dict = {}
                         seen[id(default_value)] = copy_dict
                         _set_attr(d, [k], copy_dict)
-                        _all_default(copy_dict, default_value, seen)
+                        _set_default(copy_dict, default_value, seen)
                 else:
                     # ASSUME PRIMITIVE (OR LIST, WHICH WE DO NOT COPY)
                     try:
@@ -323,7 +323,7 @@ def _all_default(d, default, seen=None):
                 _set_attr(d, [k], df)
             else:
                 seen[id(default_value)] = existing_value
-                _all_default(existing_value, default_value, seen)
+                _set_default(existing_value, default_value, seen)
 
 
 def _getdefault(obj, key):

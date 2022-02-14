@@ -8,7 +8,8 @@
 #
 from unittest import TestCase
 
-from mo_dots import inverse, coalesce, Null, missing, exists
+import tests
+from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr
 
 
 class TestUtils(TestCase):
@@ -28,3 +29,19 @@ class TestUtils(TestCase):
 
     def test_exists(self):
         self.assertEqual(exists(None), False)
+
+    def test_hash_value(self):
+        self.assertEqual(hash_value(["a"]), hash("a"))
+
+    def test_set_default(self):
+        x = set_default({"a": 1}, None)
+        self.assertEqual(x, {"a": 1})
+
+        x = set_default({"a": 1}, to_data({"b":1}))
+        self.assertEqual(x, {"a": 1, "b": 1})
+
+    def test_get_unknown_module_attr(self):
+        m = get_attr(tests, "get_attr")
+        self.assertIsInstance(m, type(tests))
+        v = get_attr(tests, "get_attr.D")
+        self.assertEqual(v, {"unique": 1234})
