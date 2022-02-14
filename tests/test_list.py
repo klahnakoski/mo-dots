@@ -337,8 +337,8 @@ class TestList(FuzzyTestCase):
 
     def test_filter(self):
         x = to_data(["a", "b"])
-        y = x.filter(lambda i: i=="a")
-        self.assertEqual(y, ['a'])
+        y = x.filter(lambda i: i == "a")
+        self.assertEqual(y, ["a"])
 
     def test_methods(self):
         a = to_data(["a", "b", "c"])
@@ -412,7 +412,7 @@ class TestList(FuzzyTestCase):
         x = to_data(["a", "b"])
         y = to_data(["a"])
 
-        self.assertFalse(x==y)
+        self.assertFalse(x == y)
 
     def test_eq2(self):
         x = to_data([Bad(), "b"])
@@ -435,9 +435,17 @@ class TestList(FuzzyTestCase):
         x += "ok"
         self.assertEqual(x, ["a", "b", "ok"])
 
+    def test_last(self):
+        x = to_data([])
+        self.assertEqual(x.last(), Null)
+
+    def test_map(self):
+        x = to_data(["a", None, "c"])
+        self.assertEqual(x.map(lambda c: "::" + c, includeNone=False), ["::a", "::c"])
+        self.assertEqual(x.map(lambda c: "::" + c if c is not None else None), ["::a", None, "::c"])
+
 
 class Bad:
-
     def __eq__(self, other):
         raise Exception()
 
