@@ -956,8 +956,12 @@ class TestDot(FuzzyTestCase):
         self.assertFalse(bool(Null))
         self.assertFalse(len(Null))
 
+        self.assertEqual([1] + Null, [1])
+        self.assertEqual(Null + [1], [1])
+
         self.assertTrue(1 + Null == None)
         self.assertTrue(Null + 1 == None)
+        self.assertTrue(Null + Null == None)
         self.assertTrue(Null() == None)
         self.assertTrue(Null - 1 == None)
         self.assertTrue(1 - Null == None)
@@ -965,21 +969,33 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(1 * Null == None)
         self.assertTrue(Null / 1 == None)
         self.assertTrue(1 / Null == None)
+        self.assertTrue(Null / 1.2 == None)
+        self.assertTrue(1.2 / Null == None)
         self.assertTrue(Null // 1 == None)
         self.assertTrue(1 // Null == None)
         self.assertTrue(Null | 1 == 1)
         self.assertTrue(1 | Null == 1)
+        self.assertTrue(Null ^ 1 == 1)
+        self.assertTrue(1 ^ Null == 1)
         self.assertTrue(Null & 1 == None)
         self.assertTrue(1 & Null == None)
         self.assertFalse(Null & False)
         self.assertFalse(False & Null)
-
         self.assertTrue((1 > Null) == None)
         self.assertTrue((1 >= Null) == None)
         self.assertTrue((1 <= Null) == None)
         self.assertTrue((1 < Null) == None)
-
         self.assertTrue(-Null == None)
+        self.assertTrue(copy(Null) == Null)
+        self.assertTrue(Null[1:3] == Null)
+        self.assertTrue(Null[1] == Null)
+        self.assertTrue(Null.__div__(0) == None)
+        self.assertTrue(Null.__rdiv__(0) == None)
+        self.assertTrue(Null.__itruediv__(0) == None)
+
+        x = Null
+        x += Null
+        self.assertTrue(x == None)
 
         x = to_data({}).a.b.c
         x += 3
@@ -1040,7 +1056,7 @@ class TestDot(FuzzyTestCase):
     def test_add_dict_to_list(self):
         x = to_data({"a": [1]})
         x += {"a": {"b": 42}}
-        self.assertEqual(x, {"a": [1, {"b":42}]})
+        self.assertEqual(x, {"a": [1, {"b": 42}]})
 
     def test_add_str_to_dict(self):
         x = to_data({"a": {"b": 42}})
@@ -1056,7 +1072,6 @@ class TestDot(FuzzyTestCase):
         x = to_data({"a": "test"})
         with self.assertRaises("has no attribute 'append'"):
             x += {"a": "world"}
-
 
 
 class _TestMapping(object):

@@ -53,6 +53,8 @@ class NullType(object):
         return Null
 
     def __radd__(self, other):
+        if is_sequence(other):
+            return other
         return Null
 
     def __call__(self, *args, **kwargs):
