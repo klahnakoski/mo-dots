@@ -168,15 +168,6 @@ class NullType(object):
     def __deepcopy__(self, memo):
         return Null
 
-    def last(self):
-        """
-        IN CASE self IS INTERPRETED AS A list
-        """
-        return Null
-
-    def right(self, num=None):
-        return Null
-
     def __getitem__(self, key):
         if isinstance(key, slice):
             return Null
