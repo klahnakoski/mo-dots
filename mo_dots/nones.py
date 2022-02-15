@@ -156,6 +156,9 @@ class NullType(object):
     def __xor__(self, other):
         return Null
 
+    def __rxor__(self, other):
+        return Null
+
     def __len__(self):
         return 0
 
