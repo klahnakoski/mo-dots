@@ -840,6 +840,13 @@ class TestDot(FuzzyTestCase):
         x = leaves_to_data({"a": to_data({"b.c": 42})})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
+    def test_leaves_w_simple(self):
+        x = leaves_to_data(42)
+        self.assertEqual(x, 42)
+
+        x = leaves_to_data([42, 0])
+        self.assertEqual(x, [42, 0])
+
     def test_leaves_on_dict(self):
         x = list(leaves({"a": to_data({"b.c": 42})}))
         self.assertEqual(x, [("a.b..c", 42)])
