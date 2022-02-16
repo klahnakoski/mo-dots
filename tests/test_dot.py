@@ -120,8 +120,8 @@ class TestDot(FuzzyTestCase):
 
     def test_null_access(self):
         a = Data()
-        c = a.b[b"test"]
-        self.assertTrue(c == None, "Expecting Null to accept str() for item access")
+        c = a.b["test"]
+        self.assertTrue(c == None)
 
     def test_null(self):
         a = 0
@@ -1026,6 +1026,10 @@ class TestDot(FuzzyTestCase):
 
         set_attr(x, "a", 42)
         self.assertEqual(x.a.a, 42)
+
+        x.b = {}
+        set_attr(x, "b", None)
+        self.assertTrue(x.b == None)
 
     def test_none_item(self):
         self.assertIsInstance(to_data({"a": 1})[None], NullType)

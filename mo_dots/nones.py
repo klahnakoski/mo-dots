@@ -9,10 +9,11 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from mo_future import text
+from mo_imports import expect, export
+
 from mo_dots.lists import is_sequence
 from mo_dots.utils import CLASS, KEY, SLOT
-from mo_future import is_binary, text
-from mo_imports import expect, export
 
 to_data, null_types, get_attr = expect("to_data", "null_types", "get_attr")
 
@@ -174,8 +175,6 @@ class NullType(object):
     def __getitem__(self, key):
         if isinstance(key, slice):
             return Null
-        elif is_binary(key):
-            key = key.decode("utf8")
         elif isinstance(key, int):
             return NullType(self, key)
 

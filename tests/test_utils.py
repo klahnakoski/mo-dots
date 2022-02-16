@@ -43,6 +43,14 @@ class TestUtils(FuzzyTestCase):
         x = set_default({"a": 1}, to_data({"b":1}))
         self.assertEqual(x, {"a": 1, "b": 1})
 
+    def test_set_default_w_None(self):
+        x = set_default({}, {"a": None})
+        self.assertEqual(x, {})
+
+        y = {"d": 2}
+        x = set_default(to_data({"b": 1}), {"a": {"b": y, "c": y}})
+        self.assertEqual(x, {"b": 1, "a": {"b": {"d": 2}, "c": {"d": 2}}})
+
     def test_get_unknown_module_attr(self):
         m = get_attr(tests, "get_attr")
         self.assertIsInstance(m, type(tests))

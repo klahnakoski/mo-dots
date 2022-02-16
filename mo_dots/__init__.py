@@ -15,7 +15,6 @@ import sys
 from mo_future import (
     binary_type,
     generator_types,
-    is_binary,
     text,
     OrderedDict,
     none_type,
@@ -267,10 +266,7 @@ def set_default(d, *dicts):
     """
     agg = d if d or _get(d, CLASS) in data_types else {}
     for p in dicts:
-        p = from_data(p)
-        if p is None:
-            continue
-        _set_default(agg, p, seen={})
+        _set_default(agg, from_data(p), seen={})
     return to_data(agg)
 
 
@@ -281,8 +277,6 @@ def _set_default(d, default, seen=None):
     """
     if default is None:
         return
-    if _get(default, CLASS) is Data:
-        default = _get(default, SLOT)  # REACH IN AND GET THE dict
 
     for k, default_value in default.items():
         default_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
@@ -587,8 +581,6 @@ def _leaves_to_data(value):
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
-            if is_binary(key):
-                key = key.decode("utf8")
 
             d = output
             seq = split_field(key)
