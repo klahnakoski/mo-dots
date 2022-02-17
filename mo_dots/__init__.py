@@ -17,7 +17,7 @@ from mo_future import (
     generator_types,
     text,
     OrderedDict,
-    none_type,
+    none_type, flatten,
     first,
 )
 from mo_imports import export
@@ -188,8 +188,8 @@ def join_field(path):
             )
 
 
-def concat_field(prefix, suffix):
-    return join_field(split_field(prefix) + split_field(suffix))
+def concat_field(*fields):
+    return join_field(flatten(split_field(f) for f in fields))
 
 
 def startswith_field(field, prefix):
