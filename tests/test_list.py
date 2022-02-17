@@ -11,12 +11,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from mo_future import PY3
+from copy import copy, deepcopy
 
-from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
+from mo_future import PY3
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots.lists import last, is_many, FlatList
+from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
+from mo_dots.lists import last, is_many, FlatList, datawrap
 
 values = [1, 2, 3]
 
@@ -205,3 +206,257 @@ class TestList(FuzzyTestCase):
         v[4] = "c"
         v[3] = "d"
         self.assertEqual(v, ["a", None, None, "d", "c", "b"])
+
+    def test_right(self):
+        x = to_data([])
+        self.assertEqual(x.right(Null), [])
+        self.assertEqual(x.right(-3), [])
+        self.assertEqual(x.right(-2), [])
+        self.assertEqual(x.right(-1), [])
+        self.assertEqual(x.right(0), [])
+        self.assertEqual(x.right(1), [])
+        self.assertEqual(x.right(2), [])
+        self.assertEqual(x.right(3), [])
+
+        x = to_data(["a"])
+        self.assertEqual(x.right(Null), ["a"])
+        self.assertEqual(x.right(-3), [])
+        self.assertEqual(x.right(-2), [])
+        self.assertEqual(x.right(-1), [])
+        self.assertEqual(x.right(0), [])
+        self.assertEqual(x.right(1), ["a"])
+        self.assertEqual(x.right(2), ["a"])
+        self.assertEqual(x.right(3), ["a"])
+
+        x = to_data(["a", "b"])
+        self.assertEqual(x.right(Null), ["a", "b"])
+        self.assertEqual(x.right(-3), [])
+        self.assertEqual(x.right(-2), [])
+        self.assertEqual(x.right(-1), [])
+        self.assertEqual(x.right(0), [])
+        self.assertEqual(x.right(1), ["b"])
+        self.assertEqual(x.right(2), ["a", "b"])
+        self.assertEqual(x.right(3), ["a", "b"])
+
+    def test_not_right(self):
+        x = to_data([])
+        self.assertEqual(x.not_right(Null), [])
+        self.assertEqual(x.not_right(-3), [])
+        self.assertEqual(x.not_right(-2), [])
+        self.assertEqual(x.not_right(-1), [])
+        self.assertEqual(x.not_right(0), [])
+        self.assertEqual(x.not_right(1), [])
+        self.assertEqual(x.not_right(2), [])
+        self.assertEqual(x.not_right(3), [])
+
+        x = to_data(["a"])
+        self.assertEqual(x.not_right(Null), ["a"])
+        self.assertEqual(x.not_right(-3), [])
+        self.assertEqual(x.not_right(-2), [])
+        self.assertEqual(x.not_right(-1), [])
+        self.assertEqual(x.not_right(0), ["a"])
+        self.assertEqual(x.not_right(1), [])
+        self.assertEqual(x.not_right(2), [])
+        self.assertEqual(x.not_right(3), [])
+
+        x = to_data(["a", "b"])
+        self.assertEqual(x.not_right(Null), ["a", "b"])
+        self.assertEqual(x.not_right(-3), [])
+        self.assertEqual(x.not_right(-2), [])
+        self.assertEqual(x.not_right(-1), [])
+        self.assertEqual(x.not_right(0), ["a", "b"])
+        self.assertEqual(x.not_right(1), ["a"])
+        self.assertEqual(x.not_right(2), [])
+        self.assertEqual(x.not_right(3), [])
+
+    def test_left(self):
+        x = to_data([])
+        self.assertEqual(x.left(Null), [])
+        self.assertEqual(x.left(-3), [])
+        self.assertEqual(x.left(-2), [])
+        self.assertEqual(x.left(-1), [])
+        self.assertEqual(x.left(0), [])
+        self.assertEqual(x.left(1), [])
+        self.assertEqual(x.left(2), [])
+        self.assertEqual(x.left(3), [])
+
+        x = to_data(["a"])
+        self.assertEqual(x.left(Null), ["a"])
+        self.assertEqual(x.left(-3), [])
+        self.assertEqual(x.left(-2), [])
+        self.assertEqual(x.left(-1), [])
+        self.assertEqual(x.left(0), [])
+        self.assertEqual(x.left(1), ["a"])
+        self.assertEqual(x.left(2), ["a"])
+        self.assertEqual(x.left(3), ["a"])
+
+        x = to_data(["a", "b"])
+        self.assertEqual(x.left(Null), ["a", "b"])
+        self.assertEqual(x.left(-3), [])
+        self.assertEqual(x.left(-2), [])
+        self.assertEqual(x.left(-1), [])
+        self.assertEqual(x.left(0), [])
+        self.assertEqual(x.left(1), ["a"])
+        self.assertEqual(x.left(2), ["a", "b"])
+        self.assertEqual(x.left(3), ["a", "b"])
+
+    def test_not_left(self):
+        x = to_data([])
+        self.assertEqual(x.not_left(Null), [])
+        self.assertEqual(x.not_left(-3), [])
+        self.assertEqual(x.not_left(-2), [])
+        self.assertEqual(x.not_left(-1), [])
+        self.assertEqual(x.not_left(0), [])
+        self.assertEqual(x.not_left(1), [])
+        self.assertEqual(x.not_left(2), [])
+        self.assertEqual(x.not_left(3), [])
+
+        x = to_data(["a"])
+        self.assertEqual(x.not_left(Null), ["a"])
+        self.assertEqual(x.not_left(-3), [])
+        self.assertEqual(x.not_left(-2), [])
+        self.assertEqual(x.not_left(-1), [])
+        self.assertEqual(x.not_left(0), ["a"])
+        self.assertEqual(x.not_left(1), [])
+        self.assertEqual(x.not_left(2), [])
+        self.assertEqual(x.not_left(3), [])
+
+        x = to_data(["a", "b"])
+        self.assertEqual(x.not_left(Null), ["a", "b"])
+        self.assertEqual(x.not_left(-3), [])
+        self.assertEqual(x.not_left(-2), [])
+        self.assertEqual(x.not_left(-1), [])
+        self.assertEqual(x.not_left(0), ["a", "b"])
+        self.assertEqual(x.not_left(1), ["b"])
+        self.assertEqual(x.not_left(2), [])
+        self.assertEqual(x.not_left(3), [])
+
+    def lest_last(self):
+        self.assertEqual(to_data([]).last(), [])
+        self.assertEqual(to_data([]).last(), None)
+
+    def test_filter(self):
+        x = to_data(["a", "b"])
+        y = x.filter(lambda i: i == "a")
+        self.assertEqual(y, ["a"])
+
+    def test_methods(self):
+        a = to_data(["a", "b", "c"])
+
+        with self.assertRaises(Exception):
+            a.select("b")
+
+        a = to_data(["a", "b", "c"])
+        del a[0:1]
+        self.assertEqual(a, ["b", "c"])
+        a.clear()
+        self.assertEqual(a, None)
+
+        a = to_data(["a", "b", "c"])
+        del a[1]
+        self.assertEqual(a, ["a", "c"])
+        a.clear()
+        self.assertEqual(a, None)
+
+        a = to_data(["a", "b", "c"])
+        self.assertIn("b", a)
+        str(a)  # ensure no exception
+        self.assertIsNot(list(a), a)
+
+        a = to_data(["a", "b", "c"])
+        b = copy(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = list(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = a.copy()
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+        a = to_data(["a", "b", "c"])
+        b = deepcopy(a)
+        self.assertIsNot(b, a)
+        self.assertEqual(b, a)
+        b.remove("c")
+        self.assertEqual(b, ["a", "b"])
+        self.assertEqual(a, ["a", "b", "c"])
+
+    def test_null_hash(self):
+        x = to_data([])
+        y = Null
+        z = None
+
+        a = {x: 42}
+        b = {y: 42}
+        c = {z: 42}
+
+        self.assertEqual(a, b)
+        self.assertEqual(b, c)
+        self.assertEqual(c, a)
+
+    def test_eq1(self):
+        x = to_data(["a", "b"])
+        y = to_data(["a"])
+
+        self.assertFalse(x == y)
+
+    def test_eq2(self):
+        x = to_data([Bad(), "b"])
+        y = to_data(["a", "b"])
+
+        self.assertFalse(x == y)
+
+    def test_append(self):
+        x = to_data(["a", "b"])
+
+        xx = x | x
+        self.assertEqual(xx, ["a", "b", "a", "b"])
+
+        zx = "z" + x
+        self.assertEqual(zx, ["z", "a", "b"])
+
+        zqx = ("z", "q") + x
+        self.assertEqual(zqx, ["z", "q", "a", "b"])
+
+        x += "ok"
+        self.assertEqual(x, ["a", "b", "ok"])
+
+    def test_last(self):
+        x = to_data([])
+        self.assertEqual(x.last(), Null)
+
+    def test_map(self):
+        x = to_data(["a", None, "c"])
+        self.assertEqual(x.map(lambda c: "::" + c, includeNone=False), ["::a", "::c"])
+        self.assertEqual(x.map(lambda c: "::" + c if c is not None else None), ["::a", None, "::c"])
+
+    def test_bad_null(self):
+        self.assertFalse(is_null(Bad()))
+
+
+
+class Bad:
+    def __eq__(self, other):
+        raise Exception()
+
+    def __req__(self, other):
+        raise Exception()
+
+
+def gen():
+    yield "a"
+    yield "b"

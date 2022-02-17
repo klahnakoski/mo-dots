@@ -9,10 +9,11 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from mo_future import text
+from mo_imports import expect, export
+
 from mo_dots.lists import is_sequence
 from mo_dots.utils import CLASS, KEY, SLOT
-from mo_future import is_binary, text
-from mo_imports import expect, export
 
 to_data, null_types, get_attr = expect("to_data", "null_types", "get_attr")
 
@@ -45,14 +46,7 @@ class NullType(object):
     def __bool__(self):
         return False
 
-    def __int__(self):
-        return None
-
-    def __float__(self):
-        return Null
-
-    def __nonzero__(self):
-        return False
+    __nonzero__ = __bool__
 
     def __add__(self, other):
         if is_sequence(other):
@@ -60,21 +54,20 @@ class NullType(object):
         return Null
 
     def __radd__(self, other):
+        if is_sequence(other):
+            return other
         return Null
 
     def __call__(self, *args, **kwargs):
         return Null
 
     def __iadd__(self, other):
-        try:
-            o = _get(self, SLOT)
-            if o is None:
-                return self
-            key = _get(self, KEY)
+        o = _get(self, SLOT)
+        if o is None:
+            return self
+        key = _get(self, KEY)
 
-            _assign_to_null(o, [key], other)
-        except Exception as e:
-            raise e
+        _assign_to_null(o, [key], other)
         return other
 
     def __sub__(self, other):
@@ -93,7 +86,7 @@ class NullType(object):
         return Null
 
     def __int__(self):
-        return Null
+        return None
 
     def __float__(self):
         return Null
@@ -101,10 +94,19 @@ class NullType(object):
     def __div__(self, other):
         return Null
 
+    def __itruediv__(self, other):
+        return Null
+
     def __rdiv__(self, other):
         return Null
 
     def __truediv__(self, other):
+        return Null
+
+    def __floordiv__(self, other):
+        return Null
+
+    def __rfloordiv__(self, other):
         return Null
 
     def __rtruediv__(self, other):
@@ -137,9 +139,7 @@ class NullType(object):
         )
 
     def __or__(self, other):
-        if other is True:
-            return True
-        return Null
+        return other
 
     def __ror__(self, other):
         return other
@@ -149,7 +149,15 @@ class NullType(object):
             return False
         return Null
 
+    def __rand__(self, other):
+        if other is False:
+            return False
+        return Null
+
     def __xor__(self, other):
+        return Null
+
+    def __rxor__(self, other):
         return Null
 
     def __len__(self):
@@ -164,20 +172,9 @@ class NullType(object):
     def __deepcopy__(self, memo):
         return Null
 
-    def last(self):
-        """
-        IN CASE self IS INTERPRETED AS A list
-        """
-        return Null
-
-    def right(self, num=None):
-        return Null
-
     def __getitem__(self, key):
         if isinstance(key, slice):
             return Null
-        elif is_binary(key):
-            key = key.decode("utf8")
         elif isinstance(key, int):
             return NullType(self, key)
 

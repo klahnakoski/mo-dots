@@ -16,6 +16,7 @@ from copy import deepcopy, copy
 
 from mo_future import UserDict, first
 from mo_logs import Log
+from mo_logs.strings import expand_template
 from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
@@ -27,9 +28,19 @@ from mo_dots import (
     literal_field,
     NullType,
     leaves_to_data,
-    from_data, FlatList,
+    from_data,
+    FlatList,
+    get_attr,
+    relative_field,
+    unliteral_field,
+    tail_field,
+    join_field,
+    set_attr,
+    PATH_NOT_FOUND,
 )
+from mo_dots.datas import leaves
 from mo_dots.objects import datawrap
+from tests import ambiguous_test
 
 
 class TestDot(FuzzyTestCase):
@@ -109,8 +120,8 @@ class TestDot(FuzzyTestCase):
 
     def test_null_access(self):
         a = Data()
-        c = a.b[b"test"]
-        self.assertTrue(c == None, "Expecting Null to accept str() for item access")
+        c = a.b["test"]
+        self.assertTrue(c == None)
 
     def test_null(self):
         a = 0
@@ -474,13 +485,37 @@ class TestDot(FuzzyTestCase):
         test = d["a.b.c"]
         self.assertEqual(test, [1, 2])
 
-    def test_set_default(self):
+    def test_set_default1(self):
         a = {"x": {"y": 1}}
-        b = {"x": {"z": 2}}
+        b = {"x": {"z": 2, "y": None}}
         c = {}
         d = set_default(c, a, b)
 
-        self.assertTrue(from_data(d) is c, "expecting first parameter to be returned")
+        self.assertIs(from_data(d), c)
+        self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
+        self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
+
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+
+    def test_set_default2(self):
+        a = {"x": {"y": 1}}
+        b = {"x": {"z": 2}}
+        c = {}
+        d = set_default(c, None, a, b)
+
+        self.assertIs(from_data(d), c)
+        self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
+        self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
+
+        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+
+    def test_set_default3(self):
+        a = {"x": {"y": 1}}
+        b = {"x": {"z": 2}}
+        c = {}
+        d = set_default(None, c, a, b)
+
+        self.assertIsNot(from_data(d), c)
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
@@ -786,8 +821,268 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(result, "test")
 
     def test_leaves_returns_flat_list(self):
-        x = to_data({"a":[1,  2, 3]})
+        x = to_data({"a": [1, 2, 3]})
         self.assertIsInstance(first(x.leaves())[1], FlatList)
+
+    def test_leaves_returns_flat_list(self):
+        x = to_data([{"a": [1, 2, 3]}])
+        self.assertIsInstance(x, FlatList)
+
+    def test_leaves_returns_inner(self):
+        x = leaves_to_data({"a.b.c": 3, "\b": 42, "d": None})
+        self.assertEqual(x, {"a": {"b": {"c": 3}}, ".": 42})
+
+    def test_empty_string_is_bad(self):
+        with self.assertRaises(Exception):
+            leaves_to_data({"": 4})
+
+    def test_leaves_w_Data(self):
+        x = leaves_to_data({"a": to_data({"b.c": 42})})
+        self.assertEqual(x, {"a": {"b": {"c": 42}}})
+
+    def test_leaves_w_simple(self):
+        x = leaves_to_data(42)
+        self.assertEqual(x, 42)
+
+        x = leaves_to_data([42, 0])
+        self.assertEqual(x, [42, 0])
+
+    def test_leaves_on_dict(self):
+        x = list(leaves({"a": to_data({"b.c": 42})}))
+        self.assertEqual(x, [("a.b..c", 42)])
+
+    def test_leaves_on_dict_w_prefix(self):
+        x = leaves({"a": to_data({"b.c": 42})}, prefix="::")
+        self.assertEqual(x, [("::a.b..c", 42)])
+
+    def test_to_generator(self):
+        def gen():
+            yield 1
+            yield 2
+
+        x = to_data(gen())
+        self.assertIsInstance(x, FlatList)
+        self.assertEqual(len(x), 2)
+
+    def test_get_module_attr(self):
+        x = get_attr(ambiguous_test, "d")
+        self.assertEqual(x, {"a": 44})
+
+    def test_get_module_attr_ambiguous(self):
+        with self.assertRaises(Exception):
+            x = get_attr(ambiguous_test, "DE")
+
+    def test_get_module_attr_lowercase(self):
+        x = get_attr(ambiguous_test, "d")
+        y = get_attr(ambiguous_test, "D")
+        self.assertIs(x, y)
+
+    def test_set_module_attr(self):
+        old, Log.main_log = Log.main_log, StructuredLogger_usingList()
+        set_attr(ambiguous_test, "d1", "test")
+        new, Log.main_log = Log.main_log, old
+        self.assertIn(PATH_NOT_FOUND, new.lines[0])
+        self.assertEqual(ambiguous_test.d1, "test")
+
+    def test_relative(self):
+        self.assertEqual(relative_field("a.b.c", "."), "a.b.c")
+        self.assertEqual(relative_field("a.b.c", "a"), "b.c")
+        self.assertEqual(relative_field("a.b.c", "a.b"), "c")
+        self.assertEqual(relative_field("a.b.c", "a.b.c"), ".")
+        self.assertEqual(relative_field("a.b.c", "a.b.c.d"), "..")
+        self.assertEqual(relative_field("a.b.c", "a.b.c.d.e"), "...")
+
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c"), "k")
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c.d"), "..k")
+        self.assertEqual(relative_field("a.b.c.k", "a.b.c.d.e"), "...k")
+
+    def test_unliteral(self):
+        for f in (".", "..", "a", "a.b", "..a.b", "", "a.."):
+            self.assertEqual(unliteral_field(literal_field(f)), f)
+
+    def test_tail_field(self):
+        self.assertEqual(tail_field(None), (".", "."))
+        self.assertEqual(tail_field(""), (".", "."))
+        self.assertEqual(tail_field("."), (".", "."))
+        self.assertEqual(tail_field(".."), ("..", "."))
+        self.assertEqual(tail_field("..."), ("..", ".."))
+        self.assertEqual(tail_field("...."), ("..", "..."))
+        self.assertEqual(tail_field("a"), ("a", "."))
+        self.assertEqual(tail_field("a.b"), ("a", "b"))
+        self.assertEqual(tail_field("a.b.c."), ("a", "b.c"))
+
+    def test_join_field_generator(self):
+        def gen():
+            yield "a"
+            yield "b"
+
+        self.assertEqual(join_field(gen()), "a.b")
+
+    def test_hash(self):
+        k1 = to_data({"a": 1, "b": 2})
+        k2 = to_data({"a": 1, "b": 2})
+        x = {k1: "42"}
+
+        self.assertEqual(x[k1], x[k2])
+
+        k1 = to_data([{"a": 1}, {"b": 2}])
+        k2 = to_data([{"a": 1}, {"b": 2}])
+        x = {k1: "42"}
+
+        self.assertEqual(x[k1], x[k2])
+
+    def test_bool(self):
+        a = to_data({})
+        b = to_data([])
+        c = to_data("")
+        d = Data()
+        d["."] = None
+        e = Data()
+        e["."] = 0
+
+        self.assertEqual(bool(a), True)
+        self.assertEqual(bool(b), False)
+        self.assertEqual(bool(c), False)
+        self.assertEqual(bool(d), False)
+        self.assertEqual(bool(e), True)
+
+    def test_iter(self):
+        a = to_data({})
+        self.assertEqual(list(a), [])
+
+        b = to_data({"a": 42})
+        self.assertEqual(list(iter(b)), [("a", 42)])
+
+    def test_null(self):
+        with self.assertRaises(Exception):
+            int(Null)
+
+        with self.assertRaises(Exception):
+            float(Null)
+
+        self.assertFalse(bool(Null))
+        self.assertFalse(len(Null))
+
+        self.assertEqual([1] + Null, [1])
+        self.assertEqual(Null + [1], [1])
+
+        self.assertTrue(1 + Null == None)
+        self.assertTrue(Null + 1 == None)
+        self.assertTrue(Null + Null == None)
+        self.assertTrue(Null() == None)
+        self.assertTrue(Null - 1 == None)
+        self.assertTrue(1 - Null == None)
+        self.assertTrue(Null * 1 == None)
+        self.assertTrue(1 * Null == None)
+        self.assertTrue(Null / 1 == None)
+        self.assertTrue(1 / Null == None)
+        self.assertTrue(Null / 1.2 == None)
+        self.assertTrue(1.2 / Null == None)
+        self.assertTrue(Null // 1 == None)
+        self.assertTrue(1 // Null == None)
+        self.assertTrue(Null | 1 == 1)
+        self.assertTrue(1 | Null == 1)
+        self.assertTrue(Null ^ 1 == None)
+        self.assertTrue(1 ^ Null == None)
+        self.assertTrue(Null & 1 == None)
+        self.assertTrue(1 & Null == None)
+        self.assertFalse(Null & False)
+        self.assertFalse(False & Null)
+        self.assertTrue((1 > Null) == None)
+        self.assertTrue((1 >= Null) == None)
+        self.assertTrue((1 <= Null) == None)
+        self.assertTrue((1 < Null) == None)
+        self.assertTrue(-Null == None)
+        self.assertTrue(copy(Null) == Null)
+        self.assertTrue(Null[1:3] == Null)
+        self.assertTrue(Null[1] == Null)
+        self.assertTrue(Null.__div__(0) == None)
+        self.assertTrue(Null.__rdiv__(0) == None)
+        self.assertTrue(Null.__itruediv__(0) == None)
+
+        x = Null
+        x += Null
+        self.assertTrue(x == None)
+
+        x = to_data({}).a.b.c
+        x += 3
+        self.assertTrue(x == 3)
+
+    def test_get_zero(self):
+        self.assertEqual(get_attr({"a": [{"b": 2}, 2]}, "a.0.b"), 2)
+
+    def test_set_attr1(self):
+        d = {"a": [{"b": 3}, 2]}
+        set_attr(d, "a.0.b", 2)
+        self.assertEqual(to_data(d).a[0].b, 2)
+
+    def test_set_attr2(self):
+        old, Log.main_log = Log.main_log, StructuredLogger_usingList()
+        set_attr(None, "a", 2)
+        new, Log.main_log = Log.main_log, old
+        self.assertIn(PATH_NOT_FOUND, new.lines[0])
+
+    def test_set_attr3(self):
+        x = SampleData()
+        x.a = SampleData()
+        set_attr(x, "a.a", "q")
+        self.assertEqual(x.a.a, "q")
+
+        set_attr(x, "a.a", None)
+        self.assertEqual(x.a.a, None)
+
+        set_attr(x, "a", 42)
+        self.assertEqual(x.a.a, 42)
+
+        x.b = {}
+        set_attr(x, "b", None)
+        self.assertTrue(x.b == None)
+
+    def test_none_item(self):
+        self.assertIsInstance(to_data({"a": 1})[None], NullType)
+
+    def test_assign_to_dot(self):
+        x = to_data({"a": 1})
+        x["."] = 42
+        self.assertEqual(x["."], 42)
+
+    def test_assign_list_to_dot(self):
+        x = to_data({"a": 1})
+        x["."] = ["a", "b"]
+        self.assertEqual(x["."], ["a", "b"])
+
+    def test_repr(self):
+        self.assertEqual(repr(to_data({"a": 1})), "Data({'a': 1})")
+
+    def test_add_one_to_dict(self):
+        x = to_data({"a": {"b": 42}})
+        with self.assertRaises(Exception):
+            x += {"a": 1}
+
+    def test_add_dict_to_one(self):
+        x = to_data({"a": 1})
+        with self.assertRaises(Exception):
+            x += {"a": {"b": 42}}
+
+    def test_add_dict_to_list(self):
+        x = to_data({"a": [1]})
+        x += {"a": {"b": 42}}
+        self.assertEqual(x, {"a": [1, {"b": 42}]})
+
+    def test_add_str_to_dict(self):
+        x = to_data({"a": {"b": 42}})
+        with self.assertRaises(Exception):
+            x += {"a": "test"}
+
+    def test_add_dict_to_str(self):
+        x = to_data({"a": "test"})
+        with self.assertRaises(Exception):
+            x += {"a": {"b": 42}}
+
+    def test_add_str_to_str(self):
+        x = to_data({"a": "test"})
+        with self.assertRaises("has no attribute 'append'"):
+            x += {"a": "world"}
 
 
 class _TestMapping(object):
@@ -797,9 +1092,20 @@ class _TestMapping(object):
 
 
 class SampleData(object):
-    def __init__(self):
-        self.a = 20
+    def __init__(self, a=None):
+        self.a = a or 20
         self.b = 30
 
     def __str__(self):
         return str(self.a) + str(self.b)
+
+
+class StructuredLogger_usingList(object):
+    def __init__(self):
+        self.lines = []
+
+    def write(self, template, params):
+        self.lines.append(expand_template(template, params))
+
+    def stop(self):
+        pass

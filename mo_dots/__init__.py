@@ -15,10 +15,10 @@ import sys
 from mo_future import (
     binary_type,
     generator_types,
-    is_binary,
     text,
     OrderedDict,
-    none_type,
+    none_type, flatten,
+    first,
 )
 from mo_imports import export
 
@@ -136,7 +136,7 @@ def tail_field(field):
     RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
     IN (first, rest) PAIR
     """
-    if field == "." or field == None:
+    if field == "." or field == None or field == "":
         return ".", "."
     elif "." in field:
         path = split_field(field)
@@ -151,17 +151,14 @@ def split_field(field):
     """
     if ILLEGAL_DOTS.search(field):
         get_logger().error("Odd number of dots is not allowed")
-    try:
-        if field.startswith(".."):
-            remainder = field.lstrip(".")
-            back = len(field) - len(remainder) - 1
-            return [".."] * back + [
-                UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
-            ]
-        else:
-            return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
-    except Exception:
-        return []
+    if field.startswith(".."):
+        remainder = field.lstrip(".")
+        back = len(field) - len(remainder) - 1
+        return [".."] * back + [
+            UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
+        ]
+    else:
+        return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
 
 
 def join_field(path):
@@ -178,17 +175,21 @@ def join_field(path):
     while True:
         try:
             i = path.index("..")
-            if i==0:
+            if i == 0:
                 prefix += "."
                 path = path[1:]
             else:
                 path = path[: i - 1] + path[i + 1 :]
         except ValueError:
-            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
+            return (
+                ("." if prefix else "")
+                + prefix
+                + ".".join(literal_field(f) for f in path)
+            )
 
 
-def concat_field(prefix, suffix):
-    return join_field(split_field(prefix) + split_field(suffix))
+def concat_field(*fields):
+    return join_field(flatten(split_field(f) for f in fields))
 
 
 def startswith_field(field, prefix):
@@ -227,20 +228,24 @@ def relative_field(field, parent):
             break
         common += 1
 
-    if len(parent_path) == common:
+    tail = join_field(field_path[common:])
+    if len(parent_path) <= common:
         return join_field(field_path[common:])
+
+    dots = "." * (len(parent_path) - common)
+    if tail == ".":
+        return "." + dots
     else:
-        dots = "." * (len(parent_path) - common)
-        return dots + "." + join_field(field_path[common:])
+        return "." + dots + tail
 
 
 def hash_value(v):
     if is_many(v):
-        return hash(tuple(hash_value(vv) for vv in v))
-    elif _get(v, CLASS) not in data_types:
-        return hash(v)
+        return hash_value(first(v))
+    elif _get(v, CLASS) in data_types:
+        return hash_value(first(v.values()))
     else:
-        return hash(tuple(sorted(hash_value(vv) for vv in v.values())))
+        return hash(v)
 
 
 def fromkeys(keys, value=None):
@@ -249,37 +254,29 @@ def fromkeys(keys, value=None):
     return dict_to_data(dict.fromkeys(keys, value))
 
 
-def set_default(*dicts):
+def set_default(d, *dicts):
     """
     RECURSIVE MERGE OF MULTIPLE dicts MOST IMPORTANT FIRST
 
-    UPDATES dicts[0] WITH THE MERGE RESULT, WHERE MERGE RESULT IS DEFINED AS:
+    UPDATES d WITH THE MERGE RESULT, WHERE MERGE RESULT IS DEFINED AS:
     FOR EACH LEAF, RETURN THE FIRST NOT-NULL LEAF VALUE
 
-    :param dicts: dicts IN PRIORITY ORDER, HIHEST TO LOWEST
-    :return: dicts[0]
+    :param dicts: dicts IN PRIORITY ORDER, HIGHEST TO LOWEST
+    :return: d
     """
-    p0 = dicts[0]
-    agg = p0 if p0 or _get(p0, CLASS) in data_types else {}
-    for p in dicts[1:]:
-        p = from_data(p)
-        if p is None:
-            continue
-        _all_default(agg, p, seen={})
+    agg = d if d or _get(d, CLASS) in data_types else {}
+    for p in dicts:
+        _set_default(agg, from_data(p), seen={})
     return to_data(agg)
 
 
-def _all_default(d, default, seen=None):
+def _set_default(d, default, seen=None):
     """
     ANY VALUE NOT SET WILL BE SET BY THE default
     THIS IS RECURSIVE
     """
     if default is None:
         return
-    if _get(default, CLASS) is Data:
-        default = _get(default, SLOT)  # REACH IN AND GET THE dict
-        # Log = _late_import()
-        # Log.error("strictly dict (or object) allowed: got {{type}}", type=_get(default, CLASS).__name__)
 
     for k, default_value in default.items():
         default_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
@@ -298,7 +295,7 @@ def _all_default(d, default, seen=None):
                         copy_dict = {}
                         seen[id(default_value)] = copy_dict
                         _set_attr(d, [k], copy_dict)
-                        _all_default(copy_dict, default_value, seen)
+                        _set_default(copy_dict, default_value, seen)
                 else:
                     # ASSUME PRIMITIVE (OR LIST, WHICH WE DO NOT COPY)
                     try:
@@ -320,7 +317,7 @@ def _all_default(d, default, seen=None):
                 _set_attr(d, [k], df)
             else:
                 seen[id(default_value)] = existing_value
-                _all_default(existing_value, default_value, seen)
+                _set_default(existing_value, default_value, seen)
 
 
 def _getdefault(obj, key):
@@ -368,12 +365,12 @@ def set_attr(obj, path, value):
     """
     try:
         return _set_attr(obj, split_field(path), value)
-    except Exception as e:
+    except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in e:
-            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=e)
+        if PATH_NOT_FOUND in cause:
+            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", cause=e)
+            Log.error("Problem setting value", cause=cause)
 
 
 def get_attr(obj, path):
@@ -382,12 +379,12 @@ def get_attr(obj, path):
     """
     try:
         return _get_attr(obj, split_field(path))
-    except Exception as e:
+    except Exception as cause:
         Log = get_logger()
         if PATH_NOT_FOUND in e:
-            Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=e)
+            Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", e)
+            Log.error("Problem setting value", cause=cause)
 
 
 def _get_attr(obj, path):
@@ -446,7 +443,7 @@ def _get_attr(obj, path):
         elif len(matched_attr_name) > 1:
             get_logger().error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
         else:
-            return _get_attr(obj[matched_attr_name[0]], path[1:])
+            return _get_attr(obj, matched_attr_name + path[1:])
 
     try:
         obj = obj[int(attr_name)]
@@ -471,9 +468,7 @@ def _set_attr(obj_, path, value):
     obj = _get_attr(obj_, path[:-1])
     if obj is None:
         # DELIBERATE USE OF `is`: WE DO NOT WHAT TO CATCH Null HERE (THEY CAN BE SET)
-        obj = _get_attr(obj_, path[:-1])
-        if obj is None:
-            get_logger().error(PATH_NOT_FOUND + " tried to get attribute of None")
+        get_logger().error(PATH_NOT_FOUND + " tried to get attribute of None")
 
     attr_name = path[-1]
 
@@ -575,6 +570,7 @@ def _leaves_to_data(value):
     class_ = _get(value, CLASS)
     if class_ in (text, binary_type, int, float):
         return value
+
     if class_ in data_types:
         if class_ is Data:
             value = from_data(value)
@@ -585,34 +581,25 @@ def _leaves_to_data(value):
 
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
-            if is_binary(key):
-                key = key.decode("utf8")
 
             d = output
-            if "." not in key:
-                if value is None:
-                    d.pop(key, None)
-                else:
-                    d[key] = value
+            seq = split_field(key)
+            for k in seq[:-1]:
+                e = d.get(k, None)
+                if e is None:
+                    d[k] = {}
+                    e = d[k]
+                d = e
+
+            if value == None:
+                d.pop(seq[-1], None)
             else:
-                seq = split_field(key)
-                for k in seq[:-1]:
-                    e = d.get(k, None)
-                    if e is None:
-                        d[k] = {}
-                        e = d[k]
-                    d = e
-                if value == None:
-                    d.pop(seq[-1], None)
-                else:
-                    d[seq[-1]] = value
+                d[seq[-1]] = value
         return output
+
     if hasattr(value, "__iter__"):
-        output = []
-        for v in value:
-            v = leaves_to_data(v)
-            output.append(v)
-        return output
+        return [_leaves_to_data(v) for v in value]
+
     return value
 
 
@@ -698,9 +685,12 @@ def tuplewrap(value):
     """
     INTENDED TO TURN lists INTO tuples FOR USE AS KEYS
     """
-    if is_many(value):
+    if value==None:
+        return tuple()
+    elif is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
-    return (from_data(value),)
+    else:
+        return from_data(value),
 
 
 def is_null(t):
@@ -745,11 +735,13 @@ export("mo_dots.datas", hash_value)
 export("mo_dots.datas", listwrap)
 export("mo_dots.datas", literal_field)
 export("mo_dots.datas", null_types)
+export("mo_dots.datas", concat_field)
 
 export("mo_dots.lists", list_to_data)
 export("mo_dots.lists", to_data)
 export("mo_dots.lists", coalesce)
 export("mo_dots.lists", from_data)
+export("mo_dots.lists", hash_value)
 
 export("mo_dots.objects", list_to_data)
 export("mo_dots.objects", to_data)

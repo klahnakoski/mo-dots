@@ -12,20 +12,26 @@ from __future__ import absolute_import, division, unicode_literals
 import types
 from copy import deepcopy
 
-from mo_future import generator_types, first, is_text
+from mo_future import generator_types, first
 from mo_imports import expect, delay_import
 
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
-datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY = expect(
-    "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY"
+datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
+    "datawrap",
+    "coalesce",
+    "list_to_data",
+    "to_data",
+    "from_data",
+    "Null",
+    "EMPTY",
+    "hash_value",
 )
 
-
+_null_hash = hash(None)
 _get = object.__getattribute__
 _set = object.__setattr__
-_emit_slice_warning = True
 
 
 class FlatList(object):
@@ -48,6 +54,9 @@ class FlatList(object):
             _set(self, SLOT, vals)
 
     def __getitem__(self, index):
+        if index == ".":
+            return self
+
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
@@ -93,7 +102,7 @@ class FlatList(object):
     def __getattr__(self, key):
         if key in ["__json__", "__call__"]:
             raise AttributeError()
-        return self.get(key)
+        return FlatList.get(self, key)
 
     def get(self, key):
         """
@@ -122,17 +131,14 @@ class FlatList(object):
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return FlatList(vals=[
-            from_data(u) for u in (to_data(v) for v in _get(self, SLOT)) if _filter(u)
+        return list_to_data([
+            from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
         ])
 
-    def __delslice__(self, i, j):
-        Log.error(
-            "Can not perform del on slice: modulo arithmetic was performed on the"
-            " parameters.  You can try using clear()"
-        )
+    def __delitem__(self, i):
+        del _get(self, SLOT)[i]
 
-    def __clear__(self):
+    def clear(self):
         _set(self, SLOT, [])
 
     def __iter__(self):
@@ -151,22 +157,6 @@ class FlatList(object):
 
     def __len__(self):
         return _get(self, SLOT).__len__()
-
-    def __getslice__(self, i, j):
-        global _emit_slice_warning
-
-        if _emit_slice_warning:
-            _emit_slice_warning = False
-            Log.warning(
-                "slicing is broken in Python 2.7: a[i:j] == a[i+len(a), j] sometimes."
-                " Use [start:stop:step] (see "
-                "https://github.com/klahnakoski/mo-dots/tree/dev/docs#the-slice-operator-in-python27-is-inconsistent"
-                ")"
-            )
-        return self[i:j:]
-
-    def __list__(self):
-        return _get(self, SLOT)
 
     def copy(self):
         return FlatList(list(_get(self, SLOT)))
@@ -194,6 +184,12 @@ class FlatList(object):
         else:
             return to_data(_get(self, SLOT).pop(index))
 
+    def __hash__(self):
+        lst = _get(self, SLOT)
+        if not lst:
+            return _null_hash
+        return hash_value(lst[0])
+
     def __eq__(self, other):
         lst = _get(self, SLOT)
         if other == None:
@@ -209,31 +205,38 @@ class FlatList(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __add__(self, value):
-        if value == None:
-            return self
+    def __add__(self, other):
         output = list(_get(self, SLOT))
-        output.extend(value)
+        if other == None:
+            return self
+        elif is_many(other):
+            output.extend(from_data(other))
+        else:
+            output.append(other)
         return FlatList(vals=output)
 
-    def __or__(self, value):
-        output = list(_get(self, SLOT))
-        output.append(value)
-        return FlatList(vals=output)
+    __or__ = __add__
 
     def __radd__(self, other):
-        output = list(other)
-        output.extend(_get(self, SLOT))
+        output = list(_get(self, SLOT))
+        if other == None:
+            return self
+        elif is_many(other):
+            output = list(from_data(other)) + output
+        else:
+            output = [other] + output
         return FlatList(vals=output)
 
     def __iadd__(self, other):
-        if is_list(other):
-            self.extend(other)
+        if other == None:
+            return self
+        elif is_many(other):
+            self.extend(from_data(other))
         else:
             self.append(other)
         return self
 
-    def right(self, num=None):
+    def right(self, num):
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE RIGHT [-num:]
         """
@@ -244,7 +247,7 @@ class FlatList(object):
 
         return FlatList(_get(self, SLOT)[-num:])
 
-    def limit(self, num=None):
+    def limit(self, num):
         """
         NOT REQUIRED, BUT EXISTS AS OPPOSITE OF right()
         """
@@ -255,13 +258,15 @@ class FlatList(object):
 
         return FlatList(_get(self, SLOT)[:num])
 
+    left = limit
+
     def not_right(self, num):
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE LEFT [:-num:]
         """
-        if num == None:
+        if not num:
             return self
-        if num <= 0:
+        if num < 0:
             return Null
 
         return FlatList(_get(self, SLOT)[:-num:])
@@ -270,9 +275,9 @@ class FlatList(object):
         """
         NOT REQUIRED, EXISTS AS OPPOSITE OF not_right()
         """
-        if num == None:
+        if not num:
             return self
-        if num <= 0:
+        if num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[num::])

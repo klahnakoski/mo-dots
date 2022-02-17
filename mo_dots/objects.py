@@ -75,35 +75,18 @@ class DataObject(Mapping):
     def items(self):
         obj = _get(self, SLOT)
         try:
-            return obj.__dict__.items()
+            yield from obj.__dict__.items()
         except Exception as e:
-            return [
-                (k, getattr(obj, k, None)) for k in dir(obj) if not k.startswith("__")
-            ]
-
-    def iteritems(self):
-        obj = _get(self, SLOT)
-        try:
-            return obj.__dict__.iteritems()
-        except Exception as e:
-
-            def output():
-                for k in dir(obj):
-                    if k.startswith("__"):
-                        continue
-                    yield k, getattr(obj, k, None)
-
-            return output()
+            for k in dir(obj):
+                if k.startswith("__"):
+                    continue
+                yield k, getattr(obj, k, None)
 
     def __data__(self):
         return self
 
     def __iter__(self):
         return (k for k in self.keys())
-
-    def __unicode__(self):
-        obj = _get(self, SLOT)
-        return text(obj)
 
     def __str__(self):
         obj = _get(self, SLOT)
@@ -122,11 +105,17 @@ register_data(DataObject)
 
 
 def datawrap(v):
+    try:
+        if v == None:
+            return Null
+    except Exception:
+        pass
+
     type_ = _get(v, CLASS)
 
     if type_ is dict:
         m = _new(Data)
-        _set(m, SLOT, v)  # INJECT m.__dict__=v SO THERE IS NO COPY
+        _set(m, SLOT, v)
         return m
     elif type_ is tuple:
         return FlatList(v)
@@ -138,21 +127,11 @@ def datawrap(v):
         return v
     elif type_ in generator_types:
         return (to_data(vv) for vv in v)
-    try:
-        if v == None:
-            return Null
-    except Exception:
-        return DataObject(v)
-
-    try:
-        return v.__data__()
-    except Exception:
-        pass
 
     return DataObject(v)
 
 
-class DictClass(object):
+class DataClass(object):
     """
     ALLOW INSTANCES OF class_ TO ACT LIKE dicts
     ALLOW CONSTRUCTOR TO ACCEPT @override

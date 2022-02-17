@@ -12,10 +12,6 @@ from __future__ import absolute_import, division, unicode_literals
 from copy import copy, deepcopy
 from decimal import Decimal
 
-from mo_dots.lists import is_list, FlatList, is_sequence, is_many
-from mo_dots.nones import Null, NullType
-from mo_dots.utils import CLASS, SLOT
-from mo_dots.utils import get_logger
 from mo_future import (
     generator_types,
     iteritems,
@@ -25,6 +21,11 @@ from mo_future import (
     OrderedDict,
 )
 from mo_imports import expect
+
+from mo_dots.lists import is_list, FlatList, is_sequence, is_many
+from mo_dots.nones import Null, NullType
+from mo_dots.utils import CLASS, SLOT
+from mo_dots.utils import get_logger
 
 (
     _getdefault,
@@ -37,6 +38,7 @@ from mo_imports import expect
     null_types,
     list_to_data,
     dict_to_data,
+    concat_field,
 ) = expect(
     "_getdefault",
     "coalesce",
@@ -48,6 +50,7 @@ from mo_imports import expect
     "null_types",
     "list_to_data",
     "dict_to_data",
+    "concat_field",
 )
 
 
@@ -78,16 +81,11 @@ class Data(object):
     def __bool__(self):
         d = _get(self, SLOT)
         if _get(d, CLASS) is dict:
-            return bool(d)
+            return True
         else:
             return d != None
 
-    def __nonzero__(self):
-        d = _get(self, SLOT)
-        if _get(d, CLASS) is dict:
-            return True if d else False
-        else:
-            return d != None
+    __nonzero__ = __bool__
 
     def __contains__(self, item):
         value = Data.__getitem__(self, item)
@@ -97,7 +95,10 @@ class Data(object):
 
     def __iter__(self):
         d = _get(self, SLOT)
-        return d.__iter__()
+        if _get(d, CLASS) is dict:
+            yield from d.items()
+        else:
+            yield from d.__iter__()
 
     def __getitem__(self, key):
         if key == None:
@@ -396,10 +397,7 @@ class Data(object):
         return v
 
     def __str__(self):
-        try:
-            return dict.__str__(_get(self, SLOT))
-        except Exception:
-            return "{}"
+        return dict.__str__(_get(self, SLOT))
 
     def __dir__(self):
         d = _get(self, SLOT)
@@ -424,13 +422,21 @@ def leaves(value, prefix=None):
     :param prefix:  OPTIONAL PREFIX GIVEN TO EACH KEY
     :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
     """
-    prefix = coalesce(prefix, "")
+    if not prefix:
+        yield from _leaves(value, ".")
+    else:
+        for k, v in _leaves(value, "."):
+            yield prefix + k, v
+
+
+def _leaves(value, parent):
     for k, v in value.items():
         try:
+            kk = concat_field(parent, literal_field(k))
             if _get(v, CLASS) in data_types:
-                yield from leaves(v, prefix=prefix + literal_field(k) + ".")
+                yield from _leaves(v, kk)
             else:
-                yield prefix + literal_field(k), to_data(v)
+                yield kk, to_data(v)
         except Exception as e:
             get_logger().error("Do not know how to handle", cause=e)
 
@@ -440,23 +446,6 @@ def _split_field(field):
     SIMPLE SPLIT, NO CHECKS
     """
     return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
-
-
-def _str(value, depth):
-    """
-    FOR DEBUGGING POSSIBLY RECURSIVE STRUCTURES
-    """
-    output = []
-    if depth > 0 and _get(value, CLASS) in data_types:
-        for k, v in value.items():
-            output.append(str(k) + "=" + _str(v, depth - 1))
-        return "{" + ",\n".join(output) + "}"
-    elif depth > 0 and is_list(value):
-        for v in value:
-            output.append(_str(v, depth - 1))
-        return "[" + ",\n".join(output) + "]"
-    else:
-        return str(type(value))
 
 
 def _iadd(self, other):
