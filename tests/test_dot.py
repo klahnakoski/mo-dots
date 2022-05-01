@@ -1084,6 +1084,11 @@ class TestDot(FuzzyTestCase):
         with self.assertRaises("has no attribute 'append'"):
             x += {"a": "world"}
 
+    def test_iadd(self):
+        x = Data()
+        x["."]["."] += [42]
+        self.assertEqual(x, [42])
+
 
 class _TestMapping(object):
     def __init__(self):
