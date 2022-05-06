@@ -457,7 +457,18 @@ def _iadd(self, other):
     """
 
     if not _get(other, CLASS) in data_types:
-        get_logger().error("Expecting Data")
+        # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
+        d = _get(self, SLOT)
+        if isinstance(d, dict) and not len(d):
+            # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
+            # ∀ x, x += {} => x
+            d = Data()
+        else:
+            d = dict_to_data({"$": self})
+        d += dict_to_data({"$": other})
+        d['.'] = d['$']
+        return d
+
     d = from_data(self)
     for ok, ov in other.items():
         sv = d.get(ok)
