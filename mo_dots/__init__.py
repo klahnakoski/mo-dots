@@ -622,7 +622,7 @@ def from_data(v):
         return v
 
 
-from_data = from_data
+unwrap = from_data
 
 
 def listwrap(value):
