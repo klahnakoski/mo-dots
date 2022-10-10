@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import relative_field, tail_field, split_field, join_field, concat_field, startswith_field
+from mo_dots import relative_field, tail_field, split_field, join_field, concat_field, startswith_field, endswith_field
 
 
 class TestFields(FuzzyTestCase):
@@ -58,11 +58,17 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(concat_field("a.b.c", "...d"), "a.d")
 
     def test_startswith(self):
-        self.assertEqual(startswith_field("a.b.c", None), False)
-        self.assertEqual(startswith_field("a.b.c", "."), True)
-        self.assertEqual(startswith_field("a.b.c", "a"), True)
-        self.assertEqual(startswith_field("a.b.c", "b"), False)
-        self.assertEqual(startswith_field("a.b.c", "a.b"), True)
+        self.assertFalse(startswith_field("a.b.c", None))
+        self.assertTrue(startswith_field("a.b.c", "."))
+        self.assertTrue(startswith_field("a.b.c", "a"))
+        self.assertFalse(startswith_field("a.b.c", "b"))
+        self.assertTrue(startswith_field("a.b.c", "a.b"))
+
+        self.assertFalse(startswith_field("a..b", "a"))
+        self.assertTrue(startswith_field("a\bb", "a"))
+
+        self.assertFalse(endswith_field("a..b", "b"))
+        self.assertTrue(endswith_field("a\bb", "b"))
 
     def test_illegal(self):
         with self.assertRaises(Exception):
@@ -83,5 +89,3 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(join_field(parent+split_field("...a.b")), "x.a.b")
         self.assertEqual(join_field(parent+split_field("....a.b")), "a.b")
         self.assertEqual(join_field(parent+split_field(".....a.b")), "..a.b")
-
-
