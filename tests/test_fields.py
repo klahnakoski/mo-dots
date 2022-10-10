@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import relative_field, tail_field, split_field, join_field, concat_field, startswith_field
+from mo_dots import relative_field, tail_field, split_field, join_field, concat_field, startswith_field, endswith_field
 
 
 class TestFields(FuzzyTestCase):

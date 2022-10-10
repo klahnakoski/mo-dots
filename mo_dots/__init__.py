@@ -12,17 +12,6 @@ from __future__ import absolute_import, division, unicode_literals
 import re
 import sys
 
-from mo_future import (
-    binary_type,
-    generator_types,
-    text,
-    OrderedDict,
-    none_type,
-    flatten,
-    first,
-)
-from mo_imports import export
-
 from mo_dots.datas import Data, data_types, is_data
 from mo_dots.lists import (
     FlatList,
@@ -33,10 +22,20 @@ from mo_dots.lists import (
     list_types,
     container_types,
     finite_types,
+    last
 )
 from mo_dots.nones import Null, NullType
 from mo_dots.objects import DataObject
 from mo_dots.utils import CLASS, SLOT, get_logger, get_module
+from mo_future import (
+    binary_type,
+    generator_types,
+    text,
+    OrderedDict,
+    none_type, flatten,
+    first,
+)
+from mo_imports import export
 
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip
@@ -44,8 +43,6 @@ _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
 _dict_zip = zip
-
-ROOT_PATH = ["."]
 
 
 def inverse(d):
@@ -209,7 +206,24 @@ def startswith_field(field, prefix):
         #     return True
 
     if field.startswith(prefix):
-        if len(field) == len(prefix) or field[len(prefix)] == ".":
+        lp = len(prefix)
+        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp+1] not in (".", "\b"):
+            return True
+    return False
+
+
+def endswith_field(field, suffix):
+    """
+    RETURN True IF field PATH STRING ENDS WITH suffix PATH STRING
+    """
+    if suffix == None:
+        return False
+    if suffix == ".":
+        return True
+
+    if field.endswith(suffix):
+        ls = len(suffix)
+        if len(field) == ls or field[-ls - 1] in (".", "\b") and field[-ls - 2] not in (".", "\b"):
             return True
     return False
 
@@ -691,7 +705,7 @@ def tuplewrap(value):
     elif is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
     else:
-        return (from_data(value),)
+        return from_data(value),
 
 
 def is_null(t):
