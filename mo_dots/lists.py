@@ -18,7 +18,8 @@ from mo_imports import expect, delay_import
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
-datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
+object_to_data, datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
+    "object_to_data",
     "datawrap",
     "coalesce",
     "list_to_data",
@@ -112,7 +113,7 @@ class FlatList(object):
             output = []
             for v in _get(self, SLOT):
                 if is_many(v):
-                    element = from_data(datawrap(v).get(key))
+                    element = from_data(object_to_data(v).get(key))
                     output.extend(element)
                 else:
                     output.append(from_data(v))
@@ -120,7 +121,7 @@ class FlatList(object):
             return list_to_data(output)
         output = []
         for v in _get(self, SLOT):
-            element = datawrap(v).get(key)
+            element = object_to_data(v).get(key)
             if element.__class__ == FlatList:
                 output.extend(from_data(element))
             else:
@@ -134,6 +135,15 @@ class FlatList(object):
         return list_to_data([
             from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
         ])
+
+    def map(self, oper, includeNone=True):
+        if includeNone:
+            return FlatList([oper(v) for v in _get(self, SLOT)])
+        else:
+            return FlatList([oper(v) for v in _get(self, SLOT) if v != None])
+
+    def to_list(self):
+        return _get(self, SLOT)
 
     def __delitem__(self, i):
         del _get(self, SLOT)[i]
@@ -290,12 +300,6 @@ class FlatList(object):
         if lst:
             return to_data(lst[-1])
         return Null
-
-    def map(self, oper, includeNone=True):
-        if includeNone:
-            return FlatList([oper(v) for v in _get(self, SLOT)])
-        else:
-            return FlatList([oper(v) for v in _get(self, SLOT) if v != None])
 
 
 def last(values):

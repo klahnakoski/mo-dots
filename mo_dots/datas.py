@@ -271,7 +271,7 @@ class Data(object):
 
         if _get(other, CLASS) not in data_types:
             return False
-        e = from_data(other)
+        e = other
         for k, v in d.items():
             if e.get(k) != v:
                 return False
@@ -473,7 +473,7 @@ def _iadd(self, other):
     for ok, ov in other.items():
         sv = d.get(ok)
         if sv == None:
-            d[ok] = deepcopy(ov)
+            d[ok] = from_data(deepcopy(ov))
         elif isinstance(ov, (Decimal, float, long, int)):
             if _get(sv, CLASS) in data_types:
                 get_logger().error(
@@ -486,7 +486,7 @@ def _iadd(self, other):
             else:
                 d[ok] = sv + ov
         elif is_list(ov):
-            d[ok] = listwrap(sv) + ov
+            d[ok] = from_data(listwrap(sv) + ov)
         elif _get(ov, CLASS) in data_types:
             if _get(sv, CLASS) in data_types:
                 _iadd(sv, ov)

@@ -281,7 +281,7 @@ def set_default(d, *dicts):
     """
     agg = d if d or _get(d, CLASS) in data_types else {}
     for p in dicts:
-        _set_default(agg, from_data(p), seen={})
+        _set_default(agg, p, seen={})
     return to_data(agg)
 
 
@@ -294,7 +294,7 @@ def _set_default(d, default, seen=None):
         return
 
     for k, default_value in default.items():
-        default_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
+        raw_value = from_data(default_value)  # TWO DIFFERENT Dicts CAN SHARE id() BECAUSE THEY ARE SHORT LIVED
         if is_data(d):
             existing_value = d.get(k)
         else:
@@ -303,12 +303,12 @@ def _set_default(d, default, seen=None):
         if existing_value == None:
             if default_value != None:
                 if _get(default_value, CLASS) in data_types:
-                    df = seen.get(id(default_value))
+                    df = seen.get(id(raw_value))
                     if df is not None:
                         _set_attr(d, [k], df)
                     else:
                         copy_dict = {}
-                        seen[id(default_value)] = copy_dict
+                        seen[id(raw_value)] = copy_dict
                         _set_attr(d, [k], copy_dict)
                         _set_default(copy_dict, default_value, seen)
                 else:
@@ -327,11 +327,11 @@ def _set_default(d, default, seen=None):
             hasattr(existing_value, "__setattr__")
             or _get(existing_value, CLASS) in data_types
         ) and _get(default_value, CLASS) in data_types:
-            df = seen.get(id(default_value))
+            df = seen.get(id(raw_value))
             if df is not None:
                 _set_attr(d, [k], df)
             else:
-                seen[id(default_value)] = existing_value
+                seen[id(raw_value)] = existing_value
                 _set_default(existing_value, default_value, seen)
 
 
@@ -554,6 +554,8 @@ def to_data(v=None):
         return m
     elif type_ is none_type:
         return Null
+    elif type_ is tuple:
+        return list_to_data(v)
     elif type_ is list:
         return list_to_data(v)
     elif type_ in generator_types:
@@ -759,7 +761,9 @@ export("mo_dots.lists", from_data)
 export("mo_dots.lists", hash_value)
 
 export("mo_dots.objects", list_to_data)
+export("mo_dots.objects", dict_to_data)
 export("mo_dots.objects", to_data)
 export("mo_dots.objects", from_data)
 export("mo_dots.objects", get_attr)
 export("mo_dots.objects", set_attr)
+export("mo_dots.objects", set_default)

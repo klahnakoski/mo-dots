@@ -11,11 +11,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from dataclasses import dataclass
+from typing import List
+
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 from mo_dots import DataObject, to_data
 from mo_dots.lists import datawrap, Null
-from mo_dots.objects import DataClass
+from mo_dots.objects import DataClass, object_to_data
 
 values = [1, 2, 3]
 
@@ -52,6 +55,66 @@ class TestObject(FuzzyTestCase):
         x = BetterObject(42)
         self.assertEqual(x.my_attr, 42)
 
+    def test_apply1(self):
+        @dataclass
+        class Example2:
+            c: int
+
+        @dataclass
+        class ExampleA:
+            a: List[str]
+            b: Example2
+
+        obj = ExampleA(['a', 'x'], Example2(42))
+        d = object_to_data(obj)
+
+        c = to_data({"a": ['z'], 'b': {"c": 99}})
+
+        result = c | d
+
+        self.assertEqual(result.b.c, 99)
+        self.assertFalse(result == d)
+
+    def test_apply2(self):
+        @dataclass
+        class Example2:
+            c: int
+
+        @dataclass
+        class ExampleA:
+            a: List[str]
+            b: Example2
+
+        obj = ExampleA(['a', 'x'], Example2(42))
+        d = object_to_data(obj)
+
+        c = to_data({'b': {"c": 42}})
+
+        result = d | c
+
+        self.assertEqual(result.b.c, 42)
+        self.assertTrue(result == d)
+        self.assertTrue(d == result)
+
+    def test_apply3(self):
+        @dataclass
+        class Example2:
+            c: int
+
+        @dataclass
+        class ExampleA:
+            a: List[str]
+            b: Example2
+
+        obj = ExampleA(['a', 'x'], Example2(42))
+        d = object_to_data(obj)
+
+        c = to_data({"a": ['z'], 'b': {"c": 99}})
+
+        result = d + c
+        expected = to_data({"a": ['a', 'x', 'z'], 'b': {"c": 42+99}})
+        self.assertTrue(result == expected)
+        self.assertTrue(expected == result)
 
 
 def gen():

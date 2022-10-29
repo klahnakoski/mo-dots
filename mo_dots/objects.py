@@ -9,13 +9,11 @@
 
 from __future__ import absolute_import, division, unicode_literals
 
+from collections import OrderedDict
+from copy import deepcopy
 from datetime import date, datetime
 from decimal import Decimal
 
-from mo_dots.datas import register_data, Data
-from mo_dots.lists import FlatList
-from mo_dots.nones import NullType, Null
-from mo_dots.utils import CLASS, SLOT
 from mo_future import (
     binary_type,
     generator_types,
@@ -26,8 +24,13 @@ from mo_future import (
 )
 from mo_imports import export, expect
 
-get_attr, set_attr, list_to_data, to_data, from_data = expect(
-    "get_attr", "set_attr", "list_to_data", "to_data", "from_data"
+from mo_dots.datas import register_data, Data, _iadd
+from mo_dots.lists import FlatList
+from mo_dots.nones import NullType, Null
+from mo_dots.utils import CLASS, SLOT
+
+get_attr, set_attr, list_to_data, dict_to_data, to_data, from_data, set_default = expect(
+    "get_attr", "set_attr", "list_to_data", "dict_to_data", "to_data", "from_data", "set_default"
 )
 
 _new = object.__new__
@@ -49,7 +52,7 @@ class DataObject(Mapping):
     def __getattr__(self, item):
         obj = _get(self, SLOT)
         output = get_attr(obj, item)
-        return datawrap(output)
+        return object_to_data(output)
 
     def __setattr__(self, key, value):
         obj = _get(self, SLOT)
@@ -58,12 +61,24 @@ class DataObject(Mapping):
     def __getitem__(self, item):
         obj = _get(self, SLOT)
         output = get_attr(obj, item)
-        return datawrap(output)
+        return object_to_data(output)
+
+    def __or__(self, other):
+        return set_default({}, self, other)
+
+    def __ror__(self, other):
+        return to_data(other) | self
+
+    def __add__(self, other):
+        return to_data(_iadd(_iadd({}, self), other))
+
+    def __radd__(self, other):
+        return to_data(_iadd(_iadd({}, other), self))
 
     def get(self, item):
         obj = _get(self, SLOT)
         output = get_attr(obj, item)
-        return datawrap(output)
+        return object_to_data(output)
 
     def keys(self):
         obj = _get(self, SLOT)
@@ -75,12 +90,19 @@ class DataObject(Mapping):
     def items(self):
         obj = _get(self, SLOT)
         try:
-            yield from obj.__dict__.items()
+            for k, v in obj.__dict__.items():
+                yield k, object_to_data(v)
         except Exception as e:
             for k in dir(obj):
                 if k.startswith("__"):
                     continue
-                yield k, getattr(obj, k, None)
+                yield k, object_to_data(getattr(obj, k, None))
+
+    def __deepcopy__(self, memodict={}):
+        output = {}
+        for k, v in self.items():
+            output[k] = from_data(deepcopy(v))
+        return dict_to_data(output)
 
     def __data__(self):
         return self
@@ -104,7 +126,7 @@ class DataObject(Mapping):
 register_data(DataObject)
 
 
-def datawrap(v):
+def object_to_data(v):
     try:
         if v == None:
             return Null
@@ -113,12 +135,12 @@ def datawrap(v):
 
     type_ = _get(v, CLASS)
 
-    if type_ is dict:
+    if type_ is (dict, OrderedDict):
         m = _new(Data)
         _set(m, SLOT, v)
         return m
     elif type_ is tuple:
-        return FlatList(v)
+        return list_to_data(v)
     elif type_ is list:
         return list_to_data(v)
     elif type_ in (Data, DataObject, FlatList, NullType):
@@ -173,4 +195,5 @@ def params_pack(params, *args):
     return output
 
 
-export("mo_dots.lists", datawrap)
+export("mo_dots.lists", "object_to_data", object_to_data)
+export("mo_dots.lists", "datawrap", object_to_data)
