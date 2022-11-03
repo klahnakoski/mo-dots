@@ -153,6 +153,9 @@ def object_to_data(v):
     return DataObject(v)
 
 
+datawrap = object_to_data
+
+
 class DataClass(object):
     """
     ALLOW INSTANCES OF class_ TO ACT LIKE dicts
