@@ -447,7 +447,11 @@ class TestList(FuzzyTestCase):
     def test_bad_null(self):
         self.assertFalse(is_null(Bad()))
 
-
+    def test_to_list(self):
+        l = to_data([1, 2, 3])
+        result = l.map(lambda x: x*2).to_list()
+        self.assertIsInstance(result, list)
+        self.assertEqual(result, [2, 4, 6])
 
 class Bad:
     def __eq__(self, other):

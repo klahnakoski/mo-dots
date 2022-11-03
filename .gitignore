@@ -11,3 +11,4 @@
 /tests/*.pyc
 .svn
 .idea
+__pycache__
