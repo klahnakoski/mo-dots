@@ -539,7 +539,7 @@ def list_to_data(v):
     return output
 
 
-def to_data(v=None):
+def to_data(v=None) -> object:
     """
     WRAP AS Data OBJECT FOR DATA PROCESSING: https://github.com/klahnakoski/mo-dots/tree/dev/docs
     :param v:  THE VALUE TO WRAP
