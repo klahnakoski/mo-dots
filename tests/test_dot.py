@@ -39,7 +39,7 @@ from mo_dots import (
     PATH_NOT_FOUND,
 )
 from mo_dots.datas import leaves
-from mo_dots.objects import object_to_data as datawrap
+from mo_dots.objects import datawrap
 from tests import ambiguous_test
 
 
