@@ -153,7 +153,7 @@ class TestDotSpeed(FuzzyTestCase):
         )
 
         self.assertGreater(
-            m_time.duration.total_seconds() * 1.1,
+            m_time.duration.total_seconds() * 1.2,
             s_time.duration.total_seconds(),
             "is_text should be slower than isinstance check",
         )
