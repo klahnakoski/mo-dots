@@ -599,13 +599,18 @@ def _leaves_to_data(value):
             if key == "":
                 get_logger().error("key is empty string.  Probably a bad idea")
 
-            d = output
             seq = split_field(key)
+            if not seq:
+                if not output:
+                    output = value
+                continue
+            if not is_data(output):
+                output = {}
+            d = output
             for k in seq[:-1]:
                 e = d.get(k, None)
-                if e is None:
-                    d[k] = {}
-                    e = d[k]
+                if not is_data(e):
+                    e = d[k] = {}
                 d = e
 
             if value == None:
