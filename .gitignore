@@ -12,5 +12,7 @@
 .svn
 .idea
 __pycache__
-./setup.py
+
+/setup.py
+
 
