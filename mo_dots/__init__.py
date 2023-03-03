@@ -396,7 +396,7 @@ def get_attr(obj, path):
         return _get_attr(obj, split_field(path))
     except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in e:
+        if PATH_NOT_FOUND in cause:
             Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
         else:
             Log.error("Problem setting value", cause=cause)
