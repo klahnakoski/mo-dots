@@ -11,7 +11,7 @@ import cProfile
 import pstats
 
 from mo_future import text, Mapping
-from mo_math.randoms import Random
+from mo_math import randoms
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_threads import profiles
 from mo_times import Timer
@@ -43,7 +43,7 @@ class SpeedTestDot(FuzzyTestCase):
             3: lambda: 6,
             4: lambda: "string",
         }
-        data = [options[Random.int(len(options))]() for _ in range(num)]
+        data = [options[randoms.int(len(options))]() for _ in range(num)]
 
         with Timer("isinstance check") as i_time:
             i_result = [isinstance(d, Mapping) for d in data]
@@ -77,7 +77,7 @@ class SpeedTestDot(FuzzyTestCase):
             # 3: lambda: Data(),
             # 4: lambda: Null,
         }
-        data = [options[Random.int(len(options))]() for _ in range(num)]
+        data = [options[randoms.int(len(options))]() for _ in range(num)]
 
         with Timer("isinstance check") as i_time:
             i_result = [isinstance(d, text) for d in data]
