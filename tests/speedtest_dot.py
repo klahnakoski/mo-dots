@@ -9,9 +9,8 @@
 
 import cProfile
 import pstats
-from collections import Mapping
 
-from mo_future import text
+from mo_future import text, Mapping
 from mo_math.randoms import Random
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_threads import profiles
