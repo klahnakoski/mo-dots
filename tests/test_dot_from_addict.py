@@ -28,14 +28,14 @@
 
 from __future__ import unicode_literals
 
-from collections import Mapping
 from copy import deepcopy
 from unittest import skip
 
-import mo_dots
 import mo_json
+from mo_future import Mapping
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
+import mo_dots
 from mo_dots import Data, set_default, from_data, to_data
 
 TEST_VAL = [1, 2, 3]

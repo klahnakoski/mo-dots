@@ -2,8 +2,8 @@ language: python
 cache: pip
 python:
 - 3.7.8
-- 3.8
-- 3.9
+- '3.8'
+- '3.9'
 env:
   global:
   - PYTHONPATH=.
@@ -17,3 +17,11 @@ script:
 - coverage run -m unittest discover tests
 after_success:
 - coveralls
+jobs:
+  include:
+  - name: Python 3.10
+    dist: jammy
+    python: '3.10'
+    before_install:
+    - pip install wheel==0.37.1
+    - pip install setuptools==45.2.0
