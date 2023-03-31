@@ -99,18 +99,7 @@ class TestList(FuzzyTestCase):
 
         level1 = v.a
         self.assertEqual(
-            level1,
-            [
-                {"b": 1},
-                {"b": 2},
-                {"b": 3},
-                {"b": 4},
-                {"b": 5},
-                {"b": 6},
-                {"b": 7},
-                {"b": 8},
-                {"b": 9},
-            ],
+            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 5}, {"b": 6}, {"b": 7}, {"b": 8}, {"b": 9},],
         )
         self.assertEqual(level1.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.assertEqual(v.a.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -449,13 +438,14 @@ class TestList(FuzzyTestCase):
 
     def test_to_list(self):
         l = to_data([1, 2, 3])
-        result = l.map(lambda x: x*2).to_list()
+        result = l.map(lambda x: x * 2).to_list()
         self.assertIsInstance(result, list)
         self.assertEqual(result, [2, 4, 6])
 
     def test_repr(self):
-        d = to_data([1,2,3])
+        d = to_data([1, 2, 3])
         self.assertEqual(repr(d), "to_data([1, 2, 3])")
+
 
 class Bad:
     def __eq__(self, other):

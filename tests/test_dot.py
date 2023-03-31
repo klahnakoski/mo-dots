@@ -378,22 +378,14 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c..a"].d += 1
 
-        self.assertEqual(
-            a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
-        )
+        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
 
         b.c1.d += 2
         b.c2.e += "f"
         b.c3.f += ["g"]
         b["c..a"].d += 3
         self.assertEqual(
-            a,
-            {
-                "c1": {"d": 3},
-                "c2": {"e": "ef"},
-                "c3": {"f": ["f", "g"]},
-                "c.a": {"d": 4},
-            },
+            a, {"c1": {"d": 3}, "c2": {"e": "ef"}, "c3": {"f": ["f", "g"]}, "c.a": {"d": 4},},
         )
 
     def test_slicing(self):
@@ -556,9 +548,7 @@ class TestDot(FuzzyTestCase):
         e = temp.e
         e.s.t = 1
         e.s.s = 2
-        self.assertEqual(
-            temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical"
-        )
+        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
@@ -607,17 +597,13 @@ class TestDot(FuzzyTestCase):
         a = {"a": "test"}
         b = {"a": [1, 2]}
         self.assertAlmostEqual(
-            set_default(a, b),
-            {"a": ["test", 1, 2]},
-            "expecting string, not list, nor some hybrid",
+            set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid",
         )
 
     def test_unicode_or_list(self):
         a = to_data({"a": "test"})
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(
-            a | b, {"a": "test"}, "expecting string, not list, nor some hybrid"
-        )
+        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
@@ -653,9 +639,7 @@ class TestDot(FuzzyTestCase):
     def test_add_null_to_list(self):
         expected = to_data(["test", "list"])
         test = expected + None
-        self.assertEqual(
-            test, expected, "expecting adding None to list does not change list"
-        )
+        self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
     def test_pop_list(self):
         l = to_data([1, 2, 3, 4])

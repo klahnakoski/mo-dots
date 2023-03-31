@@ -72,10 +72,10 @@ class TestFields(FuzzyTestCase):
 
     def test_illegal(self):
         with self.assertRaises(Exception):
-            split_field('\\...a\bb.')
+            split_field("\\...a\bb.")
 
         with self.assertRaises(Exception):
-            split_field('a\\a...\\b')
+            split_field("a\\a...\\b")
 
     def test_join_with_parents(self):
         self.assertEqual(join_field(split_field("a.b")), "a.b")
@@ -84,8 +84,8 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(join_field(split_field("...a.b")), "...a.b")
 
         parent = split_field("x.y.z")
-        self.assertEqual(join_field(parent+split_field(".a.b")), "x.y.z.a.b")
-        self.assertEqual(join_field(parent+split_field("..a.b")), "x.y.a.b")
-        self.assertEqual(join_field(parent+split_field("...a.b")), "x.a.b")
-        self.assertEqual(join_field(parent+split_field("....a.b")), "a.b")
-        self.assertEqual(join_field(parent+split_field(".....a.b")), "..a.b")
+        self.assertEqual(join_field(parent + split_field(".a.b")), "x.y.z.a.b")
+        self.assertEqual(join_field(parent + split_field("..a.b")), "x.y.a.b")
+        self.assertEqual(join_field(parent + split_field("...a.b")), "x.a.b")
+        self.assertEqual(join_field(parent + split_field("....a.b")), "a.b")
+        self.assertEqual(join_field(parent + split_field(".....a.b")), "..a.b")

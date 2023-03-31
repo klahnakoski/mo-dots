@@ -59,9 +59,7 @@ class TestDotSpeed(FuzzyTestCase):
 
         Log.info(
             "attribute access is {{t|round(places=2)}}x faster",
-            t=(att.duration.seconds + prop.duration.seconds)
-            / 2
-            / slot.duration.seconds,
+            t=(att.duration.seconds + prop.duration.seconds) / 2 / slot.duration.seconds,
         )
 
     def test_compare_isinstance_to_class_checks(self):
@@ -164,9 +162,7 @@ class TestDotSpeed(FuzzyTestCase):
         )
 
     def test_null_compare(self):
-        values = randoms.sample(
-            [None, Null, {}, Data(), Data(a="b"), [], FlatList()], 1000 * 1000
-        )
+        values = randoms.sample([None, Null, {}, Data(), Data(a="b"), [], FlatList()], 1000 * 1000)
 
         with Timer("is compare") as is_time:
             for v in values:
@@ -268,7 +264,9 @@ def split_using_double_replace(field):
         if field.startswith(".."):
             remainder = field.lstrip(".")
             back = len(field) - len(remainder) - 1
-            return [".."] * back + [k.replace("\a\a", ".").replace("\b", ".") for k in remainder.replace("..", "\a\a").split(".") if k]
+            return [".."] * back + [
+                k.replace("\a\a", ".").replace("\b", ".") for k in remainder.replace("..", "\a\a").split(".") if k
+            ]
         else:
             return [k.replace("\a\a", ".").replace("\b", ".") for k in field.replace("..", "\a\a").split(".") if k]
     except Exception as cause:

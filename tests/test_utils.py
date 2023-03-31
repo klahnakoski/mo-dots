@@ -10,13 +10,24 @@
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
-from mo_dots import inverse, coalesce, Null, missing, exists, hash_value, set_default, to_data, get_attr, tuplewrap, \
-    utils, Data
+from mo_dots import (
+    inverse,
+    coalesce,
+    Null,
+    missing,
+    exists,
+    hash_value,
+    set_default,
+    to_data,
+    get_attr,
+    tuplewrap,
+    utils,
+    Data,
+)
 from mo_dots.utils import PoorLogger
 
 
 class TestUtils(FuzzyTestCase):
-
     def test_inverse(self):
         result = inverse({"a": "b", "b": "b"})
         self.assertEqual(result, {"b": ["a", "b"]})
@@ -40,7 +51,7 @@ class TestUtils(FuzzyTestCase):
         x = set_default({"a": 1}, None)
         self.assertEqual(x, {"a": 1})
 
-        x = set_default({"a": 1}, to_data({"b":1}))
+        x = set_default({"a": 1}, to_data({"b": 1}))
         self.assertEqual(x, {"a": 1, "b": 1})
 
     def test_set_default_w_None(self):

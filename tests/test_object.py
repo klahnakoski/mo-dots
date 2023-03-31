@@ -48,7 +48,7 @@ class TestObject(FuzzyTestCase):
         self.assertEqual(datawrap(None), Null)
         self.assertEqual(datawrap(Null), Null)
         self.assertEqual(list(datawrap(gen())), [1, 2])
-        self.assertEqual(to_data({"a": 3}), {"a":3})
+        self.assertEqual(to_data({"a": 3}), {"a": 3})
 
     def test_dict_class(self):
         BetterObject = DataClass(MyObject)
@@ -65,10 +65,10 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
-        obj = ExampleA(['a', 'x'], Example2(42))
+        obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
-        c = to_data({"a": ['z'], 'b': {"c": 99}})
+        c = to_data({"a": ["z"], "b": {"c": 99}})
 
         result = c | d
 
@@ -85,10 +85,10 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
-        obj = ExampleA(['a', 'x'], Example2(42))
+        obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
-        c = to_data({'b': {"c": 42}})
+        c = to_data({"b": {"c": 42}})
 
         result = d | c
 
@@ -106,13 +106,13 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
-        obj = ExampleA(['a', 'x'], Example2(42))
+        obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
-        c = to_data({"a": ['z'], 'b': {"c": 99}})
+        c = to_data({"a": ["z"], "b": {"c": 99}})
 
         result = d + c
-        expected = to_data({"a": ['a', 'x', 'z'], 'b': {"c": 42+99}})
+        expected = to_data({"a": ["a", "x", "z"], "b": {"c": 42 + 99}})
         self.assertTrue(result == expected)
         self.assertTrue(expected == result)
 

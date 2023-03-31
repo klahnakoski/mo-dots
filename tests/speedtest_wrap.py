@@ -28,10 +28,7 @@ def test_wrap_1():
         lambda: [{"i": Random.int(2000)}],
     ]
 
-    inputs = [
-        switch[min(len(switch) - 1, int(floor(-log(Random.float(), 2))))]()
-        for i in range(NUM_INPUT)
-    ]
+    inputs = [switch[min(len(switch) - 1, int(floor(-log(Random.float(), 2))))]() for i in range(NUM_INPUT)]
 
     for i in range(NUM_REPEAT):
         results = []
@@ -60,10 +57,7 @@ def test_wrap_2():
         lambda: [{"i": Random.int(2000)}],
     ]
 
-    inputs = [
-        switch[min(len(switch) - 1, int(floor(-log(Random.float(), 2))))]()
-        for i in range(NUM_INPUT)
-    ]
+    inputs = [switch[min(len(switch) - 1, int(floor(-log(Random.float(), 2))))]() for i in range(NUM_INPUT)]
 
     for i in range(NUM_REPEAT):
         results = []
