@@ -179,9 +179,7 @@ class DataClass(object):
 
         ordered_params = dict(zip(params, args))
 
-        output = self.class_(
-            **params_pack(params, ordered_params, kwargs, settings, defaults)
-        )
+        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
         return DataObject(output)
 
 

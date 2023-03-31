@@ -134,9 +134,7 @@ class NullType(object):
             return other == None
 
     def __ne__(self, other):
-        return (
-            other is not None and _get(other, CLASS) is not NullType and other != None
-        )
+        return other is not None and _get(other, CLASS) is not NullType and other != None
 
     def __or__(self, other):
         return other

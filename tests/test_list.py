@@ -453,6 +453,10 @@ class TestList(FuzzyTestCase):
         self.assertIsInstance(result, list)
         self.assertEqual(result, [2, 4, 6])
 
+    def test_repr(self):
+        d = to_data([1,2,3])
+        self.assertEqual(repr(d), "to_data([1, 2, 3])")
+
 class Bad:
     def __eq__(self, other):
         raise Exception()

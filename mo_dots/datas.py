@@ -73,9 +73,7 @@ class Data(object):
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception(
-                "only keywords are allowed, not " + args[0].__class__.__name__
-            )
+            raise Exception("only keywords are allowed, not " + args[0].__class__.__name__)
         _set(self, SLOT, kwargs)
 
     def __bool__(self):
@@ -293,11 +291,7 @@ class Data(object):
 
     def items(self):
         d = _get(self, SLOT)
-        return [
-            (k, to_data(v))
-            for k, v in d.items()
-            if v != None or _get(v, CLASS) in data_types
-        ]
+        return [(k, to_data(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
 
     def leaves(self, prefix=None):
         """
@@ -397,7 +391,7 @@ class Data(object):
         return v
 
     def __str__(self):
-        return dict.__str__(_get(self, SLOT))
+        return str(_get(self, SLOT))
 
     def __dir__(self):
         d = _get(self, SLOT)
@@ -405,9 +399,9 @@ class Data(object):
 
     def __repr__(self):
         try:
-            return "Data(" + dict.__repr__(_get(self, SLOT)) + ")"
+            return f"to_data({repr(_get(self, SLOT))})"
         except Exception as e:
-            return "Data()"
+            return "Data(?)"
 
 
 MutableMapping.register(Data)
@@ -466,7 +460,7 @@ def _iadd(self, other):
         else:
             d = dict_to_data({"$": self})
         d += dict_to_data({"$": other})
-        d['.'] = d['$']
+        d["."] = d["$"]
         return d
 
     d = from_data(self)

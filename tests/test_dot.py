@@ -1051,7 +1051,20 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(x["."], ["a", "b"])
 
     def test_repr(self):
-        self.assertEqual(repr(to_data({"a": 1})), "Data({'a': 1})")
+        self.assertEqual(repr(to_data({"a": 1})), "to_data({'a': 1})")
+
+    def test_repr2(self):
+        d = {}
+        for i in range(3):
+            d = {"a": d}
+        d = to_data(d)
+        self.assertEqual(eval(repr(d)), d)
+
+    def test_repr3(self):
+        d = Data()
+        for i in range(3):
+            d = Data(a=d)
+        self.assertEqual(repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})")
 
     def test_add_one_to_dict(self):
         x = to_data({"a": {"b": 42}})

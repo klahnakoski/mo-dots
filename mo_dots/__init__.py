@@ -22,7 +22,7 @@ from mo_dots.lists import (
     list_types,
     container_types,
     finite_types,
-    last
+    last,
 )
 from mo_dots.nones import Null, NullType
 from mo_dots.objects import DataObject
@@ -32,7 +32,8 @@ from mo_future import (
     generator_types,
     text,
     OrderedDict,
-    none_type, flatten,
+    none_type,
+    flatten,
     first,
 )
 from mo_imports import export
@@ -152,9 +153,7 @@ def split_field(field):
     if field.startswith(".."):
         remainder = field.lstrip(".")
         back = len(field) - len(remainder) - 1
-        return [".."] * back + [
-            UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k
-        ]
+        return [".."] * back + [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k]
     else:
         return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
 
@@ -179,11 +178,7 @@ def join_field(path):
             else:
                 path = path[: i - 1] + path[i + 1 :]
         except ValueError:
-            return (
-                ("." if prefix else "")
-                + prefix
-                + ".".join(literal_field(f) for f in path)
-            )
+            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
 
 
 def concat_field(*fields):
@@ -207,7 +202,7 @@ def startswith_field(field, prefix):
 
     if field.startswith(prefix):
         lp = len(prefix)
-        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp+1] not in (".", "\b"):
+        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp + 1] not in (".", "\b"):
             return True
     return False
 
@@ -317,16 +312,13 @@ def _set_default(d, default, seen=None):
                         _set_attr(d, [k], default_value)
                     except Exception as e:
                         if PATH_NOT_FOUND not in e:
-                            get_logger().error(
-                                "Can not set attribute {{name}}", name=k, cause=e
-                            )
+                            get_logger().error("Can not set attribute {{name}}", name=k, cause=e)
         elif is_list(existing_value) or is_list(default_value):
             _set_attr(d, [k], None)
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
-        elif (
-            hasattr(existing_value, "__setattr__")
-            or _get(existing_value, CLASS) in data_types
-        ) and _get(default_value, CLASS) in data_types:
+        elif (hasattr(existing_value, "__setattr__") or _get(existing_value, CLASS) in data_types) and _get(
+            default_value, CLASS
+        ) in data_types:
             df = seen.get(id(raw_value))
             if df is not None:
                 _set_attr(d, [k], df)
@@ -426,21 +418,13 @@ def _get_attr(obj, path):
                 if len(path) == 1:
                     # GET MODULE OBJECT
                     output = __import__(
-                        obj.__name__ + str(".") + str(attr_name),
-                        globals(),
-                        locals(),
-                        [str(attr_name)],
-                        0,
+                        obj.__name__ + str(".") + str(attr_name), globals(), locals(), [str(attr_name)], 0,
                     )
                     return output
                 else:
                     # GET VARIABLE IN MODULE
                     output = __import__(
-                        obj.__name__ + str(".") + str(attr_name),
-                        globals(),
-                        locals(),
-                        [str(path[1])],
-                        0,
+                        obj.__name__ + str(".") + str(attr_name), globals(), locals(), [str(path[1])], 0,
                     )
                     return _get_attr(output, path[1:])
             except Exception as e:
@@ -451,9 +435,7 @@ def _get_attr(obj, path):
         matched_attr_name = lower_match(attr_name, dir(obj))
         if not matched_attr_name:
             get_logger().warning(
-                PATH_NOT_FOUND + "({{name|quote}}) Returning None.",
-                name=attr_name,
-                cause=possible_error,
+                PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error,
             )
         elif len(matched_attr_name) > 1:
             get_logger().error(AMBIGUOUS_PATH_FOUND + " {{paths}}", paths=attr_name)
@@ -497,9 +479,7 @@ def _set_attr(obj_, path, value):
         elif value == None:
             new_value = None
         else:
-            new_value = _get(
-                old_value, CLASS
-            )(value)  # TRY TO MAKE INSTANCE OF SAME CLASS
+            new_value = _get(old_value, CLASS)(value)  # TRY TO MAKE INSTANCE OF SAME CLASS
     except Exception:
         old_value = None
         new_value = value
@@ -712,7 +692,7 @@ def tuplewrap(value):
     elif is_many(value):
         return tuple(tuplewrap(v) if is_sequence(v) else v for v in value)
     else:
-        return from_data(value),
+        return (from_data(value),)
 
 
 def is_null(t):

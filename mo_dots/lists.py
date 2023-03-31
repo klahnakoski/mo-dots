@@ -19,15 +19,7 @@ from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
 object_to_data, datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
-    "object_to_data",
-    "datawrap",
-    "coalesce",
-    "list_to_data",
-    "to_data",
-    "from_data",
-    "Null",
-    "EMPTY",
-    "hash_value",
+    "object_to_data", "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value",
 )
 
 _null_hash = hash(None)
@@ -61,9 +53,7 @@ class FlatList(object):
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
-                Log.error(
-                    "slice step must be None, do not know how to deal with values"
-                )
+                Log.error("slice step must be None, do not know how to deal with values")
             length = len(_get(self, SLOT))
 
             i = index.start
@@ -132,9 +122,7 @@ class FlatList(object):
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return list_to_data([
-            from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
-        ])
+        return list_to_data([from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))])
 
     def map(self, oper, includeNone=True):
         if includeNone:
@@ -163,7 +151,10 @@ class FlatList(object):
         return self
 
     def __str__(self):
-        return _get(self, SLOT).__str__()
+        return str(_get(self, SLOT))
+
+    def __repr__(self):
+        return f"to_data({repr(_get(self, SLOT))})"
 
     def __len__(self):
         return _get(self, SLOT).__len__()
