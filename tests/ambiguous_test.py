@@ -11,4 +11,3 @@ from mo_dots import Data
 d = Data(a=44)
 de = Data(a=42)
 De = Data(a=43)
-
