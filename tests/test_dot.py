@@ -1101,6 +1101,14 @@ class TestDot(FuzzyTestCase):
         result = leaves_to_data({"a": 42, ".": "hi"})
         self.assertEqual(result, {"a": 42})
 
+    def test_leaves5(self):
+        data = Data()
+        data["."] = "hi"
+        b = Data(a=data)
+
+        result = list(b.leaves())
+        self.assertEqual(result, [("a", "hi")])
+
 
 class _TestMapping(object):
     def __init__(self):
