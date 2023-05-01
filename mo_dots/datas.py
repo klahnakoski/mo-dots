@@ -424,7 +424,17 @@ def leaves(value, prefix=None):
 
 
 def _leaves(value, parent):
-    for k, v in value.items():
+    if isinstance(value, Data):
+        d = _get(value, SLOT)
+        if isinstance(d, dict):
+            items = d.items()
+        else:
+            yield parent, d
+            return
+    else:
+        items = value.items()
+
+    for k, v in items:
         try:
             kk = concat_field(parent, literal_field(k))
             if _get(v, CLASS) in data_types:
