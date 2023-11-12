@@ -81,7 +81,7 @@ def missing(value):
     raise NotImplementedError("use is_missing")
 
 
-def is_missing(t):
+def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
     class_ = t.__class__
     if class_ in null_types:
@@ -96,7 +96,7 @@ def is_missing(t):
         return t == None
 
 
-def exists(value):
+def exists(value) -> bool:
     return not is_missing(value)
 
 
