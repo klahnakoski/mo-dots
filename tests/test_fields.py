@@ -89,3 +89,8 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(join_field(parent + split_field("...a.b")), "x.a.b")
         self.assertEqual(join_field(parent + split_field("....a.b")), "a.b")
         self.assertEqual(join_field(parent + split_field(".....a.b")), "..a.b")
+
+    def test_tail_field(self):
+        a, b = tail_field("g..a")
+        self.assertEqual(a, "g..a")
+        self.assertEqual(b, ".")
