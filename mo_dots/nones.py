@@ -241,6 +241,7 @@ class NullType(object):
 
 
 Null = NullType()  # INSTEAD OF None!!!
+_set(Null, SLOT, Null)
 
 
 def _assign_to_null(obj, path, value, force=True):

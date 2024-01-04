@@ -139,7 +139,9 @@ def tail_field(field):
         return ".", "."
     elif "." in field:
         path = split_field(field)
-        return path[0], join_field(path[1:])
+        if path[0].startswith("."):
+            return path[0], join_field(path[1:])
+        return literal_field(path[0]), join_field(path[1:])
     else:
         return field, "."
 
