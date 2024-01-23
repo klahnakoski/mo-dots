@@ -89,7 +89,7 @@ class NullType(object):
         return None
 
     def __float__(self):
-        return Null
+        return float('nan')
 
     def __div__(self, other):
         return Null

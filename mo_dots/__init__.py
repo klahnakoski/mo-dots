@@ -11,6 +11,7 @@
 
 import re
 import sys
+from math import isnan
 
 from mo_dots.datas import Data, data_types, is_data
 from mo_dots.lists import (
@@ -622,8 +623,11 @@ def from_data(v):
         return _get(v, SLOT)
     elif _type in generator_types:
         return (from_data(vv) for vv in v)
-    else:
+    elif _type is float:
+        if isnan(v):
+            return None
         return v
+    return v
 
 
 unwrap = from_data

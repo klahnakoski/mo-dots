@@ -12,6 +12,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from copy import deepcopy, copy
+from math import isnan
 
 from mo_future import UserDict, first, Mapping
 from mo_logs import Log
@@ -940,8 +941,8 @@ class TestDot(FuzzyTestCase):
         with self.assertRaises(Exception):
             int(Null)
 
-        with self.assertRaises(Exception):
-            float(Null)
+        result = float(Null)
+        self.assertTrue(isnan(result))
 
         self.assertFalse(bool(Null))
         self.assertFalse(len(Null))
@@ -1108,6 +1109,11 @@ class TestDot(FuzzyTestCase):
 
         result = list(b.leaves())
         self.assertEqual(result, [("a", "hi")])
+
+    def test_float(self):
+        data = Data()
+        data.a = float(data.a)
+        self.assertTrue(data.a == None)
 
 
 class _TestMapping(object):
