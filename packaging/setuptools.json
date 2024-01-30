@@ -18,7 +18,7 @@
                "pyLibrary",          "mo-math",         "mo-times", "jx-elasticsearch"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==7.507.24028", "mo-imports==7.507.24028"],
+    "install_requires": ["mo-future==7.507.24028", "mo-imports==5.509.24030"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -138,6 +138,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "9.508.24028",
+    "version": "8.509.24030",
     "zip_safe": false
 }
