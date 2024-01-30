@@ -5,7 +5,7 @@ idna==3.6
 jx-elasticsearch==3.99.20292
 jx-python==4.511.24028
 mo-collections==5.508.24028
-mo-dots==8.509.24030
+mo-dots==8.513.24030
 mo-files==6.511.24028
 mo-future==7.507.24028
 mo-http==3.99.20292
@@ -21,4 +21,6 @@ mo-times==5.508.24028
 pip==23.3.2
 pyLibrary==3.264.22338
 requests==2.31.0
+setuptools==69.0.3
 urllib3==2.1.0
+wheel==0.42.0
