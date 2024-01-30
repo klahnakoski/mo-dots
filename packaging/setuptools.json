@@ -10,7 +10,6 @@
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12"
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "extras_require": {"tests": [
