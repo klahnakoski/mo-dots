@@ -5,7 +5,7 @@ idna==3.6
 jx-elasticsearch==3.99.20292
 jx-python==4.511.24028
 mo-collections==5.508.24028
-mo-dots==8.514.24030
+mo-dots==8.515.24030
 mo-files==6.511.24028
 mo-future==7.507.24028
 mo-http==3.99.20292
