@@ -1,3 +1,4 @@
+# Tests pass with these versions 2024-01-31T03:48:56Z
 certifi==2023.11.17
 charset-normalizer==3.3.2
 hjson==3.1.0
@@ -5,11 +6,11 @@ idna==3.6
 jx-elasticsearch==3.99.20292
 jx-python==4.511.24028
 mo-collections==5.508.24028
-mo-dots==8.518.24031
+mo-dots==8.519.24031
 mo-files==6.511.24028
-mo-future==7.507.24028
+mo-future==7.519.24031
 mo-http==3.99.20292
-mo-imports==5.509.24030
+mo-imports==5.519.24031
 mo-json==6.511.24028
 mo-json-config==4.511.24028
 mo-kwargs==7.508.24028
