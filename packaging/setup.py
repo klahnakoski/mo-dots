@@ -15,6 +15,6 @@ setup(
     name='mo-dots',
     packages=["mo_dots"],
     url='https://github.com/klahnakoski/mo-dots',
-    version='8.518.24031',
+    version='8.519.24031',
     zip_safe=False
 )
