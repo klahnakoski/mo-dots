@@ -7,9 +7,9 @@ jx-elasticsearch==3.99.20292
 jx-python==3.99.20292
 mo-collections==5.527.24034
 mo-files==3.92.20258
-mo-future==7.520.24032
+mo-future==7.531.24035
 mo-http==3.99.20292
-mo-imports==7.530.24035
+mo-imports==7.531.24035
 mo-json==6.527.24034
 mo-json-config==3.77.20190
 mo-kwargs==7.527.24034
