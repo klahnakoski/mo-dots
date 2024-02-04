@@ -1,24 +1,23 @@
-# Tests pass with these versions 2024-02-03
+# Tests pass with these versions 2024-02-04
 certifi==2023.11.17
 charset-normalizer==3.3.2
 hjson==3.1.0
 idna==3.6
 jx-elasticsearch==3.99.20292
 jx-python==3.99.20292
-mo-collections==5.522.24033
-mo-dots==9.520.24032
+mo-collections==5.527.24034
 mo-files==3.92.20258
 mo-future==7.520.24032
 mo-http==3.99.20292
-mo-imports==7.527.24034
-mo-json==6.522.24033
+mo-imports==7.530.24035
+mo-json==6.527.24034
 mo-json-config==3.77.20190
-mo-kwargs==7.520.24032
-mo-logs==8.522.24033
-mo-math==7.521.24032
-mo-testing==7.523.24033
-mo-threads==6.522.24033
-mo-times==5.522.24033
+mo-kwargs==7.527.24034
+mo-logs==8.527.24034
+mo-math==7.527.24034
+mo-testing==3.124.20293
+mo-threads==6.527.24034
+mo-times==5.527.24034
 pyLibrary==3.264.22338
 requests==2.31.0
 urllib3==2.2.0
