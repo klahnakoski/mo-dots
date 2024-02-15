@@ -358,7 +358,7 @@ def _getdefault(obj, key):
 
     # TODO: FIGURE OUT WHY THIS WAS EVER HERE (AND MAKE A TEST)
     # try:
-    #     return eval("obj."+text(key))
+    #     return eval("obj."+str(key))
     # except Exception as f:
     #     pass
     return NullType(obj, key)

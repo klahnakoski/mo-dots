@@ -187,7 +187,7 @@ def params_pack(params, *args):
     settings = {}
     for a in args:
         for k, v in a.items():
-            k = text(k)
+            k = str(k)
             if k in settings:
                 continue
             settings[k] = v
