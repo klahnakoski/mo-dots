@@ -38,3 +38,6 @@ jobs:
     - pip install --upgrade pip
     - pip install wheel==0.42.0
     - pip install setuptools==69.0.3
+branches:
+  except:
+  - dev
