@@ -108,7 +108,7 @@ class Data(object):
             else:
                 return output
 
-        key = text(key)
+        key = str(key)
         d = _get(self, SLOT)
 
         if key.find(".") >= 0:
@@ -310,7 +310,7 @@ class Data(object):
         if key == ".":
             raise NotImplemented()
 
-        key = text(key)
+        key = str(key)
         d = _get(self, SLOT)
 
         if key.find(".") >= 0:
@@ -379,7 +379,7 @@ class Data(object):
         d.pop(seq[-1], None)
 
     def __delattr__(self, key):
-        key = text(key)
+        key = str(key)
         d = _get(self, SLOT)
         d.pop(key, None)
 

@@ -183,7 +183,7 @@ class NullType(object):
         return output
 
     def __getattr__(self, key):
-        key = text(key)
+        key = str(key)
 
         o = to_data(_get(self, SLOT))
         k = _get(self, KEY)
@@ -200,7 +200,7 @@ class NullType(object):
             Log.error("not expected", cause=e)
 
     def __setattr__(self, key, value):
-        key = text(key)
+        key = str(key)
         o = _get(self, SLOT)
         k = _get(self, KEY)
         seq = [k] + [key]
