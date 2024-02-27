@@ -30,7 +30,6 @@ jobs:
         pip install .
         python tests/smoke_test.py
         python -m pip install --upgrade pip
-        python -m pip install unittest
         pip install -r tests/requirements.txt
         pip install .
     - name: Test with pytest
