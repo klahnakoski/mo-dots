@@ -51,5 +51,5 @@ jobs:
       run: |
         pip install coverage coveralls
         coverage run --rcfile=packaging/coverage.rc -m unittest discover tests
-        coverage --rcfile=packaging/coverage.rc report
+        coverage report --rcfile=packaging/coverage.rc 
         coveralls
