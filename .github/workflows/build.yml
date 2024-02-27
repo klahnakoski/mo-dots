@@ -36,14 +36,11 @@ jobs:
       run: |
         python -m unittest discover tests -v
     - name: Coverage
+      if: matrix.python-version == '3.12'
       env:
         COVERAGE: true
       run: |
-        pip install coverage
+        pip install coverage coveralls
         coverage run -m unittest discover tests
         coverage report
-        coverage xml
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        path-to-lcov: coverage.xml
+        coveralls
