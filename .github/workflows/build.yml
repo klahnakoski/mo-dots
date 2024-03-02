@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-
+    if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,12 +21,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
     - name: Cache pip
-      if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
@@ -35,7 +33,6 @@ jobs:
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
           ${{ runner.os }}-pip-
     - name: Install dependencies
-      if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
       run: |
         cp packaging/setup.py .
         pip install .
@@ -44,11 +41,10 @@ jobs:
         pip install -r tests/requirements.txt
         pip install .
     - name: Run Tests
-      if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
       run: |
         python -m unittest discover tests -v
     - name: Coverage
-      if: github.ref != 'refs/heads/dev' || matrix.python-version == '3.12'
+      if: matrix.python-version == '3.12'
       env:
         COVERAGE: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
