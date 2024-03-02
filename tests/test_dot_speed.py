@@ -33,12 +33,13 @@ from mo_dots import (
 )
 
 IS_TRAVIS = bool(os.environ.get("TRAVIS"))
+IS_COVERAGE = bool(os.environ.get("COVERAGE"))
 
 PY37 = sys.version_info[0] == 3 and sys.version_info[1] == 7
 PY39 = sys.version_info[0] == 3 and sys.version_info[1] == 9
 
 
-@skipIf(IS_TRAVIS, "no need to test speed on Travis")
+@skipIf(IS_TRAVIS or IS_COVERAGE, "no need to test speed on Travis")
 class TestDotSpeed(FuzzyTestCase):
     def test_simple_access(self):
         times = range(1000 * 1000)

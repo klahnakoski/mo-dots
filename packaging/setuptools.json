@@ -14,10 +14,10 @@
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "extras_require": {"tests": [
-                "mo-logs>=8.541.24038",         "mo-json>=6.541.24038",
-             "mo-threads>=6.542.24038",      "mo-testing>=3.124.20293",
-              "pyLibrary>=3.264.22338",         "mo-math>=7.541.24038",
-               "mo-times>=5.541.24038", "jx-elasticsearch>=3.99.20292"
+                "mo-logs>=8.543.24046",         "mo-json>=6.543.24046",
+             "mo-threads>=6.543.24046",      "mo-testing>=3.124.20293",
+              "pyLibrary>=3.264.22338",         "mo-math>=7.543.24046",
+               "mo-times>=5.543.24046", "jx-elasticsearch>=3.99.20292"
     ]},
     "include_package_data": true,
     "install_requires": ["mo-future==7.546.24057", "mo-imports==7.546.24057"],
@@ -28,8 +28,8 @@
             "# More Dots!",
             "",
             "[![PyPI Latest Release](https://img.shields.io/pypi/v/mo-dots.svg)](https://pypi.org/project/mo-dots/)",
-            "[![Build Status](https://app.travis-ci.com/klahnakoski/mo-dots.svg?branch=master)](https://travis-ci.com/github/klahnakoski/mo-dots)",
-            " [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)",
+            "[![Build Status](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml)",
+            "[![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)",
             "[![Downloads](https://pepy.tech/badge/mo-dots/month)](https://pepy.tech/project/mo-dots)",
             "",
             "#### Changes in version 9.x.x",
@@ -140,6 +140,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "9.547.24058",
+    "version": "9.549.24062",
     "zip_safe": false
 }
