@@ -50,6 +50,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pip install coverage coveralls
-        coverage run --rcfile=packaging/coverage.rc -m unittest discover tests
-        coverage report --rcfile=packaging/coverage.rc 
+        coverage run --rcfile=packaging/coverage.ini -m unittest discover tests
+        coverage report --rcfile=packaging/coverage.ini
         coveralls
