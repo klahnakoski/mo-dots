@@ -7,10 +7,6 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from copy import copy, deepcopy
 
 from mo_future import PY3
@@ -123,11 +119,11 @@ class TestList(FuzzyTestCase):
         self.assertEqual(v.a.b, [5, 5, 5, 5, 5, 5, 5, 5, 5])
 
     def test_flatten_w_dot(self):
-        v = listwrap([[{"b": 1}, {"b": 2}, {"b": 3}], {"b": 4}, [{"b": 7}, {"b": 8}],])
+        v = listwrap([[{"b": 1}, {"b": 2}, {"b": 3}], {"b": 4}, [{"b": 7}, {"b": 8}]])
 
         level1 = v.get(".")
         self.assertEqual(
-            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8},],
+            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8}]
         )
         self.assertEqual(level1.b, [1, 2, 3, 4, 7, 8])
         self.assertEqual(v.b, [1, 2, 3, 4, 7, 8])
@@ -445,6 +441,11 @@ class TestList(FuzzyTestCase):
     def test_repr(self):
         d = to_data([1, 2, 3])
         self.assertEqual(repr(d), "to_data([1, 2, 3])")
+
+    def test_int_and_object_gets(self):
+        d = to_data([1, 2, 3, {"a": 4, "b": 5}])
+        result = d.get("a")
+        self.assertEqual(result, [4])
 
 
 class Bad:
