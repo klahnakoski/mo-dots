@@ -18,8 +18,8 @@ from mo_imports import expect, delay_import
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
-object_to_data, datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value = expect(
-    "object_to_data", "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value",
+object_to_data, datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value, get_attr, is_missing = expect(
+    "object_to_data", "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value", "get_attr", "is_missing"
 )
 
 _null_hash = hash(None)
@@ -111,11 +111,13 @@ class FlatList(object):
             return list_to_data(output)
         output = []
         for v in _get(self, SLOT):
-            element = object_to_data(v).get(key)
-            if element.__class__ == FlatList:
-                output.extend(from_data(element))
+            element = from_data(get_attr(to_data(v), key))
+            if is_missing(element):
+                continue
+            elif is_many(element):
+                output.extend(element)
             else:
-                output.append(from_data(element))
+                output.append(element)
         return list_to_data(output)
 
     def select(self, key):

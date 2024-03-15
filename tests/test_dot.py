@@ -6,11 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from copy import deepcopy, copy
 from math import isnan
 

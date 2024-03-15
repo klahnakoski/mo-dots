@@ -750,6 +750,8 @@ export("mo_dots.lists", to_data)
 export("mo_dots.lists", coalesce)
 export("mo_dots.lists", from_data)
 export("mo_dots.lists", hash_value)
+export("mo_dots.lists", get_attr)
+export("mo_dots.lists", is_missing)
 
 export("mo_dots.objects", list_to_data)
 export("mo_dots.objects", dict_to_data)
