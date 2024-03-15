@@ -1,23 +1,24 @@
-# Tests pass with these versions 2024-03-02
+# Tests pass with these versions 2024-03-15
+# pip install --no-deps -r tests/requirements.lock
 certifi==2023.11.17
 charset-normalizer==3.3.2
 hjson==3.1.0
 idna==3.6
 jx-elasticsearch==3.99.20292
 jx-python==3.99.20292
-mo-collections==5.547.24058
+mo-collections==5.556.24070
 mo-files==3.92.20258
 mo-future==7.546.24057
 mo-http==3.99.20292
 mo-imports==7.546.24057
-mo-json==6.547.24058
+mo-json==6.561.24073
 mo-json-config==3.77.20190
-mo-kwargs==7.547.24058
-mo-logs==8.547.24058
-mo-math==7.547.24058
-mo-testing==3.124.20293
-mo-threads==6.547.24058
-mo-times==5.547.24058
+mo-kwargs==7.551.24062
+mo-logs==8.556.24070
+mo-math==7.552.24062
+mo-testing==7.559.24071
+mo-threads==6.556.24070
+mo-times==5.556.24070
 pyLibrary==3.264.22338
 requests==2.31.0
 urllib3==2.2.0
