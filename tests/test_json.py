@@ -11,7 +11,7 @@ import json
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import to_data, from_data
+from mo_dots import *
 
 
 class TestJson(FuzzyTestCase):

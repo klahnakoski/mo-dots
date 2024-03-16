@@ -6,24 +6,11 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
+from mo_dots import utils
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
-from mo_dots import (
-    inverse,
-    coalesce,
-    Null,
-    missing,
-    exists,
-    hash_value,
-    set_default,
-    to_data,
-    get_attr,
-    tuplewrap,
-    utils,
-    Data,
-)
+from mo_dots import *
 from mo_dots.utils import PoorLogger
 
 

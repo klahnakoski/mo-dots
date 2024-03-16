@@ -8,7 +8,6 @@
 #
 
 
-
 from copy import copy, deepcopy
 from decimal import Decimal
 
@@ -19,38 +18,40 @@ from mo_future import (
     text,
     MutableMapping,
     OrderedDict,
+    first,
+    binary_type,
 )
 from mo_imports import expect
 
-from mo_dots.lists import is_list, FlatList, is_sequence, is_many
-from mo_dots.nones import Null, NullType
+from mo_dots.fields import split_field, literal_field, concat_field
+from mo_dots.nones import Null, NullType, null_types
 from mo_dots.utils import CLASS, SLOT
 from mo_dots.utils import get_logger
 
 (
     _getdefault,
     coalesce,
-    hash_value,
     listwrap,
-    literal_field,
     from_data,
     to_data,
-    null_types,
     list_to_data,
-    dict_to_data,
-    concat_field,
+    finite_types,
+    is_list,
+    FlatList,
+    is_sequence,
+    is_many,
 ) = expect(
     "_getdefault",
     "coalesce",
-    "hash_value",
     "listwrap",
-    "literal_field",
     "from_data",
     "to_data",
-    "null_types",
     "list_to_data",
-    "dict_to_data",
-    "concat_field",
+    "finite_types",
+    "is_list",
+    "FlatList",
+    "is_sequence",
+    "is_many",
 )
 
 
@@ -532,3 +533,100 @@ def is_data(d):
     :return: True IF d IS A TYPE THAT HOLDS DATA
     """
     return d.__class__ in data_types
+
+
+def is_missing(t) -> bool:
+    # RETURN True IF EFFECTIVELY NOTHING
+    class_ = t.__class__
+    if class_ in null_types:
+        return True
+    elif class_ in data_types:
+        return False
+    elif class_ in finite_types and not t:
+        return True
+    elif class_ is text and not t:
+        return True
+    else:
+        return t == None
+
+
+def exists(value) -> bool:
+    return not is_missing(value)
+
+
+def hash_value(v):
+    if is_many(v):
+        return hash_value(first(v))
+    elif _get(v, CLASS) in data_types:
+        return hash_value(first(v.values()))
+    else:
+        return hash(v)
+
+
+def dict_to_data(d):
+    """
+    FASTEST WAY TO MAKE Data, DO NOT CHECK TYPE
+    :param d: dict
+    :return: Data
+    """
+    m = _new(Data)
+    _set(m, SLOT, d)
+    return m
+
+
+def leaves_to_data(value):
+    """
+    dict WITH DOTS IN KEYS IS INTERPRETED AS A PATH
+    """
+    return to_data(_leaves_to_data(value))
+
+
+wrap_leaves = leaves_to_data
+
+
+def _leaves_to_data(value):
+    """
+    RETURN UNWRAPPED STRUCTURES
+    """
+    if value == None:
+        return None
+
+    class_ = _get(value, CLASS)
+    if class_ in (text, binary_type, int, float):
+        return value
+
+    if class_ in data_types:
+        if class_ is Data:
+            value = from_data(value)
+
+        output = {}
+        for key, value in value.items():
+            value = _leaves_to_data(value)
+
+            if key == "":
+                get_logger().error("key is empty string.  Probably a bad idea")
+
+            seq = split_field(key)
+            if not seq:
+                if not output:
+                    output = value
+                continue
+            if not is_data(output):
+                output = {}
+            d = output
+            for k in seq[:-1]:
+                e = d.get(k, None)
+                if not is_data(e):
+                    e = d[k] = {}
+                d = e
+
+            if value == None:
+                d.pop(seq[-1], None)
+            else:
+                d[seq[-1]] = value
+        return output
+
+    if hasattr(value, "__iter__"):
+        return [_leaves_to_data(v) for v in value]
+
+    return value

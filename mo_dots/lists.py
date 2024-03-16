@@ -13,18 +13,21 @@ import types
 from copy import deepcopy
 
 from mo_future import generator_types, first
-from mo_imports import expect, delay_import
+from mo_imports import expect, delay_import, export
 
+from mo_dots.datas import is_missing, hash_value
+from mo_dots.nones import Null
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
-object_to_data, datawrap, coalesce, list_to_data, to_data, from_data, Null, EMPTY, hash_value, get_attr, is_missing = expect(
-    "object_to_data", "datawrap", "coalesce", "list_to_data", "to_data", "from_data", "Null", "EMPTY", "hash_value", "get_attr", "is_missing"
+object_to_data, coalesce, to_data, from_data, get_attr = expect(
+    "object_to_data", "coalesce", "to_data", "from_data", "get_attr"
 )
 
 _null_hash = hash(None)
 _get = object.__getattribute__
 _set = object.__setattr__
+_new = object.__new__
 
 
 class FlatList(object):
@@ -362,3 +365,22 @@ def is_many(value):
         Log.warning("is_many() can not detect generator {{type}}", type=type_.__name__)
         return True
     return False
+
+
+def list_to_data(v):
+    """
+    to_data, BUT WITHOUT CHECKS
+    """
+    output = _new(FlatList)
+    _set(output, SLOT, v)
+    return output
+
+
+export("mo_dots.datas", finite_types)
+export("mo_dots.datas", is_list)
+export("mo_dots.datas", list_to_data)
+export("mo_dots.datas", FlatList)
+export("mo_dots.datas", is_sequence)
+export("mo_dots.datas", is_many)
+
+export("mo_dots.nones", is_sequence)

@@ -24,13 +24,13 @@ from mo_future import (
 )
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd
-from mo_dots.lists import FlatList
+from mo_dots.datas import register_data, Data, _iadd, dict_to_data
+from mo_dots.lists import FlatList, list_to_data
 from mo_dots.nones import NullType, Null
-from mo_dots.utils import CLASS, SLOT
+from mo_dots.utils import CLASS, SLOT, get_logger
 
-get_attr, set_attr, list_to_data, dict_to_data, to_data, from_data, set_default = expect(
-    "get_attr", "set_attr", "list_to_data", "dict_to_data", "to_data", "from_data", "set_default"
+get_attr, set_attr, to_data, from_data, set_default = expect(
+    "get_attr", "set_attr", "to_data", "from_data", "set_default"
 )
 
 _new = object.__new__
@@ -82,21 +82,27 @@ class DataObject(Mapping):
 
     def keys(self):
         obj = _get(self, SLOT)
+
         try:
             return obj.__dict__.keys()
-        except Exception as e:
-            raise e
+        except Exception:
+            pass
+
+        _type = obj.__class__
+        try:
+            return _type.__slots__
+        except Exception:
+            pass
+
+        raise Exception("cannot get keys")
 
     def items(self):
-        obj = _get(self, SLOT)
+        keys = self.keys()
         try:
-            for k, v in obj.__dict__.items():
-                yield k, object_to_data(v)
-        except Exception as e:
-            for k in dir(obj):
-                if k.startswith("__"):
-                    continue
-                yield k, object_to_data(getattr(obj, k, None))
+            for k in keys:
+                yield k, self[k]
+        except Exception as cause:
+            get_logger().error("problem with items", cause=cause)
 
     def __deepcopy__(self, memodict={}):
         output = {}
@@ -153,9 +159,6 @@ def object_to_data(v):
     return DataObject(v)
 
 
-datawrap = object_to_data
-
-
 class DataClass(object):
     """
     ALLOW INSTANCES OF class_ TO ACT LIKE dicts
@@ -196,5 +199,4 @@ def params_pack(params, *args):
     return output
 
 
-export("mo_dots.lists", "object_to_data", object_to_data)
-export("mo_dots.lists", "datawrap", object_to_data)
+export("mo_dots.lists", object_to_data)

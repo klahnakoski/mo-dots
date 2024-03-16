@@ -3,7 +3,7 @@
 # SNAGED FROM https://github.com/pawelzny/dotty_dict/blob/98984911a61ae9f1aa4da3f6c4808da991b89847/tests/test_dotty_basics.py
 # UNDER THe MIT LICENSE
 
-from mo_dots import to_data, Data
+from mo_dots import *
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 

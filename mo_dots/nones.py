@@ -9,13 +9,12 @@
 
 
 
-from mo_future import text
+from mo_future import none_type
 from mo_imports import expect, export
 
-from mo_dots.lists import is_sequence
 from mo_dots.utils import CLASS, KEY, SLOT
 
-to_data, null_types, get_attr = expect("to_data", "null_types", "get_attr")
+to_data, get_attr, is_sequence = expect("to_data", "get_attr", "is_sequence")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -301,5 +300,4 @@ def _setdefault(obj, key, value):
     return v
 
 
-export("mo_dots.lists", Null)
-export("mo_dots.lists", "EMPTY", Null)
+null_types = (none_type, NullType)

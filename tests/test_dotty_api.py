@@ -4,7 +4,7 @@
 # UNDER THe MIT LICENSE
 
 import mo_dots
-from mo_dots import split_field, to_data, Data, from_data
+from mo_dots import *
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 

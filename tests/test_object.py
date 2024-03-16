@@ -12,9 +12,7 @@ from typing import List
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import DataObject, to_data
-from mo_dots.lists import datawrap, Null
-from mo_dots.objects import DataClass, object_to_data
+from mo_dots import *
 
 values = [1, 2, 3]
 
@@ -111,6 +109,72 @@ class TestObject(FuzzyTestCase):
         expected = to_data({"a": ["a", "x", "z"], "b": {"c": 42 + 99}})
         self.assertTrue(result == expected)
         self.assertTrue(expected == result)
+
+    def test_radd(self):
+        @dataclass
+        class Example2:
+            c: int
+
+        @dataclass
+        class ExampleA:
+            a: List[str]
+            b: Example2
+
+        obj = ExampleA(["a", "x"], Example2(42))
+        d = object_to_data(obj)
+
+        c = {"a": ["z"], "b": {"c": 99}}
+
+        result = c + d
+        expected = to_data({"a": ["z", "a", "x"], "b": {"c": 99 + 42}})
+        self.assertTrue(result == expected)
+        self.assertTrue(expected == result)
+
+    def test_ror(self):
+        @dataclass
+        class Example2:
+            c: int
+
+        @dataclass
+        class ExampleA:
+            a: List[str]
+            b: Example2
+
+        obj = ExampleA(["a", "x"], Example2(42))
+        d = object_to_data(obj)
+
+        c = {"a": ["z"], "b": {"c": 99}}
+
+        result = c | d
+        expected = to_data({"a": ["z"], "b": {"c": 99}})
+        self.assertTrue(result == expected)
+        self.assertTrue(expected == result)
+
+    def test_class_properties_are_ignored(self):
+        class Unknown:
+            parent = None
+
+            __slots__ = ["a"]
+            def __init__(self, a):
+                self.a = a
+
+        Unknown.parent = Unknown(4)
+
+        obj = DataObject(Unknown(3))
+
+        self.assertEqual(list(obj.items()), [('a', 3)])
+
+    def test_dataclass_properties_are_ignored(self):
+        @dataclass
+        class Unknown:
+            a: int
+
+        obj = DataObject(Unknown(3))
+
+        self.assertEqual(list(obj.items()), [('a', 3)])
+        self.assertEqual([('a', 3)], list(obj.items()))
+
+
 
 
 def gen():
