@@ -36,8 +36,9 @@ get_attr, set_attr, to_data, from_data, set_default = expect(
 _new = object.__new__
 _get = object.__getattribute__
 _set = object.__setattr__
-WRAPPED_CLASSES = set()
 
+WRAPPED_CLASSES = set()
+known_types = {}  #  map from type to field names
 
 class DataObject(Mapping):
     """
@@ -89,12 +90,23 @@ class DataObject(Mapping):
             pass
 
         _type = obj.__class__
+        keys = known_types.get(_type)
+        if keys:
+            return keys
+
         try:
-            return _type.__slots__
+            keys = _type.__slots__
+            known_types[_type] = keys
+            return keys
         except Exception:
             pass
 
-        raise Exception("cannot get keys")
+        keys=known_types[_type]=tuple(
+            k
+            for k in dir(_type)
+            if getattr(_type, k).__class__.__name__ in ['member_descriptor', 'getset_descriptor']
+        )
+        return keys
 
     def items(self):
         keys = self.keys()
