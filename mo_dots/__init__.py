@@ -58,8 +58,7 @@ __all__ = [
     "missing",
     "hash_value",
     "inverse",
-    "concat_field"
-
+    "concat_field",
 ]
 
 
