@@ -59,6 +59,8 @@ __all__ = [
     "hash_value",
     "inverse",
     "concat_field",
+    "list_to_data",
+    "is_container"
 ]
 
 
