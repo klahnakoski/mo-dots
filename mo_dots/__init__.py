@@ -13,7 +13,7 @@ import re
 import sys
 from math import isnan
 
-from mo_dots.datas import Data, data_types, is_data
+from mo_dots.datas import Data, is_data
 from mo_dots.lists import (
     FlatList,
     is_list,
