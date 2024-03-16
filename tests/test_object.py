@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
+import sys
 from dataclasses import dataclass
 from typing import List
 
@@ -174,7 +174,15 @@ class TestObject(FuzzyTestCase):
         self.assertEqual(list(obj.items()), [('a', 3)])
         self.assertEqual([('a', 3)], list(obj.items()))
 
+    def test_w_traceback(self):
+        try:
+            return 1 / 0
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
 
+        obj = DataObject(exc_traceback)
+        self.assertEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
+        self.assertEqual(obj.tb_frame.f_code.co_name, "test_w_traceback")
 
 
 def gen():
