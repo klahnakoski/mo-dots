@@ -6,38 +6,20 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from copy import deepcopy, copy
-from math import isnan
+from copy import copy, deepcopy
 
-from mo_future import UserDict, first, Mapping
+from mo_future import UserDict, Mapping, first
 from mo_logs import Log
 from mo_logs.strings import expand_template
 from mo_math import MAX
-from mo_testing.fuzzytestcase import FuzzyTestCase
+from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
+from math import isnan
 
-from mo_dots import (
-    to_data,
-    Null,
-    set_default,
-    Data,
-    literal_field,
-    NullType,
-    leaves_to_data,
-    from_data,
-    FlatList,
-    get_attr,
-    relative_field,
-    unliteral_field,
-    tail_field,
-    join_field,
-    set_attr,
-    PATH_NOT_FOUND,
-)
-from mo_dots.datas import leaves
-from mo_dots.objects import datawrap
+from mo_dots import *
 from tests import ambiguous_test
 
 
+@add_error_reporting
 class TestDot(FuzzyTestCase):
     def test_set_union_w_null(self):
         s = set("a")

@@ -12,23 +12,14 @@ import sys
 from collections import deque
 from unittest import skipIf
 
+from mo_dots import datas
 from mo_future import text, Mapping
 from mo_logs import Log
 from mo_math import randoms
 from mo_testing.fuzzytestcase import FuzzyTestCase
 from mo_times import Timer
 
-from mo_dots import (
-    Data,
-    Null,
-    FlatList,
-    data_types,
-    is_data,
-    to_data,
-    from_data,
-    split_field,
-    is_null,
-)
+from mo_dots import *
 
 IS_TRAVIS = bool(os.environ.get("TRAVIS"))
 IS_COVERAGE = bool(os.environ.get("COVERAGE"))
@@ -76,7 +67,7 @@ class TestDotSpeed(FuzzyTestCase):
             i_result = [isinstance(d, Mapping) for d in data]
 
         with Timer("Data: in data_types check") as s_time:
-            s_result = [d.__class__ in data_types for d in data]
+            s_result = [d.__class__ in datas.data_types for d in data]
 
         with Timer("Data: is checks") as e_time:
             e_result = [d.__class__ is Data or d.__class__ is dict for d in data]

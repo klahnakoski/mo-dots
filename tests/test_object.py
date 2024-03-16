@@ -12,9 +12,7 @@ from typing import List
 
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import DataObject, to_data
-from mo_dots.lists import datawrap, Null
-from mo_dots.objects import DataClass, object_to_data
+from mo_dots import *
 
 values = [1, 2, 3]
 

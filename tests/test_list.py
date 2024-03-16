@@ -6,14 +6,11 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
 from copy import copy, deepcopy
 
-from mo_future import PY3
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
-from mo_dots import to_data, Null, listwrap, is_missing, is_null, is_not_null
-from mo_dots.lists import last, is_many, FlatList, datawrap
+from mo_dots import *
 
 values = [1, 2, 3]
 
@@ -66,8 +63,7 @@ class TestList(FuzzyTestCase):
         self.assertEqual(last(v), None)
 
     def test_is_not_many(self):
-        if PY3:
-            self.assertEqual(hasattr("", "__iter__"), True)
+        self.assertEqual(hasattr("", "__iter__"), True)
         self.assertEqual(is_many(""), False)
 
     def test_index(self):
