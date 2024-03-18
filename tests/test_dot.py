@@ -1102,6 +1102,20 @@ class TestDot(FuzzyTestCase):
         data['.'] |= 1
         self.assertEqual(data, 1)
 
+    def test_object_of_unknown(self):
+
+        class Unknown:
+            parent = None
+
+            __slots__ = ["a"]
+            def __init__(self, a):
+                self.a = a
+
+        Unknown.parent = Unknown(4)
+
+        result = list(DataObject(Unknown(3)).items())
+        self.assertEqual(result, [("a", 3)])
+        self.assertEqual([("a", 3)], result)
 
 
 class _TestMapping(object):
