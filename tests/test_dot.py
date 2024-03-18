@@ -1092,6 +1092,17 @@ class TestDot(FuzzyTestCase):
         data.a = float(data.a)
         self.assertTrue(data.a == None)
 
+    def test_or_w_dot1(self):
+        data = Data()
+        data |= leaves_to_data({".":1})
+        self.assertEqual(data, 1)
+
+    def test_or_w_dot2(self):
+        data = Data()
+        data['.'] |= 1
+        self.assertEqual(data, 1)
+
+
 
 class _TestMapping(object):
     def __init__(self):
