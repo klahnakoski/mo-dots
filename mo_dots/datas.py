@@ -235,8 +235,11 @@ class Data(object):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
+        d = _get(self, SLOT)
         if not _get(other, CLASS) in data_types:
-            get_logger().error("Expecting Data")
+            if is_missing(d) or (isinstance(d, dict) and not d):
+                _set(self, SLOT, other)
+            return self
         d = _get(self, SLOT)
         for ok, ov in other.items():
             if ov == None:
