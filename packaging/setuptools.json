@@ -20,7 +20,7 @@
                "mo-times>=5.562.24075", "jx-elasticsearch>=3.99.20292"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==7.546.24057", "mo-imports==7.546.24057"],
+    "install_requires": ["mo-future==7.584.24095", "mo-imports==7.584.24095"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -138,6 +138,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "9.582.24095",
+    "version": "9.584.24095",
     "zip_safe": false
 }

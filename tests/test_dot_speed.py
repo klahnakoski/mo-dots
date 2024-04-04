@@ -84,11 +84,7 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(n_result, i_result)
 
         self.assertGreater(i_time.duration, s_time.duration)
-
-        if sys.version_info[:2] in [(3, 9)]:
-            self.assertLessEqual(m_time.duration, s_time.duration*1.2)
-        else:
-            self.assertGreater(m_time.duration * 1.2, s_time.duration)
+        self.assertGreater(m_time.duration * 1.2, s_time.duration)
 
     def test_compare_isinstance_to_text(self):
         num = 1 * 1000 * 1000
@@ -138,7 +134,7 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(e_result, i_result)
         self.assertEqual(n_result, i_result)
 
-        if sys.version_info[:2] not in [(3, 9), (3, 10)]:
+        if sys.version_info[:2] >= (3, 10):
             self.assertGreater(
                 s_time.duration.total_seconds() * 1.2,
                 i_time.duration.total_seconds(),
