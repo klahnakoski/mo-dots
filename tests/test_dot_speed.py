@@ -134,7 +134,7 @@ class TestDotSpeed(FuzzyTestCase):
         self.assertEqual(e_result, i_result)
         self.assertEqual(n_result, i_result)
 
-        if sys.version_info[:2] >= (3, 11):
+        if sys.version_info[:2] not in [(3, 9), (3, 10)]:
             self.assertGreater(
                 s_time.duration.total_seconds() * 1.2,
                 i_time.duration.total_seconds(),
