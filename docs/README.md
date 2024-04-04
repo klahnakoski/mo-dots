@@ -7,7 +7,7 @@ and some state bundled together to form a unit. The second are ***Data***: Prima
 a set of properties, with only (de)serialization functions, or algebraic
 operators defined. 
 
-*Data* objects in Python have minimal attributes, if any. Therefore, we can use attributes to access properties: `a.x == a["x"]`. Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. Property access is only the beginning. 
+*Data* objects in Python have minimal attributes, if any. Therefore, we can use attributes to access properties: `a.x == a["x"]`. Static property access is clearest done with dot notation `a.x`, and parametric property access is best done with item access `a[v]`. 
 
 Focusing on just *data* objects; We want a succinct way of transforming data. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. This library provides the consistent base for a high level data manipulation algebra. 
 
@@ -17,18 +17,19 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
 `Data` is used to declare an instance of an anonymous type, and intended for manipulating JSON. Anonymous types are necessary when writing sophisticated list comprehensions, or queries, while at the same time keeping them succinct. In many ways, `dict` can act as an anonymous type, but it is missing the features listed here.
 
 
- 1. `a.b == a["b"]`
- 2. missing property names are handled gracefully, which is beneficial when being used in
-    set operations (database operations) without raising exceptions <pre>
-&gt;&gt;&gt; a = to_data({})
-a == {}
-&gt;&gt;&gt; a.b == None
-True
-&gt;&gt;&gt; a.b.c == None
-True
-&gt;&gt;&gt; a[None] == None
-True</pre>
-    missing property names are common when dealing with JSON, which is often almost anything.
+1. `a.b == a["b"]`
+2. missing property names are handled gracefully, which is beneficial when being used in set operations (database operations) without raising exceptions 
+   ```python
+   >>> a = to_data({})
+   a == {}
+   >>> a.b == None
+   True
+   >>> a.b.c == None
+   True
+   >>> a[None] == None
+   True
+   ```
+   missing property names are common when dealing with JSON, which is often almost anything.
     Unfortunately, you do loose the ability to perform <code>a is None</code>
     checks: **You must always use <code>a == None</code> instead**.
  3. Accessing missing properties does not change the data; unlike `defaultdict`
@@ -36,33 +37,38 @@ True</pre>
  5. Dot-separated path access: `a["b.c"] == a.b.c`.
     * Use double-dot (`..`) to refer to literal dot (`.`) - Eg `to_data(a)['c..b'] == from_data(a)['c.b']`
     * Alternativly, use bell (`\b`) to refer to literal dot (`.`) - this allows dots to be the last character in a key (`a['c\b.d'] == a['c.']['d']`)
- 6. you can set paths to values, missing dicts along the path are created:<pre>
-&gt;&gt;&gt; a = to_data({})
-a == {}
-&gt;&gt;&gt; a["b.c"] = 42   # same as a.b.c = 42
-a == {"b": {"c": 42}}</pre>
- 7. path assignment also works for the `+=` operator <pre>
-&gt;&gt;&gt; a = to_data({})
-a == {}
-&gt;&gt;&gt; a.b.c += 1
-a == {"b": {"c": 1}}
-&gt;&gt;&gt; a.b.c += 42
-a == {"b": {"c": 43}}</pre>
- 8. `+=` with a list (`[]`) will `append()`<pre>
-&gt;&gt;&gt; a = to_data({})
-a == {}
-&gt;&gt;&gt; a.b.c += [1]
-a == {"b": {"c": [1]}}
-&gt;&gt;&gt; a.b.c += [42]
-a == {"b": {"c": [1, 42]}}</pre>
- 9. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:<pre>
-&gt;&gt;&gt; a = to_data({"a":42, "b":["hello"]})
-&gt;&gt;&gt; b = {"a":24, "b":["world"]}
-&gt;&gt;&gt; c = a + b
-c == {"a":66, "b":["hello", "world"]}</pre>
- 10. property names are coerced to unicode - it appears Python2.7 
- `object.getattribute()` is called with `str()` even when using `from __future__
- import unicode_literals`
+ 6. you can set paths to values, missing dicts along the path are created:
+    ```python
+    >>> a = to_data({})
+    a == {}
+    >>> a["b.c"] = 42   # same as a.b.c = 42
+    a == {"b": {"c": 42}}
+    ```
+ 7. path assignment also works for the `+=` operator
+    ```python
+    >>> a = to_data({})
+    a == {}
+    >>> a.b.c += 1
+    a == {"b": {"c": 1}}
+    >>> a.b.c += 42
+    a == {"b": {"c": 43}}
+    ```
+ 8. `+=` with a list (`[]`) will `append()`
+    ```python
+    >>> a = to_data({})
+    a == {}
+    >>> a.b.c += [1]
+    a == {"b": {"c": [1]}}
+    >>> a.b.c += [42]
+    a == {"b": {"c": [1, 42]}}
+    ```
+ 9. If the leaves of your datastructure are numbers or lists, you can add `Data` to other `Data`:
+    ```
+    >>> a = to_data({"a":42, "b":["hello"]}) 
+    >>> b = {"a":24, "b":["world"]}
+    >>> c = a + b
+    c == {"a":66, "b":["hello", "world"]}
+    ```
 
 ## Mapping Leaves
 
@@ -171,17 +177,17 @@ b.c: 42
 
 
 
-## Towards a better `None`
+## What does Null mean?
 
-In many applications the meaning of `None` (or `null`) is always in the context of
-a known type: Each type has a list of expected properties, and if an instance
-is missing one of those properties we set it to `None`. Let us call it this the
+In many applications the meaning of null is always in the context of
+a known type: Each type has a list of expected properties; if an instance
+is missing one of those properties we set it to null. Let us call it this the
 "*Missing Value*" definition. Also known as ["my billion dollar mistake"](https://en.wikipedia.org/wiki/Tony_Hoare).
 
-Another interpretation for `None` (or `null`), is that the instance simply does not
+Another interpretation for null, is that the instance simply does not
 have that property: Asking for the physical height of poem is nonsense, and
-we return `None`/`null` to indicate this. Databases use `NULL` in this way to
-allow tables to hold records of multiple (sub)types and minimize query complexity. 
+we return null to indicate this. Databases use `NULL` in this way to
+allow tables to be polymorphic; represent records of multiple types and minimize query complexity. 
 Call this version of None the "*Out of Context*" definition.
 
 Python, and the *pythonic way*, and many of its libraries, assume `None` is a
@@ -226,7 +232,7 @@ With `Null` defined, we have met the requirements for an [algebraic semigroup](h
  1. `a[Null] == Null`
  2. `a["."] == a`
 
-which are true for all `a`. I hope, dear reader, you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
+which are true for all `a`. I hope you do not see this a some peculiar pattern, but rather a clean basis that allows us to perform complex operations over heterogeneous data with less code.
 
 
 ### NullTypes are Lazy
@@ -298,11 +304,8 @@ Here is table of indexing results
 ### Slicing
 
 The *flat list* assumption reduces exception handling and simplifies code for
-window functions. For example, `mo_math.min(flat_list[a:b:])` is valid for
+window functions. For example, `mo_math.min(flat_list[a:b])` is valid for
 all `a<=b`
-
-  * Python 2.x binary slicing `[:]` throws a warning if used on a FlatList (see implementation issues below)
-  * Trinary slicing `[::]` uses the flat list definition
 
 When assuming a *flat-list*, we loose the *take-from-the-right* tricks gained
 from modulo arithmetic on the indices. Therefore, we require extra methods
@@ -319,7 +322,7 @@ For the sake of completeness, we have two more convenience methods:
 
 ### Dot (.) Operator
 
-The dot operator on a `FlatList` performs a simple projection; it will return a list of property values
+The dot operator on a `FlatList` performs a simple projection; it will return a FlatList of property values
 
 ```python
     myList.name == [x["name"] for x in myList]

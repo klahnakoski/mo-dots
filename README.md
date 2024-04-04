@@ -1,6 +1,8 @@
 
 # More Dots!
 
+Null-safe dataclass
+
 [![PyPI Latest Release](https://img.shields.io/pypi/v/mo-dots.svg)](https://pypi.org/project/mo-dots/)
 [![Build Status](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
@@ -80,7 +82,7 @@ Use `+=` to add to a property; default zero (`0`)
     >>> a.b.c += 42
     a == {"b": {"c": 43}}
 
-Use `+=` with a list ([]) to append to a list; default empty list (`[]`)
+Use `+=` with a list (`[]`) to append to a list; default empty list (`[]`)
 
     >>> a = Data()
     a == {}
