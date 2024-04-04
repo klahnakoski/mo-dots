@@ -1,8 +1,6 @@
 
 # More Dots!
 
-Null-safe dataclass
-
 [![PyPI Latest Release](https://img.shields.io/pypi/v/mo-dots.svg)](https://pypi.org/project/mo-dots/)
 [![Build Status](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
@@ -19,21 +17,21 @@ The `Data()` constructor only accepts keyword parameters. It no longer accepts a
 
 ## Overview
 
-This library defines a `Data` class that can serve as a replacement for `dict`, with additional features. 
+This library defines a `Data` class that can serve as a replacement for `dict`, and acts much like a null-safe dataclass.
 
-    >>> from mo_dots import to_data, Data
-
-*See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`*
+> See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`
 
 ### Create instances
 
 Define `Data` using named parameters, just like you would a `dict`
 
+    >>> from mo_dots import Data
     >>> Data(b=42, c="hello world")
     Data({'b': 42, 'c': 'hello world'})
 
 You can also wrap existing `dict`s so they can be used like `Data`
 
+    >>> from mo_dots import to_data
     >>> to_data({'b': 42, 'c': 'hello world'})
     Data({'b': 42, 'c': 'hello world'})
 
@@ -54,7 +52,6 @@ Access properties by dot-delimited path.
 If a property does not exist then return `Null` rather than raising an error.
 
 	>>> a = Data()
-	a == {}
 	>>> a.b == None
 	True
 	>>> a.b.c == None
@@ -67,7 +64,6 @@ If a property does not exist then return `Null` rather than raising an error.
 No need to make intermediate `dicts`
 
     >>> a = Data()
-    a == {}
     >>> a["b.c"] = 42   # same as a.b.c = 42
     a == {"b": {"c": 42}}
 
