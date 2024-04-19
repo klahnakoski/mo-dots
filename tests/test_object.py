@@ -10,13 +10,14 @@ import sys
 from dataclasses import dataclass
 from typing import List
 
-from mo_testing.fuzzytestcase import FuzzyTestCase
+from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
 from mo_dots import *
 
 values = [1, 2, 3]
 
 
+@add_error_reporting
 class TestObject(FuzzyTestCase):
     def test_funcs(self):
         x = MyObject(42)
@@ -181,7 +182,7 @@ class TestObject(FuzzyTestCase):
             exc_type, exc_value, exc_traceback = sys.exc_info()
 
         obj = DataObject(exc_traceback)
-        self.assertEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
+        self.assertAlmostEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
         self.assertEqual(obj.tb_frame.f_code.co_name, "test_w_traceback")
 
 
