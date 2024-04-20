@@ -323,7 +323,7 @@ list_types = (list, FlatList)
 container_types = (list, FlatList, set)
 finite_types = (list, FlatList, set, tuple)
 sequence_types = (list, FlatList, tuple) + generator_types
-many_types = tuple(set(list_types + container_types + sequence_types))
+_many_types = tuple(set(list_types + container_types + sequence_types))
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
 not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "Data")
@@ -355,13 +355,13 @@ def is_many(value):
     # THIS IS COMPLICATED BECAUSE I AM UNSURE ABOUT ALL THE "PRIMITIVE TYPES"
     # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
     # UNTIL WE HAVE A COMPLETE SLOT, WE KEEP ALL THIS warning() CODE
-    global many_types
+    global _many_types
     type_ = value.__class__
-    if type_ in many_types:
+    if type_ in _many_types:
         return True
 
     if issubclass(type_, types.GeneratorType):
-        many_types = many_types + (type_,)
+        _many_types = _many_types + (type_,)
         Log.warning("is_many() can not detect generator {{type}}", type=type_.__name__)
         return True
     return False
@@ -374,6 +374,10 @@ def list_to_data(v):
     output = _new(FlatList)
     _set(output, SLOT, v)
     return output
+
+def register_many(_type):
+    global _many_types
+    _many_types = _many_types + (_type,)
 
 
 export("mo_dots.datas", finite_types)
