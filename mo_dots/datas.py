@@ -9,7 +9,6 @@
 
 
 from copy import copy, deepcopy
-from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from mo_future import (
@@ -518,7 +517,7 @@ def _iadd(self, other):
     return self
 
 
-_data_types = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
+_data_types = data_type = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
 
 
 def register_data(type_):
