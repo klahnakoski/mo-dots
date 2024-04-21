@@ -39,6 +39,8 @@ _set = object.__setattr__
 
 WRAPPED_CLASSES = set()
 known_types = {}  #  map from type to field names
+primitive_types = (text, binary_type, int, float, bool, Decimal, datetime, date)
+
 
 class DataObject(Mapping):
     """
@@ -173,7 +175,7 @@ def object_to_data(v):
         return list_to_data(v)
     elif type_ in (Data, DataObject, FlatList, NullType):
         return v
-    elif type_ in (text, binary_type, int, float, Decimal, datetime, date):
+    elif type_ in primitive_types:
         return v
     elif type_ in generator_types:
         return (to_data(vv) for vv in v)

@@ -185,6 +185,10 @@ class TestObject(FuzzyTestCase):
         self.assertAlmostEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
         self.assertEqual(obj.tb_frame.f_code.co_name, "test_w_traceback")
 
+    def test_w_boolean(self):
+        obj = object_to_data(True)
+        self.assertIs(obj, True)
+
 
 def gen():
     yield 1
