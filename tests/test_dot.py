@@ -1131,6 +1131,8 @@ class TestDot(FuzzyTestCase):
         self.assertIsInstance(data[0][1], Date)
 
 
+# TODO: remove me
+register_primitive(Date)
 
 
 class _TestMapping(object):
