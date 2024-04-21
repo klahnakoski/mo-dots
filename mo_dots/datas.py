@@ -9,7 +9,7 @@
 
 
 from copy import copy, deepcopy
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time
 from decimal import Decimal
 
 from mo_future import (
@@ -67,7 +67,7 @@ _new = object.__new__
 
 DEBUG = False
 
-primitive_types = (text, str, bytes, int, float, bool, Decimal, datetime, date)
+primitive_types = (text, str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta)
 
 
 class Data(object):

@@ -7,6 +7,7 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 from copy import copy, deepcopy
+from datetime import timedelta
 
 from mo_future import UserDict, Mapping, first
 from mo_logs import Log
@@ -798,6 +799,14 @@ class TestDot(FuzzyTestCase):
     def test_leaves_w_Data(self):
         x = leaves_to_data({"a": to_data({"b.c": 42})})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
+
+    def test_leaves_w_dict(self):
+        x = leaves_to_data({"a": {"b.c": 42}})
+        self.assertEqual(x, {"a": {"b": {"c": 42}}})
+
+    def test_leaves_w_timedelta(self):
+        x = leaves_to_data({"a": {"b.c": timedelta(days=1)}})
+        self.assertEqual(x, {"a": {"b": {"c": timedelta(days=1)}}})
 
     def test_leaves_w_simple(self):
         x = leaves_to_data(42)
