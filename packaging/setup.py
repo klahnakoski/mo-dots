@@ -6,7 +6,7 @@ setup(
     author_email='kyle@lahnakoski.com',
     classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12"],
     description='More Dots! Dot-access to Python dicts like Javascript',
-    extras_require={"tests":["mo-logs>=8.562.24075","mo-json>=6.562.24075","mo-threads>=6.562.24075","mo-testing>=7.562.24075","pyLibrary>=3.264.22338","mo-math>=7.562.24075","mo-times>=5.562.24075","jx-elasticsearch>=3.99.20292"]},
+    extras_require={"tests":["mo-logs>=8.584.24095","mo-json>=6.589.24111","mo-threads>=6.589.24111","mo-testing>=8.591.24112","pyLibrary>=3.264.22338","mo-math>=7.589.24111","mo-times>=5.589.24111","jx-elasticsearch>=3.99.20292"]},
     include_package_data=True,
     install_requires=["mo-future==7.584.24095","mo-imports==7.584.24095"],
     license='MPL 2.0',
@@ -15,6 +15,6 @@ setup(
     name='mo-dots',
     packages=["mo_dots"],
     url='https://github.com/klahnakoski/mo-dots',
-    version='9.592.24112',
+    version='9.593.24112',
     zip_safe=False
 )
