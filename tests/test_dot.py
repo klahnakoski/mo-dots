@@ -1131,6 +1131,8 @@ class TestDot(FuzzyTestCase):
         self.assertIsInstance(data[0][1], Date)
 
 
+
+
 class _TestMapping(object):
     def __init__(self):
         self.a = None
