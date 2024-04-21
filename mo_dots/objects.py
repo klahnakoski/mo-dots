@@ -6,25 +6,13 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
-
 from collections import OrderedDict
 from copy import deepcopy
-from datetime import date, datetime
-from decimal import Decimal
 
-from mo_future import (
-    binary_type,
-    generator_types,
-    get_function_arguments,
-    get_function_defaults,
-    text,
-    Mapping,
-)
+from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd, dict_to_data
+from mo_dots.datas import register_data, Data, _iadd, dict_to_data, primitive_types
 from mo_dots.lists import FlatList, list_to_data
 from mo_dots.nones import NullType, Null
 from mo_dots.utils import CLASS, SLOT, get_logger
@@ -39,7 +27,6 @@ _set = object.__setattr__
 
 WRAPPED_CLASSES = set()
 known_types = {}  #  map from type to field names
-primitive_types = (text, binary_type, int, float, bool, Decimal, datetime, date)
 
 
 class DataObject(Mapping):
@@ -149,9 +136,7 @@ def get_keys(obj):
         pass
 
     keys = known_types[_type] = tuple(
-        k
-        for k in dir(_type)
-        if getattr(_type, k).__class__.__name__ in ['member_descriptor', 'getset_descriptor']
+        k for k in dir(_type) if getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
     )
     return keys
 

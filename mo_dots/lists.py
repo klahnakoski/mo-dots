@@ -8,7 +8,6 @@
 #
 
 
-
 import types
 from copy import deepcopy
 
@@ -374,6 +373,7 @@ def list_to_data(v):
     output = _new(FlatList)
     _set(output, SLOT, v)
     return output
+
 
 def register_many(_type):
     global _many_types

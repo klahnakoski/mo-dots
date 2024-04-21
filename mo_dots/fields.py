@@ -158,4 +158,3 @@ def relative_field(field, parent):
         return "." + dots
     else:
         return "." + dots + tail
-
