@@ -517,7 +517,7 @@ def _iadd(self, other):
     return self
 
 
-_data_types = data_type = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
+_data_types = data_types = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
 
 
 def register_data(type_):
