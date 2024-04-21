@@ -251,7 +251,7 @@ class Data(object):
             if ov == None:
                 continue
 
-            sv = d.get(ok)
+            sv = to_data(d.get(ok))
             if sv == None:
                 d[ok] = ov
             elif is_data(sv):
