@@ -17,7 +17,6 @@ from mo_dots.nones import *
 from mo_dots.objects import DataObject, DataClass, object_to_data
 from mo_dots.utils import get_module, CLASS, get_logger, SLOT
 
-
 __all__ = [
     "coalesce",
     "concat_field",
@@ -327,7 +326,7 @@ def _set_attr(obj_, path, value):
     try:
         old_value = _get_attr(obj, [attr_name])
         old_type = _get(old_value, CLASS)
-        if old_value == None or old_type in (bool, int, float, text, binary_type):
+        if old_value == None or old_type in primitive_types:
             old_value = None
             new_value = value
         elif value == None:
@@ -351,8 +350,6 @@ def _set_attr(obj_, path, value):
 
 def lower_match(value, candidates):
     return [v for v in candidates if v.lower() == value.lower()]
-
-
 
 
 def to_data(v=None) -> object:
@@ -381,8 +378,6 @@ def to_data(v=None) -> object:
 
 
 wrap = to_data
-
-
 
 
 def from_data(v):

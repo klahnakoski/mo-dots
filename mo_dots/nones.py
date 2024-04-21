@@ -8,9 +8,8 @@
 #
 
 
-
 from mo_future import none_type
-from mo_imports import expect, export
+from mo_imports import expect
 
 from mo_dots.utils import CLASS, KEY, SLOT
 
@@ -88,7 +87,7 @@ class NullType(object):
         return None
 
     def __float__(self):
-        return float('nan')
+        return float("nan")
 
     def __div__(self, other):
         return Null

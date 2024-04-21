@@ -9,6 +9,7 @@
 
 
 from copy import copy, deepcopy
+from datetime import datetime, date
 from decimal import Decimal
 
 from mo_future import (
@@ -19,7 +20,6 @@ from mo_future import (
     MutableMapping,
     OrderedDict,
     first,
-    binary_type,
 )
 from mo_imports import expect
 
@@ -66,6 +66,8 @@ _set = object.__setattr__
 _new = object.__new__
 
 DEBUG = False
+
+primitive_types = (text, str, bytes, int, float, bool, Decimal, datetime, date)
 
 
 class Data(object):
@@ -594,7 +596,7 @@ def _leaves_to_data(value):
         return None
 
     class_ = _get(value, CLASS)
-    if class_ in (text, binary_type, int, float):
+    if class_ in primitive_types:
         return value
 
     if class_ in _data_types:
