@@ -326,7 +326,7 @@ def _set_attr(obj_, path, value):
     try:
         old_value = _get_attr(obj, [attr_name])
         old_type = _get(old_value, CLASS)
-        if old_value == None or old_type in primitive_types:
+        if old_value == None or is_primitive(old_value):
             old_value = None
             new_value = value
         elif value == None:

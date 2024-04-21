@@ -16,6 +16,8 @@ from mo_math import MAX
 from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 from math import isnan
 
+from mo_times import Date
+
 from mo_dots import *
 from tests import ambiguous_test
 
@@ -1123,6 +1125,10 @@ class TestDot(FuzzyTestCase):
         result = list(DataObject(Unknown(3)).items())
         self.assertEqual(result, [("a", 3)])
         self.assertEqual([("a", 3)], result)
+
+    def test_date(self):
+        data = list(leaves({"a": {"b": Date("01-01-2019")}}))
+        self.assertIsInstance(data[0][1], Date)
 
 
 class _TestMapping(object):

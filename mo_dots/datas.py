@@ -67,7 +67,6 @@ _new = object.__new__
 
 DEBUG = False
 
-primitive_types = (text, str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta)
 
 
 class Data(object):
@@ -595,10 +594,10 @@ def _leaves_to_data(value):
     if value == None:
         return None
 
-    class_ = _get(value, CLASS)
-    if class_ in primitive_types:
+    if is_primitive(value):
         return value
 
+    class_ = _get(value, CLASS)
     if class_ in _data_types:
         if class_ is Data:
             value = from_data(value)
@@ -634,3 +633,12 @@ def _leaves_to_data(value):
         return [_leaves_to_data(v) for v in value]
 
     return value
+
+
+_primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta)
+_other_primitives = ("Date",)
+
+def is_primitive(value):
+    if isinstance(value, _primitive_types):
+        return True
+    return value.__class__.__name__ in _other_primitives
