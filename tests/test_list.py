@@ -8,13 +8,14 @@
 #
 from copy import copy, deepcopy
 
-from mo_testing.fuzzytestcase import FuzzyTestCase
+from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
 from mo_dots import *
 
 values = [1, 2, 3]
 
 
+@add_error_reporting
 class TestList(FuzzyTestCase):
     def test_generator(self):
         self.assertEqual(last(reversed(values)), 1)
@@ -232,9 +233,9 @@ class TestList(FuzzyTestCase):
 
         x = to_data(["a"])
         self.assertEqual(x.not_right(Null), ["a"])
-        self.assertEqual(x.not_right(-3), [])
-        self.assertEqual(x.not_right(-2), [])
-        self.assertEqual(x.not_right(-1), [])
+        self.assertEqual(x.not_right(-3), ["a"])
+        self.assertEqual(x.not_right(-2), ["a"])
+        self.assertEqual(x.not_right(-1), ["a"])
         self.assertEqual(x.not_right(0), ["a"])
         self.assertEqual(x.not_right(1), [])
         self.assertEqual(x.not_right(2), [])
@@ -242,9 +243,9 @@ class TestList(FuzzyTestCase):
 
         x = to_data(["a", "b"])
         self.assertEqual(x.not_right(Null), ["a", "b"])
-        self.assertEqual(x.not_right(-3), [])
-        self.assertEqual(x.not_right(-2), [])
-        self.assertEqual(x.not_right(-1), [])
+        self.assertEqual(x.not_right(-3), ["a", "b"])
+        self.assertEqual(x.not_right(-2), ["a", "b"])
+        self.assertEqual(x.not_right(-1), ["a", "b"])
         self.assertEqual(x.not_right(0), ["a", "b"])
         self.assertEqual(x.not_right(1), ["a"])
         self.assertEqual(x.not_right(2), [])
@@ -294,9 +295,9 @@ class TestList(FuzzyTestCase):
 
         x = to_data(["a"])
         self.assertEqual(x.not_left(Null), ["a"])
-        self.assertEqual(x.not_left(-3), [])
-        self.assertEqual(x.not_left(-2), [])
-        self.assertEqual(x.not_left(-1), [])
+        self.assertEqual(x.not_left(-3), ["a"])
+        self.assertEqual(x.not_left(-2), ["a"])
+        self.assertEqual(x.not_left(-1), ["a"])
         self.assertEqual(x.not_left(0), ["a"])
         self.assertEqual(x.not_left(1), [])
         self.assertEqual(x.not_left(2), [])
@@ -304,9 +305,9 @@ class TestList(FuzzyTestCase):
 
         x = to_data(["a", "b"])
         self.assertEqual(x.not_left(Null), ["a", "b"])
-        self.assertEqual(x.not_left(-3), [])
-        self.assertEqual(x.not_left(-2), [])
-        self.assertEqual(x.not_left(-1), [])
+        self.assertEqual(x.not_left(-3), ["a", "b"])
+        self.assertEqual(x.not_left(-2), ["a", "b"])
+        self.assertEqual(x.not_left(-1), ["a", "b"])
         self.assertEqual(x.not_left(0), ["a", "b"])
         self.assertEqual(x.not_left(1), ["b"])
         self.assertEqual(x.not_left(2), [])

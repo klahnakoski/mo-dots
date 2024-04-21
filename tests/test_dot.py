@@ -499,7 +499,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertEqual(to_data(a).x.z, [], "a should not have been altered")
 
     def test_Data_of_Data(self):
         value = {"a": 1}
@@ -754,8 +754,6 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(empty == None)
 
     def test_none_and_magic(self):
-        # self.assertIs(int(Null), Null)
-        # self.assertIs(float(Null), Null)
         self.assertEqual(list(Null), Null)
 
     def test_keys(self):

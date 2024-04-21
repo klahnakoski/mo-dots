@@ -40,6 +40,9 @@ from mo_dots.utils import get_logger
     FlatList,
     is_sequence,
     is_many,
+    DataObject,
+    get_keys,
+    object_to_data,
 ) = expect(
     "_getdefault",
     "coalesce",
@@ -52,6 +55,9 @@ from mo_dots.utils import get_logger
     "FlatList",
     "is_sequence",
     "is_many",
+    "DataObject",
+    "get_keys",
+    "object_to_data",
 )
 
 
@@ -88,7 +94,7 @@ class Data(object):
 
     def __contains__(self, item):
         value = Data.__getitem__(self, item)
-        if _get(value, CLASS) in data_types or value:
+        if _get(value, CLASS) in _data_types or value:
             return True
         return False
 
@@ -104,7 +110,7 @@ class Data(object):
             return Null
         if key == ".":
             output = _get(self, SLOT)
-            if _get(output, CLASS) in data_types:
+            if _get(output, CLASS) in _data_types:
                 return self
             else:
                 return output
@@ -214,7 +220,7 @@ class Data(object):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not _get(other, CLASS) in data_types:
+        if not _get(other, CLASS) in _data_types:
             get_logger().error("Expecting Data")
 
         d = _get(self, SLOT)
@@ -226,7 +232,7 @@ class Data(object):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not _get(other, CLASS) in data_types:
+        if not _get(other, CLASS) in _data_types:
             get_logger().error("Expecting Data")
 
         return to_data(other).__or__(self)
@@ -236,24 +242,20 @@ class Data(object):
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
         d = _get(self, SLOT)
-        if not _get(other, CLASS) in data_types:
+        if not _get(other, CLASS) in _data_types:
             if is_missing(d) or (isinstance(d, dict) and not d):
                 _set(self, SLOT, other)
             return self
-        d = _get(self, SLOT)
+
         for ok, ov in other.items():
             if ov == None:
                 continue
 
-            sv = d.get(ok)
+            sv = to_data(d.get(ok))
             if sv == None:
                 d[ok] = ov
-            elif isinstance(sv, Data):
-                sv |= ov
             elif is_data(sv):
-                wv = _new(Data)
-                _set(wv, SLOT, sv)
-                wv |= ov
+                d[ok] = sv | ov
         return self
 
     def __hash__(self):
@@ -271,7 +273,7 @@ class Data(object):
         if not d and other == None:
             return False
 
-        if _get(other, CLASS) not in data_types:
+        if _get(other, CLASS) not in _data_types:
             return False
         e = other
         for k, v in d.items():
@@ -295,7 +297,7 @@ class Data(object):
 
     def items(self):
         d = _get(self, SLOT)
-        return [(k, to_data(v)) for k, v in d.items() if v != None or _get(v, CLASS) in data_types]
+        return [(k, to_data(v)) for k, v in d.items() if v != None or _get(v, CLASS) in _data_types]
 
     def leaves(self, prefix=None):
         """
@@ -421,32 +423,29 @@ def leaves(value, prefix=None):
     :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
     """
     if not prefix:
-        yield from _leaves(value, ".")
+        yield from _leaves(".", value)
     else:
-        for k, v in _leaves(value, "."):
+        for k, v in _leaves(".", value):
             yield prefix + k, v
 
 
-def _leaves(value, parent):
-    if isinstance(value, Data):
-        d = _get(value, SLOT)
-        if isinstance(d, dict):
-            items = d.items()
-        else:
-            yield parent, d
-            return
-    else:
-        items = value.items()
+def _leaves(parent, value):
+    value = from_data(value)
+    obj = object_to_data(value)
+    if obj is value:
+        yield parent, value
+        return
 
-    for k, v in items:
+    for k in get_keys(obj):
         try:
+            v = obj[literal_field(k)]
+            if is_missing(v):
+                continue
             kk = concat_field(parent, literal_field(k))
-            if _get(v, CLASS) in data_types:
-                yield from _leaves(v, kk)
-            else:
-                yield kk, to_data(v)
-        except Exception as e:
-            get_logger().error("Do not know how to handle", cause=e)
+            vv = object_to_data(v)
+            yield from _leaves(kk, vv)
+        except Exception as cause:
+            get_logger().error("Do not know how to handle", cause=cause)
 
 
 def _split_field(field):
@@ -464,7 +463,7 @@ def _iadd(self, other):
     * NUMBERS ARE ADDED
     """
 
-    if not _get(other, CLASS) in data_types:
+    if not _get(other, CLASS) in _data_types:
         # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
         d = _get(self, SLOT)
         if isinstance(d, dict) and not len(d):
@@ -483,7 +482,7 @@ def _iadd(self, other):
         if sv == None:
             d[ok] = from_data(deepcopy(ov))
         elif isinstance(ov, (Decimal, float, long, int)):
-            if _get(sv, CLASS) in data_types:
+            if _get(sv, CLASS) in _data_types:
                 get_logger().error(
                     "can not add {{stype}} with {{otype}",
                     stype=_get(sv, CLASS).__name__,
@@ -495,8 +494,8 @@ def _iadd(self, other):
                 d[ok] = sv + ov
         elif is_list(ov):
             d[ok] = from_data(listwrap(sv) + ov)
-        elif _get(ov, CLASS) in data_types:
-            if _get(sv, CLASS) in data_types:
+        elif _get(ov, CLASS) in _data_types:
+            if _get(sv, CLASS) in _data_types:
                 _iadd(sv, ov)
             elif is_list(sv):
                 d[ok].append(ov)
@@ -507,7 +506,7 @@ def _iadd(self, other):
                     otype=_get(ov, CLASS).__name__,
                 )
         else:
-            if _get(sv, CLASS) in data_types:
+            if _get(sv, CLASS) in _data_types:
                 get_logger().error(
                     "can not add {{stype}} with {{otype}",
                     stype=_get(sv, CLASS).__name__,
@@ -518,7 +517,7 @@ def _iadd(self, other):
     return self
 
 
-data_types = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
+_data_types = data_types = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
 
 
 def register_data(type_):
@@ -526,8 +525,8 @@ def register_data(type_):
     :param type_:  ADD OTHER TYPE THAT HOLDS DATA
     :return:
     """
-    global data_types
-    data_types = tuple(set(data_types + (type_,)))
+    global _data_types
+    _data_types = tuple(set(_data_types + (type_,)))
 
 
 def is_data(d):
@@ -535,7 +534,7 @@ def is_data(d):
     :param d:
     :return: True IF d IS A TYPE THAT HOLDS DATA
     """
-    return d.__class__ in data_types
+    return d.__class__ in _data_types
 
 
 def is_missing(t) -> bool:
@@ -543,7 +542,7 @@ def is_missing(t) -> bool:
     class_ = t.__class__
     if class_ in null_types:
         return True
-    elif class_ in data_types:
+    elif class_ in _data_types:
         return False
     elif class_ in finite_types and not t:
         return True
@@ -560,7 +559,7 @@ def exists(value) -> bool:
 def hash_value(v):
     if is_many(v):
         return hash_value(first(v))
-    elif _get(v, CLASS) in data_types:
+    elif _get(v, CLASS) in _data_types:
         return hash_value(first(v.values()))
     else:
         return hash(v)
@@ -598,7 +597,7 @@ def _leaves_to_data(value):
     if class_ in (text, binary_type, int, float):
         return value
 
-    if class_ in data_types:
+    if class_ in _data_types:
         if class_ is Data:
             value = from_data(value)
 

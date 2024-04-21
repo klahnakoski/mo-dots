@@ -41,6 +41,8 @@ jobs:
         pip install --no-deps -r tests/requirements.lock
         pip install .
     - name: Run Tests
+      env:
+        CI: true
       run: |
         python -m unittest discover tests -v
 
