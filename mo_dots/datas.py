@@ -68,7 +68,6 @@ _new = object.__new__
 DEBUG = False
 
 
-
 class Data(object):
     """
     Please see https://github.com/klahnakoski/mo-dots/tree/dev/docs#data-replaces-pythons-dict
@@ -636,9 +635,12 @@ def _leaves_to_data(value):
 
 
 _primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta)
-_other_primitives = ("Date",)
+
 
 def is_primitive(value):
-    if isinstance(value, _primitive_types):
-        return True
-    return value.__class__.__name__ in _other_primitives
+    return isinstance(value, _primitive_types)
+
+
+def register_primitive(_type):
+    global _primitive_types
+    _primitive_types = tuple(set(_primitive_types + (_type,)))
