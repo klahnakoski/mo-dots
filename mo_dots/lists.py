@@ -273,7 +273,7 @@ class FlatList(object):
         if not num:
             return self
         if num < 0:
-            return Null
+            return self
 
         return FlatList(_get(self, SLOT)[:-num:])
 
