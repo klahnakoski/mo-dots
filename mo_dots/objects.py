@@ -82,31 +82,7 @@ class DataObject(Mapping):
         return object_to_data(output)
 
     def keys(self):
-        obj = _get(self, SLOT)
-
-        try:
-            return obj.__dict__.keys()
-        except Exception:
-            pass
-
-        _type = obj.__class__
-        keys = known_types.get(_type)
-        if keys:
-            return keys
-
-        try:
-            keys = _type.__slots__
-            known_types[_type] = keys
-            return keys
-        except Exception:
-            pass
-
-        keys=known_types[_type]=tuple(
-            k
-            for k in dir(_type)
-            if getattr(_type, k).__class__.__name__ in ['member_descriptor', 'getset_descriptor']
-        )
-        return keys
+        return get_keys(self)
 
     def items(self):
         keys = self.keys()
@@ -142,6 +118,40 @@ class DataObject(Mapping):
 
 
 register_data(DataObject)
+
+
+def get_keys(obj):
+    """
+    RETURN keys OF obj, AS IF DATA
+    """
+    while isinstance(obj, (DataObject, Data)):
+        obj = _get(obj, SLOT)
+
+    if isinstance(obj, dict):
+        return obj.keys()
+
+    try:
+        return obj.__dict__.keys()
+    except Exception:
+        pass
+
+    _type = obj.__class__
+    keys = known_types.get(_type)
+    if keys:
+        return keys
+
+    try:
+        keys = known_types[_type] = _type.__slots__
+        return keys
+    except Exception:
+        pass
+
+    keys = known_types[_type] = tuple(
+        k
+        for k in dir(_type)
+        if getattr(_type, k).__class__.__name__ in ['member_descriptor', 'getset_descriptor']
+    )
+    return keys
 
 
 def object_to_data(v):
@@ -212,3 +222,6 @@ def params_pack(params, *args):
 
 
 export("mo_dots.lists", object_to_data)
+export("mo_dots.datas", object_to_data)
+export("mo_dots.datas", DataObject)
+export("mo_dots.datas", get_keys)

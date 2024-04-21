@@ -124,16 +124,23 @@ class NullType(object):
         return Null
 
     def __eq__(self, other):
-        class_ = _get(other, CLASS)
-        if class_ in null_types:
+        if is_sequence(other) and not other:
             return True
-        elif class_ is list and not other:
+
+        _class = _get(other, CLASS)
+        if _class in null_types:
             return True
         else:
-            return other == None
+            return Null
 
     def __ne__(self, other):
-        return other is not None and _get(other, CLASS) is not NullType and other != None
+        class_ = _get(other, CLASS)
+        if class_ in null_types:
+            return False
+        elif class_ is list and not other:
+            return False
+        else:
+            return Null
 
     def __or__(self, other):
         return other

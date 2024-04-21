@@ -9,6 +9,7 @@
 
 
 from copy import copy, deepcopy
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from mo_future import (
@@ -40,6 +41,9 @@ from mo_dots.utils import get_logger
     FlatList,
     is_sequence,
     is_many,
+    DataObject,
+    get_keys,
+    object_to_data,
 ) = expect(
     "_getdefault",
     "coalesce",
@@ -52,6 +56,9 @@ from mo_dots.utils import get_logger
     "FlatList",
     "is_sequence",
     "is_many",
+    "DataObject",
+    "get_keys",
+    "object_to_data",
 )
 
 
@@ -240,7 +247,7 @@ class Data(object):
             if is_missing(d) or (isinstance(d, dict) and not d):
                 _set(self, SLOT, other)
             return self
-        d = _get(self, SLOT)
+
         for ok, ov in other.items():
             if ov == None:
                 continue
@@ -248,12 +255,8 @@ class Data(object):
             sv = d.get(ok)
             if sv == None:
                 d[ok] = ov
-            elif isinstance(sv, Data):
-                sv |= ov
             elif is_data(sv):
-                wv = _new(Data)
-                _set(wv, SLOT, sv)
-                wv |= ov
+                d[ok] = sv | ov
         return self
 
     def __hash__(self):
@@ -421,32 +424,29 @@ def leaves(value, prefix=None):
     :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
     """
     if not prefix:
-        yield from _leaves(value, ".")
+        yield from _leaves(".", value)
     else:
-        for k, v in _leaves(value, "."):
+        for k, v in _leaves(".", value):
             yield prefix + k, v
 
 
-def _leaves(value, parent):
-    if isinstance(value, Data):
-        d = _get(value, SLOT)
-        if isinstance(d, dict):
-            items = d.items()
-        else:
-            yield parent, d
-            return
-    else:
-        items = value.items()
+def _leaves(parent, value):
+    value = from_data(value)
+    obj = object_to_data(value)
+    if obj is value:
+        yield parent, value
+        return
 
-    for k, v in items:
+    for k in get_keys(obj):
         try:
+            v = obj[literal_field(k)]
+            if is_missing(v):
+                continue
             kk = concat_field(parent, literal_field(k))
-            if _get(v, CLASS) in _data_types:
-                yield from _leaves(v, kk)
-            else:
-                yield kk, to_data(v)
-        except Exception as e:
-            get_logger().error("Do not know how to handle", cause=e)
+            vv = object_to_data(v)
+            yield from _leaves(kk, vv)
+        except Exception as cause:
+            get_logger().error("Do not know how to handle", cause=cause)
 
 
 def _split_field(field):
