@@ -12,7 +12,7 @@ from copy import deepcopy
 from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd, dict_to_data, primitive_types
+from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive
 from mo_dots.lists import FlatList, list_to_data
 from mo_dots.nones import NullType, Null
 from mo_dots.utils import CLASS, SLOT, get_logger
@@ -148,8 +148,10 @@ def object_to_data(v):
     except Exception:
         pass
 
-    type_ = _get(v, CLASS)
+    if is_primitive(v):
+        return v
 
+    type_ = _get(v, CLASS)
     if type_ is (dict, OrderedDict):
         m = _new(Data)
         _set(m, SLOT, v)
@@ -159,8 +161,6 @@ def object_to_data(v):
     elif type_ is list:
         return list_to_data(v)
     elif type_ in (Data, DataObject, FlatList, NullType):
-        return v
-    elif type_ in primitive_types:
         return v
     elif type_ in generator_types:
         return (to_data(vv) for vv in v)
