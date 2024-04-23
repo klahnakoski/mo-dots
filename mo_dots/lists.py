@@ -388,3 +388,4 @@ export("mo_dots.datas", is_sequence)
 export("mo_dots.datas", is_many)
 
 export("mo_dots.nones", is_sequence)
+export("mo_dots.nones", FlatList)

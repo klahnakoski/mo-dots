@@ -475,10 +475,6 @@ def tuplewrap(value):
         return (from_data(value),)
 
 
-def is_not_null(t):
-    return t.__class__ in null_types
-
-
 datawrap = object_to_data
 
 
