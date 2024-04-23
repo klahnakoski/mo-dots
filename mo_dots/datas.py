@@ -432,7 +432,7 @@ def leaves(value, prefix=None):
 def _leaves(parent, value):
     value = from_data(value)
     obj = object_to_data(value)
-    if obj is value:
+    if obj is value or is_many(value):
         yield parent, value
         return
 
