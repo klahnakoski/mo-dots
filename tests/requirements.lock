@@ -1,4 +1,4 @@
-# Tests pass with these versions 2024-04-22
+# Tests pass with these versions 2024-04-23
 # pip install --no-deps -r tests/requirements.lock
 certifi==2023.11.17
 charset-normalizer==3.3.2

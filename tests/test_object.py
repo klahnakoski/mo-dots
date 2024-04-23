@@ -10,6 +10,7 @@ import sys
 from dataclasses import dataclass
 from typing import List
 
+from mo_json import scrub
 from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
 from mo_dots import *

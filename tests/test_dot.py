@@ -1130,6 +1130,11 @@ class TestDot(FuzzyTestCase):
         data = list(leaves({"a": {"b": Date("01-01-2019")}}))
         self.assertIsInstance(data[0][1], Date)
 
+    def test_leaves_w_list(self):
+        data = to_data({"value": {"one": {"two": [{"test": 1}, {"test": 2}, "3"]}}})
+        result = list(leaves(data))
+        self.assertEqual(result, [("value.one.two", [{"test": 1}, {"test": 2}, "3"])])
+
 
 # TODO: remove me
 register_primitive(Date)
