@@ -11,6 +11,7 @@
 from mo_future import none_type
 from mo_imports import expect
 
+import mo_dots
 from mo_dots.utils import CLASS, KEY, SLOT
 
 to_data, get_attr, is_sequence = expect("to_data", "get_attr", "is_sequence")
@@ -283,6 +284,15 @@ def _assign_to_null(obj, path, value, force=True):
         _assign_to_null(old_value, path[1:], value)
     except Exception as e:
         raise e
+
+def is_null(value):
+    # RETURN True IF EFFECTIVELY NOTHING
+    _class = _get(value, CLASS)
+    if _class in null_types:
+        return True
+    if _class in null_types or (_class in mo_dots.many_types and not value):
+        return True
+
 
 
 def _split_field(field):

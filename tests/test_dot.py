@@ -19,6 +19,7 @@ from math import isnan
 from mo_times import Date
 
 from mo_dots import *
+from mo_dots.datas import _leaves
 from tests import ambiguous_test
 
 
@@ -1135,6 +1136,9 @@ class TestDot(FuzzyTestCase):
         result = list(leaves(data))
         self.assertEqual(result, [("value.one.two", [{"test": 1}, {"test": 2}, "3"])])
 
+    def test_leaves_w_dict(self):
+        result = list(_leaves("a", dict.values))
+        self.assertEqual(result, [])
 
 # TODO: remove me
 register_primitive(Date)

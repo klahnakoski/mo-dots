@@ -475,18 +475,6 @@ def tuplewrap(value):
         return (from_data(value),)
 
 
-def is_null(t):
-    # RETURN True IF EFFECTIVELY NOTHING
-    class_ = t.__class__
-    if class_ in null_types:
-        return True
-    else:
-        try:
-            return t == None
-        except Exception:
-            return False
-
-
 def is_not_null(t):
     # RETURN True IF EFFECTIVELY SOMETHING
     class_ = t.__class__

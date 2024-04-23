@@ -24,7 +24,7 @@ from mo_future import (
 from mo_imports import expect
 
 from mo_dots.fields import split_field, literal_field, concat_field
-from mo_dots.nones import Null, NullType, null_types
+from mo_dots.nones import Null, NullType, null_types, is_null
 from mo_dots.utils import CLASS, SLOT
 from mo_dots.utils import get_logger
 
@@ -132,7 +132,7 @@ class Data(object):
         else:
             o = d.get(key)
 
-        if o == None:
+        if is_null(o):
             return NullType(d, key)
         return to_data(o)
 

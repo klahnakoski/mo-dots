@@ -27,6 +27,7 @@ _set = object.__setattr__
 
 WRAPPED_CLASSES = set()
 known_types = {}  #  map from type to field names
+ignored_attributes = set(dir(object)) | set(dir(dict.values.__class__))
 
 
 class DataObject(Mapping):
@@ -126,7 +127,7 @@ def get_keys(obj):
 
     _type = obj.__class__
     keys = known_types.get(_type)
-    if keys:
+    if keys is not None:
         return keys
 
     try:
@@ -136,7 +137,7 @@ def get_keys(obj):
         pass
 
     keys = known_types[_type] = tuple(
-        k for k in dir(_type) if getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
+        k for k in dir(_type) if k not in ignored_attributes and getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
     )
     return keys
 
@@ -152,7 +153,7 @@ def object_to_data(v):
         return v
 
     type_ = _get(v, CLASS)
-    if type_ is (dict, OrderedDict):
+    if type_ in (dict, OrderedDict):
         m = _new(Data)
         _set(m, SLOT, v)
         return m
