@@ -285,14 +285,10 @@ def _assign_to_null(obj, path, value, force=True):
     except Exception as e:
         raise e
 
+
 def is_null(value):
     # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(value, CLASS)
-    if _class in null_types:
-        return True
-    if _class in null_types or (_class in mo_dots.many_types and not value):
-        return True
-
+    return _get(value, CLASS) in null_types
 
 
 def _split_field(field):

@@ -1137,8 +1137,14 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(result, [("value.one.two", [{"test": 1}, {"test": 2}, "3"])])
 
     def test_leaves_w_dict(self):
-        result = list(_leaves("a", dict.values))
+        result = list(_leaves("a", dict.values, tuple()))
         self.assertEqual(result, [])
+
+    def test_leaves_loop(self):
+        d = to_data({"a": 1})
+        d.a=d
+        result = list(d.leaves())
+        self.assertEqual(result, [("a", d)])
 
 # TODO: remove me
 register_primitive(Date)
