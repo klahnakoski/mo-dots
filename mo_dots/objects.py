@@ -137,14 +137,17 @@ def get_keys(obj):
         pass
 
     keys = known_types[_type] = tuple(
-        k for k in dir(_type) if k not in ignored_attributes and getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
+        k
+        for k in dir(_type)
+        if k not in ignored_attributes
+        and getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
     )
     return keys
 
 
 def object_to_data(v):
     try:
-        if v == None:
+        if is_null(v):
             return Null
     except Exception:
         pass
