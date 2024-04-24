@@ -190,6 +190,14 @@ class TestObject(FuzzyTestCase):
         obj = object_to_data(True)
         self.assertIs(obj, True)
 
+    def test_null_to_data(self):
+        obj = object_to_data(Null)
+        self.assertIs(obj, Null)
+
+    def test_none_to_data(self):
+        obj = object_to_data(None)
+        self.assertIs(obj, Null)
+
 
 def gen():
     yield 1
