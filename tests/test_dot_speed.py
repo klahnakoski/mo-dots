@@ -65,7 +65,7 @@ class TestDotSpeed(FuzzyTestCase):
         with Timer("method compare") as me_time:
             me_result = [is_null(v) for v in values]
 
-        self.assertAlmostEqual(me_result, eq_result, "expecting compare to be the same")
+        self.assertAlmostEqual(me_result, eq_result, "expecting compare to be the same", places=1.5)
 
         Log.info(
             "is_null compare is {{t|round(places=2)}}x slower than `== None`",

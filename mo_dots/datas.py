@@ -24,7 +24,7 @@ from mo_future import (
 from mo_imports import expect
 
 from mo_dots.fields import split_field, literal_field, concat_field
-from mo_dots.nones import Null, NullType, null_types
+from mo_dots.nones import Null, NullType, null_types, is_null
 from mo_dots.utils import CLASS, SLOT
 from mo_dots.utils import get_logger
 
@@ -132,7 +132,7 @@ class Data(object):
         else:
             o = d.get(key)
 
-        if o == None:
+        if is_null(o):
             return NullType(d, key)
         return to_data(o)
 
@@ -423,16 +423,20 @@ def leaves(value, prefix=None):
     :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
     """
     if not prefix:
-        yield from _leaves(".", value)
+        yield from _leaves(".", value, tuple())
     else:
-        for k, v in _leaves(".", value):
+        for k, v in _leaves(".", value, tuple()):
             yield prefix + k, v
 
 
-def _leaves(parent, value):
-    value = from_data(value)
-    obj = object_to_data(value)
-    if obj is value or is_many(value):
+def _leaves(parent, value, path):
+    val = from_data(value)
+    _id = id(val)
+    if _id in path:
+        yield parent, value
+        return
+    obj = object_to_data(val)
+    if obj is val or is_many(val):
         yield parent, value
         return
 
@@ -443,7 +447,7 @@ def _leaves(parent, value):
                 continue
             kk = concat_field(parent, literal_field(k))
             vv = object_to_data(v)
-            yield from _leaves(kk, vv)
+            yield from _leaves(kk, vv, path+(_id,))
         except Exception as cause:
             get_logger().error("Do not know how to handle", cause=cause)
 
