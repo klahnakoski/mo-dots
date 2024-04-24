@@ -49,7 +49,7 @@ jobs:
           echo "All $max_attempts attempts have failed!"
           exit 1
         fi
-    - name: Install dependencies
+    - name: Install Test Dependencies
       run: |
         python tests/smoke_test.py
         python -m pip install --upgrade pip
