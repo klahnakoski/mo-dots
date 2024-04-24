@@ -3,6 +3,9 @@
 
 name: install_self
 
+on:
+  workflow_call:
+
 jobs:
   install_self:
     steps:
