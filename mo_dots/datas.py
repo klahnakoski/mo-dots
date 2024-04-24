@@ -543,17 +543,18 @@ def is_data(d):
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    class_ = _get(t, CLASS)
-    if class_ in null_types:
+    _class = _get(t, CLASS)
+    if _class in null_types:
         return True
-    elif class_ in _data_types:
+    elif _class in _data_types:
         return False
-    elif class_ in finite_types and not t:
+    elif _class in finite_types and not t:
         return True
-    elif class_ is text and not t:
+    elif _class is text and not t:
         return True
-    else:
-        return t == None
+    elif _class in null_types:
+        return True
+    return False
 
 
 def exists(value) -> bool:
