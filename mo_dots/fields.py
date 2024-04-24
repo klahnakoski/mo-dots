@@ -3,10 +3,11 @@ import sys
 
 from mo_future import generator_types, flatten
 
-from mo_dots.utils import get_logger
+from mo_dots.utils import get_logger, CLASS
 
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip
+_get = object.__getattribute__
 
 
 ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
@@ -73,7 +74,7 @@ def join_field(path):
     """
     RETURN field SEQUENCE AS STRING
     """
-    if path.__class__ in generator_types:
+    if _get(path, CLASS) in generator_types:
         path = list(path)
 
     if not path:

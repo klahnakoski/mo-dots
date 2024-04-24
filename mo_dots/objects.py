@@ -125,7 +125,7 @@ def get_keys(obj):
     except Exception:
         pass
 
-    _type = obj.__class__
+    _type = _get(obj, CLASS)
     keys = known_types.get(_type)
     if keys is not None:
         return keys

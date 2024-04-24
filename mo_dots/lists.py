@@ -43,7 +43,7 @@ class FlatList(object):
         # list.__init__(self)
         if vals == None:
             _set(self, SLOT, [])
-        elif vals.__class__ is FlatList:
+        elif _get(vals, CLASS) is FlatList:
             _set(self, SLOT, vals.list)
         else:
             _set(self, SLOT, vals)
@@ -330,22 +330,22 @@ not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "D
 
 def is_list(l):
     # ORDERED, AND CAN CHANGE CONTENTS
-    return l.__class__ in list_types
+    return _get(l, CLASS) in list_types
 
 
 def is_container(l):
     # CAN ADD AND REMOVE ELEMENTS
-    return l.__class__ in container_types
+    return _get(l, CLASS) in container_types
 
 
 def is_sequence(l):
     # HAS AN ORDER, INCLUDES GENERATORS
-    return l.__class__ in sequence_types
+    return _get(l, CLASS) in sequence_types
 
 
 def is_finite(l):
     # CAN PERFORM len(l); NOT A GENERATOR
-    return l.__class__ in finite_types
+    return _get(l, CLASS) in finite_types
 
 
 def is_many(value):
@@ -355,7 +355,7 @@ def is_many(value):
     # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
     # UNTIL WE HAVE A COMPLETE SLOT, WE KEEP ALL THIS warning() CODE
     global _many_types
-    type_ = value.__class__
+    type_ = _get(value, CLASS)
     if type_ in _many_types:
         return True
 

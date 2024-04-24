@@ -538,12 +538,12 @@ def is_data(d):
     :param d:
     :return: True IF d IS A TYPE THAT HOLDS DATA
     """
-    return d.__class__ in _data_types
+    return _get(d, CLASS) in _data_types
 
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    class_ = t.__class__
+    class_ = _get(t, CLASS)
     if class_ in null_types:
         return True
     elif class_ in _data_types:
