@@ -197,7 +197,7 @@ def _getdefault(obj, key):
         return [_getdefault(o, key) for o in obj]
 
     try:
-        if obj.__class__ is not dict:
+        if _get(obj, CLASS) is not dict:
             return getattr(obj, key)
     except Exception as f:
         pass
