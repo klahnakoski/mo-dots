@@ -1,28 +1,16 @@
-name: Install Dependencies
-on:
-  workflow_call:
-    inputs:
-      python-version:
-        required: true
-        type: string
-
-jobs:
-  install:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
+name: 'Install Python and Dependencies'
+description: 'Installs Python and project dependencies'
+inputs:
+  python-version:
+    description: 'Version of Python to install'
+    required: true
+runs:
+  using: 'composite'
+  steps:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
         python-version: ${{ inputs.python-version }}
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ inputs.python-version }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ inputs.python-version }}-
-          ${{ runner.os }}-pip-
     - name: Install Dependencies with Retry
       run: |
         max_attempts=5
@@ -39,3 +27,4 @@ jobs:
           echo "All $max_attempts attempts have failed!"
           exit 1
         fi
+      shell: bash
