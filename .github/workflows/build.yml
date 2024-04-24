@@ -35,8 +35,8 @@ jobs:
     - name: Install Dependencies with Retry
       run: |
         cp packaging/setup.py .
-        max_attempts=3
-        sleep_seconds=30
+        max_attempts=5
+        sleep_seconds=10
         attempt_num=1
         until timeout $sleep_seconds pip install . || [[ $attempt_num -eq $max_attempts ]]
         do
