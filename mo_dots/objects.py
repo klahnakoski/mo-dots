@@ -14,7 +14,7 @@ from mo_imports import export, expect
 
 from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive
 from mo_dots.lists import FlatList, list_to_data
-from mo_dots.nones import NullType, Null
+from mo_dots.nones import NullType, Null, is_null
 from mo_dots.utils import CLASS, SLOT, get_logger
 
 get_attr, set_attr, to_data, from_data, set_default = expect(
