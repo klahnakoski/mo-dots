@@ -10,14 +10,11 @@ jobs:
   install:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
+    - uses: actions/checkout@v3
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
         python-version: ${{ inputs.python-version }}
-
     - name: Cache pip
       uses: actions/cache@v2
       with:
@@ -26,7 +23,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-${{ inputs.python-version }}-
           ${{ runner.os }}-pip-
-
     - name: Install Dependencies with Retry
       run: |
         max_attempts=5
