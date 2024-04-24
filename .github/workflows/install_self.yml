@@ -1,30 +1,34 @@
-#
-# pip install .
-
-name: install_self
-
+name: Install Dependencies
 on:
   workflow_call:
+    inputs:
+      python-version:
+        required: true
+        type: string
 
 jobs:
-  install_self:
+  install:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ inputs.python-version }}
+
     - name: Cache pip
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}
+        key: ${{ runner.os }}-pip-${{ inputs.python-version }}
         restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-${{ inputs.python-version }}-
           ${{ runner.os }}-pip-
+
     - name: Install Dependencies with Retry
       run: |
-        cp packaging/setup.py .
         max_attempts=5
         sleep_seconds=10
         attempt_num=1

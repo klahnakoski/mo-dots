@@ -19,7 +19,9 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - uses: ./.github/workflows/install_self
+    - uses: actions/checkout@v3
+    - name: Install Self
+      uses: ./.github/workflows/install_self.yml
     - name: Install Test Dependencies
       run: |
         python tests/smoke_test.py
@@ -41,7 +43,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: ./.github/workflows/install_self
+    - uses: ./.github/workflows/install_self.yml
     - name: Coverage
       env:
         COVERAGE: true

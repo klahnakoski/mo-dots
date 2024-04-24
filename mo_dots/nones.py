@@ -9,7 +9,7 @@
 
 
 from mo_future import none_type
-from mo_imports import expect
+from mo_imports import expect, export
 
 from mo_dots.utils import CLASS, KEY, SLOT
 
@@ -326,3 +326,5 @@ def _setdefault(obj, key, value):
 
 
 null_types = (none_type, NullType)
+
+export("mo_dots.fields", is_null)
