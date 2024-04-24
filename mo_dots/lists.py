@@ -15,7 +15,7 @@ from mo_future import generator_types, first
 from mo_imports import expect, delay_import, export
 
 from mo_dots.datas import is_missing, hash_value
-from mo_dots.nones import Null
+from mo_dots.nones import Null, is_null
 from mo_dots.utils import CLASS, SLOT
 
 Log = delay_import("mo_logs.Log")
@@ -41,7 +41,7 @@ class FlatList(object):
     def __init__(self, vals=None):
         """ USE THE vals, NOT A COPY """
         # list.__init__(self)
-        if vals == None:
+        if is_null(vals):
             _set(self, SLOT, [])
         elif _get(vals, CLASS) is FlatList:
             _set(self, SLOT, vals.list)
@@ -197,7 +197,7 @@ class FlatList(object):
 
     def __eq__(self, other):
         lst = _get(self, SLOT)
-        if other == None:
+        if is_null(other):
             return len(lst) == 0
 
         try:
@@ -212,7 +212,7 @@ class FlatList(object):
 
     def __add__(self, other):
         output = list(_get(self, SLOT))
-        if other == None:
+        if is_null(other):
             return self
         elif is_many(other):
             output.extend(from_data(other))
@@ -224,7 +224,7 @@ class FlatList(object):
 
     def __radd__(self, other):
         output = list(_get(self, SLOT))
-        if other == None:
+        if is_null(other):
             return self
         elif is_many(other):
             output = list(from_data(other)) + output
@@ -233,7 +233,7 @@ class FlatList(object):
         return FlatList(vals=output)
 
     def __iadd__(self, other):
-        if other == None:
+        if is_null(other):
             return self
         elif is_many(other):
             self.extend(from_data(other))
@@ -245,7 +245,7 @@ class FlatList(object):
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE RIGHT [-num:]
         """
-        if num == None:
+        if is_null(num):
             return self
         if num <= 0:
             return Null
@@ -256,7 +256,7 @@ class FlatList(object):
         """
         NOT REQUIRED, BUT EXISTS AS OPPOSITE OF right()
         """
-        if num == None:
+        if is_null(num):
             return self
         if num <= 0:
             return Null

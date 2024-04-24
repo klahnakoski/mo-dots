@@ -9,7 +9,7 @@
 
 
 from mo_future import none_type
-from mo_imports import expect
+from mo_imports import expect, export
 
 from mo_dots.utils import CLASS, KEY, SLOT
 
@@ -192,10 +192,10 @@ class NullType(object):
 
         o = to_data(_get(self, SLOT))
         k = _get(self, KEY)
-        if o == None:
+        if is_null(o):
             return NullType(self, key)
         v = o.get(k)
-        if v == None:
+        if is_null(v):
             return NullType(self, key)
         try:
             return v.get(key)
@@ -274,8 +274,8 @@ def _assign_to_null(obj, path, value, force=True):
             return
 
         old_value = get_attr(obj, path0)
-        if old_value == None:
-            if value == None:
+        if is_null(old_value):
+            if is_null(value):
                 return
             else:
                 obj[path0] = old_value = {}
@@ -319,10 +319,12 @@ def _setdefault(obj, key, value):
     DO NOT USE __dict__.setdefault(obj, key, value), IT DOES NOT CHECK FOR obj[key] == None
     """
     v = obj.get(key)
-    if v == None:
+    if is_null(v):
         obj[key] = value
         return value
     return v
 
 
 null_types = (none_type, NullType)
+
+export("mo_dots.fields", is_null)

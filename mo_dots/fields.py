@@ -2,8 +2,11 @@ import re
 import sys
 
 from mo_future import generator_types, flatten
+from mo_imports import expect
 
 from mo_dots.utils import get_logger, CLASS
+
+is_missing, is_null = expect("is_missing", "is_null")
 
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip
@@ -45,7 +48,7 @@ def tail_field(field):
     RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
     IN (first, rest) PAIR
     """
-    if field == "." or field == None or field == "":
+    if field == "." or is_missing(field):
         return ".", "."
     elif "." in field:
         path = split_field(field)
@@ -123,7 +126,7 @@ def endswith_field(field, suffix):
     """
     RETURN True IF field PATH STRING ENDS WITH suffix PATH STRING
     """
-    if suffix == None:
+    if is_null(suffix):
         return False
     if suffix == ".":
         return True
