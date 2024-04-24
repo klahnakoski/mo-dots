@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# This workflow will install Python dependencies, run tests, and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: build
@@ -7,7 +7,7 @@ on:
   push:
     branches: [ "master", "dev" ]
     tags:
-      - '[0-9]+'
+      - 'v*'
 
 jobs:
   test:
@@ -22,13 +22,12 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install Self
-      uses: ./.github/workflows/install_self@dev
+      uses: ./.github/actions/install_self@dev
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Test Dependencies
       run: |
-        python tests/smoke_test.py
         python -m pip install --upgrade pip
         pip install --no-deps -r tests/requirements.lock
         pip install .
@@ -50,7 +49,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install Self
-      uses: ./.github/workflows/install_self@dev
+      uses: ./.github/actions/install_self@dev
       with:
         python-version: ${{ matrix.python-version }}
 
