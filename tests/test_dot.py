@@ -511,7 +511,7 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(value is from_data(wrapped), "expecting identical object")
 
     def test_leaves_of_mappings(self):
-        a = to_data({"a": _TestMapping()})
+        a = object_to_data({"a": _TestMapping()})
         a.a.a = {"a": 1}
         a.a.b = {"b": 2}
 
@@ -803,7 +803,7 @@ class TestDot(FuzzyTestCase):
         x = leaves_to_data({"a": to_data({"b.c": 42})})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
-    def test_leaves_w_dict(self):
+    def test_leaves_w_dict1(self):
         x = leaves_to_data({"a": {"b.c": 42}})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
@@ -1136,12 +1136,18 @@ class TestDot(FuzzyTestCase):
         result = list(leaves(data))
         self.assertEqual(result, [("value.one.two", [{"test": 1}, {"test": 2}, "3"])])
 
-    def test_leaves_w_dict(self):
+    def test_leaves_w_dict2(self):
         result = list(_leaves("a", dict.values, tuple()))
-        self.assertEqual(result, [])
+        self.assertEqual(result, [["a", dict.values]])
 
     def test_leaves_loop(self):
         d = to_data({"a": 1})
+        d.a=d
+        result = list(d.leaves())
+        self.assertEqual(result, [("a", d)])
+
+    def test_object_leaves_loop(self):
+        d = object_to_data({"a": 1})
         d.a=d
         result = list(d.leaves())
         self.assertEqual(result, [("a", d)])
@@ -1150,12 +1156,8 @@ class TestDot(FuzzyTestCase):
         from bs4 import BeautifulSoup
 
         for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
-            result = list(Data(p=p).leaves())
-            self.assertEqual(result, [[("p", p)]])
-
-
-# TODO: remove me
-register_primitive(Date)
+            result = list(to_data({"p":p}).leaves())
+            self.assertEqual(result, [("p", p)])
 
 
 class _TestMapping(object):
@@ -1163,6 +1165,7 @@ class _TestMapping(object):
         self.a = None
         self.b = None
 
+register_type(_TestMapping)
 
 class SampleData(object):
     def __init__(self, a=None):
@@ -1171,6 +1174,9 @@ class SampleData(object):
 
     def __str__(self):
         return str(self.a) + str(self.b)
+
+
+register_type(SampleData)
 
 
 class StructuredLogger_usingList(object):

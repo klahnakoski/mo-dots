@@ -61,6 +61,9 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
+        register_type(Example2)
+        register_type(ExampleA)
+
         obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
@@ -80,6 +83,9 @@ class TestObject(FuzzyTestCase):
         class ExampleA:
             a: List[str]
             b: Example2
+
+        register_type(Example2)
+        register_type(ExampleA)
 
         obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
@@ -102,6 +108,9 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
+        register_type(Example2)
+        register_type(ExampleA)
+
         obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
@@ -122,6 +131,9 @@ class TestObject(FuzzyTestCase):
             a: List[str]
             b: Example2
 
+        register_type(Example2)
+        register_type(ExampleA)
+
         obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)
 
@@ -141,6 +153,9 @@ class TestObject(FuzzyTestCase):
         class ExampleA:
             a: List[str]
             b: Example2
+
+        register_type(Example2)
+        register_type(ExampleA)
 
         obj = ExampleA(["a", "x"], Example2(42))
         d = object_to_data(obj)

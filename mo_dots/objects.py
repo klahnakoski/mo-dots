@@ -9,12 +9,11 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-from mo_dots.fields import literal_field, concat_field
 from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive, is_missing
-from mo_dots.lists import FlatList, list_to_data, is_many
+from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive
+from mo_dots.lists import FlatList, list_to_data
 from mo_dots.nones import NullType, Null, is_null
 from mo_dots.utils import CLASS, SLOT, get_logger
 
@@ -74,9 +73,6 @@ class DataObject(Mapping):
 
     def keys(self):
         return get_keys(self)
-
-    def leaves(self):
-        return leaves(self)
 
     def items(self):
         keys = self.keys()
@@ -159,21 +155,21 @@ def object_to_data(v):
     if is_primitive(v):
         return v
 
-    type_ = _get(v, CLASS)
-    if type_ in (dict, OrderedDict):
+    _class = _get(v, CLASS)
+    if _class in (dict, OrderedDict):
         m = _new(Data)
         _set(m, SLOT, v)
         return m
-    elif type_ is tuple:
+    elif _class in (tuple, list):
         return list_to_data(v)
-    elif type_ is list:
-        return list_to_data(v)
-    elif type_ in (Data, DataObject, FlatList, NullType):
+    elif _class in (Data, DataObject, FlatList, NullType):
         return v
-    elif type_ in generator_types:
+    elif _class in generator_types:
         return (to_data(vv) for vv in v)
-
-    return DataObject(v)
+    elif _class in WRAPPED_CLASSES:
+        return DataObject(v)
+    else:
+        return v
 
 
 class DataClass(object):
@@ -203,46 +199,6 @@ class DataClass(object):
         return DataObject(output)
 
 
-
-def leaves(value, prefix=None):
-    """
-    LIKE items() BUT RECURSIVE, AND ONLY FOR THE LEAVES (non dict) VALUES
-    SEE leaves_to_data FOR THE INVERSE
-
-    :param value: THE Mapping TO TRAVERSE
-    :param prefix:  OPTIONAL PREFIX GIVEN TO EACH KEY
-    :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
-    """
-    if not prefix:
-        yield from _leaves(".", value, tuple())
-    else:
-        for k, v in _leaves(".", value, tuple()):
-            yield prefix + k, v
-
-
-def _leaves(parent, value, path):
-    val = from_data(value)
-    _id = id(val)
-    if _id in path:
-        yield parent, value
-        return
-    obj = object_to_data(val)
-    if obj is val or is_many(val):
-        yield parent, value
-        return
-
-    for k in get_keys(obj):
-        try:
-            v = obj[literal_field(k)]
-            if is_missing(v):
-                continue
-            kk = concat_field(parent, literal_field(k))
-            vv = object_to_data(v)
-            yield from _leaves(kk, vv, path + (_id,))
-        except Exception as cause:
-            get_logger().error("Do not know how to handle", cause=cause)
-
-
 def params_pack(params, *args):
     settings = {}
     for a in args:
@@ -254,6 +210,10 @@ def params_pack(params, *args):
 
     output = {str(k): from_data(settings[k]) for k in params if k in settings}
     return output
+
+def register_type(*_classes):
+    WRAPPED_CLASSES.update(_classes)
+
 
 
 export("mo_dots.lists", object_to_data)

@@ -412,6 +412,46 @@ class Data:
 MutableMapping.register(Data)
 
 
+
+def leaves(value, prefix=None):
+    """
+    LIKE items() BUT RECURSIVE, AND ONLY FOR THE LEAVES (non dict) VALUES
+    SEE leaves_to_data FOR THE INVERSE
+
+    :param value: THE Mapping TO TRAVERSE
+    :param prefix:  OPTIONAL PREFIX GIVEN TO EACH KEY
+    :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
+    """
+    if not prefix:
+        yield from _leaves(".", value, tuple())
+    else:
+        for k, v in _leaves(".", value, tuple()):
+            yield prefix + k, v
+
+
+def _leaves(parent, value, path):
+    val = from_data(value)
+    _id = id(val)
+    if _id in path:
+        yield parent, value
+        return
+    obj = object_to_data(val)
+    if obj is val or is_many(val):
+        yield parent, value
+        return
+
+    for k in get_keys(obj):
+        try:
+            v = obj[literal_field(k)]
+            if is_missing(v):
+                continue
+            kk = concat_field(parent, literal_field(k))
+            vv = object_to_data(v)
+            yield from _leaves(kk, vv, path + (_id,))
+        except Exception as cause:
+            get_logger().error("Do not know how to handle", cause=cause)
+
+
 def _split_field(field):
     """
     SIMPLE SPLIT, NO CHECKS
@@ -598,7 +638,7 @@ def _leaves_to_data(value):
 
     return value
 
-_primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta, object.__class__, types.FunctionType, types.MethodType)
+_primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta, dict.values.__class__, object.__class__, types.FunctionType, types.MethodType)
 
 
 def is_primitive(value):

@@ -6,6 +6,15 @@
 [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
 [![Downloads](https://pepy.tech/badge/mo-dots/month)](https://pepy.tech/project/mo-dots)
 
+#### Changes in version 10.x.x
+
+Only instances of registered types will be treated as data, otherwise they are assumed to be atoms.
+
+    class MyType:
+        ...
+
+    register_type(MyType)
+
 #### Changes in version 9.x.x
 
 Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot (`..`). Escaping a literal dot can still be done with bell (`\b`) 

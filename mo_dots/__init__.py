@@ -14,7 +14,7 @@ from mo_dots.datas import *
 from mo_dots.fields import *
 from mo_dots.lists import *
 from mo_dots.nones import *
-from mo_dots.objects import DataObject, DataClass, object_to_data
+from mo_dots.objects import DataObject, DataClass, object_to_data, register_type
 from mo_dots.utils import get_module, CLASS, get_logger, SLOT
 
 __all__ = [
@@ -57,6 +57,7 @@ __all__ = [
     "register_data",
     "register_many",
     "register_primitive",
+    "register_type",
     "set_attr",
     "set_default",
     "split_field",
