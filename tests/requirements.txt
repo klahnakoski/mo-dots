@@ -6,3 +6,4 @@ pyLibrary>=3.264.22338
 mo-math>=7.589.24111
 mo-times>=5.589.24111
 jx-elasticsearch>=3.99.20292
+beautifulsoup4

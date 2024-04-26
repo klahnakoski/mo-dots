@@ -1146,6 +1146,14 @@ class TestDot(FuzzyTestCase):
         result = list(d.leaves())
         self.assertEqual(result, [("a", d)])
 
+    def test_leaves_w_bs4(self):
+        from bs4 import BeautifulSoup
+
+        for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
+            result = list(Data(p=p).leaves())
+            self.assertEqual(result, [[("p", p)]])
+
+
 # TODO: remove me
 register_primitive(Date)
 

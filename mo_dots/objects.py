@@ -9,11 +9,12 @@
 from collections import OrderedDict
 from copy import deepcopy
 
+from mo_dots.fields import literal_field, concat_field
 from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive
-from mo_dots.lists import FlatList, list_to_data
+from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive, is_missing
+from mo_dots.lists import FlatList, list_to_data, is_many
 from mo_dots.nones import NullType, Null, is_null
 from mo_dots.utils import CLASS, SLOT, get_logger
 
@@ -73,6 +74,9 @@ class DataObject(Mapping):
 
     def keys(self):
         return get_keys(self)
+
+    def leaves(self):
+        return leaves(self)
 
     def items(self):
         keys = self.keys()
@@ -197,6 +201,46 @@ class DataClass(object):
 
         output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
         return DataObject(output)
+
+
+
+def leaves(value, prefix=None):
+    """
+    LIKE items() BUT RECURSIVE, AND ONLY FOR THE LEAVES (non dict) VALUES
+    SEE leaves_to_data FOR THE INVERSE
+
+    :param value: THE Mapping TO TRAVERSE
+    :param prefix:  OPTIONAL PREFIX GIVEN TO EACH KEY
+    :return: Data, WHICH EACH KEY BEING A PATH INTO value TREE
+    """
+    if not prefix:
+        yield from _leaves(".", value, tuple())
+    else:
+        for k, v in _leaves(".", value, tuple()):
+            yield prefix + k, v
+
+
+def _leaves(parent, value, path):
+    val = from_data(value)
+    _id = id(val)
+    if _id in path:
+        yield parent, value
+        return
+    obj = object_to_data(val)
+    if obj is val or is_many(val):
+        yield parent, value
+        return
+
+    for k in get_keys(obj):
+        try:
+            v = obj[literal_field(k)]
+            if is_missing(v):
+                continue
+            kk = concat_field(parent, literal_field(k))
+            vv = object_to_data(v)
+            yield from _leaves(kk, vv, path + (_id,))
+        except Exception as cause:
+            get_logger().error("Do not know how to handle", cause=cause)
 
 
 def params_pack(params, *args):
