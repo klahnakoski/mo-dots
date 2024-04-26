@@ -412,7 +412,6 @@ class Data:
 MutableMapping.register(Data)
 
 
-
 def leaves(value, prefix=None):
     """
     LIKE items() BUT RECURSIVE, AND ONLY FOR THE LEAVES (non dict) VALUES
@@ -552,8 +551,6 @@ def is_missing(t) -> bool:
         return True
     elif _class is text and not t:
         return True
-    elif _class in null_types:
-        return True
     return False
 
 
@@ -638,7 +635,23 @@ def _leaves_to_data(value):
 
     return value
 
-_primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta, dict.values.__class__, object.__class__, types.FunctionType, types.MethodType)
+
+_primitive_types = (
+    str,
+    bytes,
+    int,
+    float,
+    bool,
+    Decimal,
+    datetime,
+    date,
+    time,
+    timedelta,
+    dict.values.__class__,
+    object.__class__,
+    types.FunctionType,
+    types.MethodType,
+)
 
 
 def is_primitive(value):

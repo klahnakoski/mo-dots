@@ -6,8 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
 import types
 from copy import deepcopy
 

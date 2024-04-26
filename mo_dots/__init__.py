@@ -17,6 +17,7 @@ from mo_dots.nones import *
 from mo_dots.objects import DataObject, DataClass, object_to_data, register_type
 from mo_dots.utils import get_module, CLASS, get_logger, SLOT
 
+
 __all__ = [
     "coalesce",
     "concat_field",

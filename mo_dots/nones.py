@@ -6,8 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
 from mo_future import none_type
 from mo_imports import expect, export
 

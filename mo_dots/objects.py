@@ -211,9 +211,9 @@ def params_pack(params, *args):
     output = {str(k): from_data(settings[k]) for k in params if k in settings}
     return output
 
+
 def register_type(*_classes):
     WRAPPED_CLASSES.update(_classes)
-
 
 
 export("mo_dots.lists", object_to_data)
