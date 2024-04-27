@@ -17,7 +17,8 @@
                 "mo-logs>=8.584.24095",         "mo-json>=6.589.24111",
              "mo-threads>=6.589.24111",      "mo-testing>=8.591.24112",
               "pyLibrary>=3.264.22338",         "mo-math>=7.589.24111",
-               "mo-times>=5.589.24111", "jx-elasticsearch>=3.99.20292"
+               "mo-times>=5.589.24111", "jx-elasticsearch>=3.99.20292",
+                      "beautifulsoup4"
     ]},
     "include_package_data": true,
     "install_requires": ["mo-future==7.584.24095", "mo-imports==7.584.24095"],
@@ -31,6 +32,15 @@
             "[![Build Status](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/klahnakoski/mo-dots/actions/workflows/build.yml)",
             "[![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)",
             "[![Downloads](https://pepy.tech/badge/mo-dots/month)](https://pepy.tech/project/mo-dots)",
+            "",
+            "#### Changes in version 10.x.x",
+            "",
+            "Only instances of registered types will be treated as data, otherwise they are assumed to be atoms.",
+            "",
+            "    class MyType:",
+            "        ...",
+            "",
+            "    register_type(MyType)",
             "",
             "#### Changes in version 9.x.x",
             "",
@@ -138,6 +148,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "10.0.0",
+    "version": "0.608.24118",
     "zip_safe": false
 }
