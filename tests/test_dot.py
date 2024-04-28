@@ -6,6 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import timedelta
 
@@ -104,7 +105,7 @@ class TestDot(FuzzyTestCase):
         c = a.b["test"]
         self.assertTrue(c == None)
 
-    def test_null(self):
+    def test_null1(self):
         a = 0
         b = 0
         c = Null
@@ -669,9 +670,9 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(a == a)
         self.assertTrue(b == b)
         self.assertTrue(b == c)
-        self.assertTrue(b == None)
+        self.assertFalse(b == None)
         self.assertTrue(b == Null)
-        self.assertTrue(None == b)
+        self.assertFalse(None == b)
         self.assertTrue(Null == b)
 
     def test_add_1(self):
@@ -755,7 +756,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue([] == Null)
         self.assertTrue(empty == Null)
-        self.assertTrue(empty == None)
+        self.assertFalse(empty == None)
 
     def test_none_and_magic(self):
         self.assertEqual(list(Null), Null)
@@ -924,7 +925,7 @@ class TestDot(FuzzyTestCase):
         b = to_data({"a": 42})
         self.assertEqual(list(iter(b)), [("a", 42)])
 
-    def test_null(self):
+    def test_null2(self):
         with self.assertRaises(Exception):
             int(Null)
 
@@ -1158,6 +1159,20 @@ class TestDot(FuzzyTestCase):
         for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
             result = list(to_data({"p":p}).leaves())
             self.assertEqual(result, [("p", p)])
+
+    def test_null_tuples(self):
+        temp = namedtuple("temp", "a")
+        temp1 = temp(1)
+        self.assertTrue(is_not_null(temp1))
+        self.assertTrue(exists(temp1))
+        self.assertFalse(is_null(temp1))
+        self.assertFalse(is_missing(temp1))
+
+        temp2 = tuple()
+        self.assertFalse(is_null(temp2))
+        self.assertTrue(is_not_null(temp2))
+        self.assertTrue(is_missing(temp2))
+        self.assertFalse(exists(temp2))
 
 
 class _TestMapping(object):

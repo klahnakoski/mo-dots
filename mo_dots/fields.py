@@ -4,9 +4,7 @@ import sys
 from mo_future import generator_types, flatten
 from mo_imports import expect
 
-from mo_dots.utils import get_logger, CLASS
-
-is_missing, is_null = expect("is_missing", "is_null")
+from mo_dots.utils import get_logger, CLASS, is_missing, is_null
 
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip

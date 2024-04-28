@@ -15,6 +15,18 @@ Only instances of registered types will be treated as data, otherwise they are a
 
     register_type(MyType)
 
+datawrap = object_to_data
+
+Old 
+
+    assertTrue(FlatList() == None),
+
+New
+
+    is_missing(FlatList()) == True
+
+
+
 #### Changes in version 9.x.x
 
 Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot (`..`). Escaping a literal dot can still be done with bell (`\b`) 
