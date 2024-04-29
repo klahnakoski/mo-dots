@@ -6,14 +6,11 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
-from mo_future import none_type
 from mo_imports import expect, export
 
-from mo_dots.utils import CLASS, KEY, SLOT
+from mo_dots.utils import CLASS, KEY, SLOT, is_null, is_missing, is_sequence, register_null_type, is_many
 
-to_data, get_attr, is_sequence, FlatList = expect("to_data", "get_attr", "is_sequence", "FlatList")
+to_data, get_attr = expect("to_data", "get_attr")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -126,17 +123,13 @@ class NullType(object):
         if is_sequence(other) and not other:
             return True
 
-        _class = _get(other, CLASS)
-        if _class in null_types:
+        if is_null(other):
             return True
         else:
             return Null
 
     def __ne__(self, other):
-        class_ = _get(other, CLASS)
-        if class_ in null_types:
-            return False
-        elif class_ is list and not other:
+        if is_missing(other):
             return False
         else:
             return Null
@@ -245,6 +238,7 @@ class NullType(object):
         return _null_hash
 
 
+register_null_type(NullType)
 Null = NullType()  # INSTEAD OF None!!!
 _set(Null, SLOT, Null)
 
@@ -285,25 +279,6 @@ def _assign_to_null(obj, path, value, force=True):
         raise e
 
 
-def is_null(value):
-    # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(value, CLASS)
-    if _class in null_types:
-        return True
-    if _class is FlatList:
-        return not value
-    return False
-
-
-def is_not_null(value):
-    _class = _get(value, CLASS)
-    if _class in null_types:
-        return False
-    if _class is FlatList:
-        return bool(value)
-    return True
-
-
 def _split_field(field):
     """
     SIMPLE SPLIT, NO CHECKS
@@ -323,8 +298,3 @@ def _setdefault(obj, key, value):
         obj[key] = value
         return value
     return v
-
-
-null_types = (none_type, NullType)
-
-export("mo_dots.fields", is_null)

@@ -6,27 +6,16 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
 from copy import copy, deepcopy
-from datetime import datetime, date, timedelta, time
 from decimal import Decimal
 
-from mo_future import (
-    generator_types,
-    iteritems,
-    long,
-    text,
-    MutableMapping,
-    OrderedDict,
-    first,
-)
+from mo_future import generator_types, MutableMapping, first
 from mo_imports import expect, export
 
+from mo_dots import utils
 from mo_dots.fields import split_field, literal_field, concat_field
-from mo_dots.nones import Null, NullType, null_types, is_null
-from mo_dots.utils import CLASS, SLOT
-from mo_dots.utils import get_logger
+from mo_dots.nones import Null, NullType
+from mo_dots.utils import *
 
 (
     _getdefault,
@@ -35,11 +24,7 @@ from mo_dots.utils import get_logger
     from_data,
     to_data,
     list_to_data,
-    finite_types,
-    is_list,
     FlatList,
-    is_sequence,
-    is_many,
     DataObject,
     get_keys,
     object_to_data,
@@ -50,11 +35,7 @@ from mo_dots.utils import get_logger
     "from_data",
     "to_data",
     "list_to_data",
-    "finite_types",
-    "is_list",
     "FlatList",
-    "is_sequence",
-    "is_many",
     "DataObject",
     "get_keys",
     "object_to_data",
@@ -68,7 +49,7 @@ _new = object.__new__
 DEBUG = False
 
 
-class Data(object):
+class Data:
     """
     Please see https://github.com/klahnakoski/mo-dots/tree/dev/docs#data-replaces-pythons-dict
     """
@@ -94,7 +75,7 @@ class Data(object):
 
     def __contains__(self, item):
         value = Data.__getitem__(self, item)
-        if _get(value, CLASS) in _data_types or value:
+        if is_data(value) or value:
             return True
         return False
 
@@ -110,7 +91,7 @@ class Data(object):
             return Null
         if key == ".":
             output = _get(self, SLOT)
-            if _get(output, CLASS) in _data_types:
+            if is_data(output):
                 return self
             else:
                 return output
@@ -123,7 +104,7 @@ class Data(object):
             for n in seq:
                 if _get(d, CLASS) is NullType:
                     d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
-                elif is_list(d):
+                elif is_many(d):
                     d = [_getdefault(dd, n) for dd in d]
                 else:
                     d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
@@ -188,7 +169,7 @@ class Data(object):
         # OPTIMIZED to_data()
         if t is dict:
             return dict_to_data(v)
-        elif t in null_types:
+        elif t in utils._null_types:
             return NullType(d, key)
         elif t is list:
             return list_to_data(v)
@@ -220,7 +201,7 @@ class Data(object):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not _get(other, CLASS) in _data_types:
+        if not is_data(other):
             get_logger().error("Expecting Data")
 
         d = _get(self, SLOT)
@@ -232,7 +213,7 @@ class Data(object):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not _get(other, CLASS) in _data_types:
+        if not is_data(other):
             get_logger().error("Expecting Data")
 
         return to_data(other).__or__(self)
@@ -242,7 +223,7 @@ class Data(object):
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
         d = _get(self, SLOT)
-        if not _get(other, CLASS) in _data_types:
+        if not is_data(other):
             if is_missing(d) or (isinstance(d, dict) and not d):
                 _set(self, SLOT, other)
             return self
@@ -273,7 +254,7 @@ class Data(object):
         if not d and is_null(other):
             return False
 
-        if _get(other, CLASS) not in _data_types:
+        if not is_data(other):
             return False
         e = other
         for k, v in d.items():
@@ -297,7 +278,7 @@ class Data(object):
 
     def items(self):
         d = _get(self, SLOT)
-        return [(k, to_data(v)) for k, v in d.items() if v != None or _get(v, CLASS) in _data_types]
+        return [(k, to_data(v)) for k, v in d.items() if v != None or is_data(v)]
 
     def leaves(self, prefix=None):
         """
@@ -308,7 +289,7 @@ class Data(object):
     def iteritems(self):
         # LOW LEVEL ITERATION, NO WRAPPING
         d = _get(self, SLOT)
-        return ((k, to_data(v)) for k, v in iteritems(d))
+        return ((k, to_data(v)) for k, v in d.items())
 
     def pop(self, key, default=Null):
         if is_null(key):
@@ -324,7 +305,7 @@ class Data(object):
             for n in seq[:-1]:
                 if _get(d, CLASS) is NullType:
                     d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
-                elif is_list(d):
+                elif is_many(d):
                     d = [_getdefault(dd, n) for dd in d]
                 else:
                     d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
@@ -411,7 +392,7 @@ class Data(object):
 
 
 MutableMapping.register(Data)
-
+register_data(Data)
 
 def leaves(value, prefix=None):
     """
@@ -467,7 +448,7 @@ def _iadd(self, other):
     * NUMBERS ARE ADDED
     """
 
-    if not _get(other, CLASS) in _data_types:
+    if not is_data(other):
         # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
         d = _get(self, SLOT)
         if isinstance(d, dict) and not len(d):
@@ -485,23 +466,23 @@ def _iadd(self, other):
         sv = d.get(ok)
         if is_null(sv):
             d[ok] = from_data(deepcopy(ov))
-        elif isinstance(ov, (Decimal, float, long, int)):
-            if _get(sv, CLASS) in _data_types:
+        elif isinstance(ov, (Decimal, float, int)):
+            if is_data(sv):
                 get_logger().error(
                     "can not add {{stype}} with {{otype}",
                     stype=_get(sv, CLASS).__name__,
                     otype=_get(ov, CLASS).__name__,
                 )
-            elif is_list(sv):
+            elif is_many(sv):
                 d[ok].append(ov)
             else:
                 d[ok] = sv + ov
-        elif is_list(ov):
+        elif is_many(ov):
             d[ok] = from_data(listwrap(sv) + ov)
-        elif _get(ov, CLASS) in _data_types:
-            if _get(sv, CLASS) in _data_types:
+        elif is_data(ov):
+            if is_data(sv):
                 _iadd(sv, ov)
-            elif is_list(sv):
+            elif is_many(sv):
                 d[ok].append(ov)
             else:
                 get_logger().error(
@@ -510,7 +491,7 @@ def _iadd(self, other):
                     otype=_get(ov, CLASS).__name__,
                 )
         else:
-            if _get(sv, CLASS) in _data_types:
+            if is_data(sv):
                 get_logger().error(
                     "can not add {{stype}} with {{otype}",
                     stype=_get(sv, CLASS).__name__,
@@ -521,50 +502,10 @@ def _iadd(self, other):
     return self
 
 
-_data_types = data_types = (Data, dict, OrderedDict)  # TYPES TO HOLD DATA
-
-
-def register_data(type_):
-    """
-    :param type_:  ADD OTHER TYPE THAT HOLDS DATA
-    :return:
-    """
-    global _data_types
-    _data_types = tuple(set(_data_types + (type_,)))
-
-
-def is_data(d):
-    """
-    :param d:
-    :return: True IF d IS A TYPE THAT HOLDS DATA
-    """
-    return _get(d, CLASS) in _data_types
-
-
-def is_missing(t) -> bool:
-    # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(t, CLASS)
-    if _class in null_types:
-        return True
-    elif _class in _data_types:
-        return False
-    elif _class in finite_types and not t:
-        return True
-    elif _class is text and not t:
-        return True
-    elif _class in null_types:
-        return True
-    return False
-
-
-def exists(value) -> bool:
-    return not is_missing(value)
-
-
 def hash_value(v):
     if is_many(v):
         return hash_value(first(v))
-    elif _get(v, CLASS) in _data_types:
+    elif is_data(v):
         return hash_value(first(v.values()))
     else:
         return hash(v)
@@ -601,9 +542,9 @@ def _leaves_to_data(value):
     if is_primitive(value):
         return value
 
-    class_ = _get(value, CLASS)
-    if class_ in _data_types:
-        if class_ is Data:
+    _class = _get(value, CLASS)
+    if _class in utils._data_types:
+        if _class is Data:
             value = from_data(value)
 
         output = {}
@@ -637,18 +578,3 @@ def _leaves_to_data(value):
         return [_leaves_to_data(v) for v in value]
 
     return value
-
-
-_primitive_types = (str, bytes, int, float, bool, Decimal, datetime, date, time, timedelta)
-
-
-def is_primitive(value):
-    return isinstance(value, _primitive_types)
-
-
-def register_primitive(_type):
-    global _primitive_types
-    _primitive_types = tuple(set(_primitive_types + (_type,)))
-
-
-export("mo_dots.fields", is_missing)

@@ -6,17 +6,15 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-
-import types
 from copy import deepcopy
 
-from mo_future import generator_types, first
+from mo_future import first
 from mo_imports import expect, delay_import, export
 
+from mo_dots import utils
 from mo_dots.datas import is_missing, hash_value
-from mo_dots.nones import Null, is_null
-from mo_dots.utils import CLASS, SLOT
+from mo_dots.nones import Null, NullType
+from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
 
 Log = delay_import("mo_logs.Log")
 object_to_data, coalesce, to_data, from_data, get_attr = expect(
@@ -197,8 +195,8 @@ class FlatList(object):
 
     def __eq__(self, other):
         lst = _get(self, SLOT)
-        if is_null(other):
-            return len(lst) == 0
+        if other is None:
+            return False
 
         try:
             if len(lst) != len(other):
@@ -297,6 +295,9 @@ class FlatList(object):
         return Null
 
 
+register_list(FlatList)
+
+
 def last(values):
     if is_many(values):
         if not values:
@@ -318,53 +319,6 @@ def last(values):
     return values
 
 
-list_types = (list, FlatList)
-container_types = (list, FlatList, set)
-finite_types = (list, FlatList, set, tuple)
-sequence_types = (list, FlatList, tuple) + generator_types
-_many_types = many_types = tuple(set(list_types + container_types + sequence_types))
-
-# ITERATORS THAT ARE CONSIDERED PRIMITIVE
-not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "Data")
-
-
-def is_list(l):
-    # ORDERED, AND CAN CHANGE CONTENTS
-    return _get(l, CLASS) in list_types
-
-
-def is_container(l):
-    # CAN ADD AND REMOVE ELEMENTS
-    return _get(l, CLASS) in container_types
-
-
-def is_sequence(l):
-    # HAS AN ORDER, INCLUDES GENERATORS
-    return _get(l, CLASS) in sequence_types
-
-
-def is_finite(l):
-    # CAN PERFORM len(l); NOT A GENERATOR
-    return _get(l, CLASS) in finite_types
-
-
-def is_many(value):
-    # REPRESENTS MULTIPLE VALUES
-    # TODO: CLEAN UP THIS LOGIC
-    # THIS IS COMPLICATED BECAUSE I AM UNSURE ABOUT ALL THE "PRIMITIVE TYPES"
-    # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
-    # UNTIL WE HAVE A COMPLETE SLOT, WE KEEP ALL THIS warning() CODE
-    global _many_types
-    type_ = _get(value, CLASS)
-    if type_ in _many_types:
-        return True
-
-    if issubclass(type_, types.GeneratorType):
-        _many_types = _many_types + (type_,)
-        Log.warning("is_many() can not detect generator {{type}}", type=type_.__name__)
-        return True
-    return False
-
 
 def list_to_data(v):
     """
@@ -380,12 +334,5 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
 
 
-export("mo_dots.datas", finite_types)
-export("mo_dots.datas", is_list)
 export("mo_dots.datas", list_to_data)
 export("mo_dots.datas", FlatList)
-export("mo_dots.datas", is_sequence)
-export("mo_dots.datas", is_many)
-
-export("mo_dots.nones", is_sequence)
-export("mo_dots.nones", FlatList)

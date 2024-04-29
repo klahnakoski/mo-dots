@@ -12,10 +12,11 @@ from copy import deepcopy
 from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
-from mo_dots.datas import register_data, Data, _iadd, dict_to_data, is_primitive
+from mo_dots.datas import Data, _iadd, dict_to_data
 from mo_dots.lists import FlatList, list_to_data
-from mo_dots.nones import NullType, Null, is_null
-from mo_dots.utils import CLASS, SLOT, get_logger
+from mo_dots.nones import NullType, Null
+from mo_dots.utils import CLASS, SLOT, register_data, get_logger, is_primitive, is_known_data_type, is_null, \
+    register_type
 
 get_attr, set_attr, to_data, from_data, set_default = expect(
     "get_attr", "set_attr", "to_data", "from_data", "set_default"
@@ -25,8 +26,8 @@ _new = object.__new__
 _get = object.__getattribute__
 _set = object.__setattr__
 
-WRAPPED_CLASSES = set()
-known_types = {}  #  map from type to field names
+
+_known_fields = {}  #  map from type to field names
 ignored_attributes = set(dir(object)) | set(dir(dict.values.__class__))
 
 
@@ -126,17 +127,17 @@ def get_keys(obj):
         pass
 
     _type = _get(obj, CLASS)
-    keys = known_types.get(_type)
+    keys = _known_fields.get(_type)
     if keys is not None:
         return keys
 
     try:
-        keys = known_types[_type] = _type.__slots__
+        keys = _known_fields[_type] = _type.__slots__
         return keys
     except Exception:
         pass
 
-    keys = known_types[_type] = tuple(
+    keys = _known_fields[_type] = tuple(
         k
         for k in dir(_type)
         if k not in ignored_attributes
@@ -155,21 +156,21 @@ def object_to_data(v):
     if is_primitive(v):
         return v
 
-    type_ = _get(v, CLASS)
-    if type_ in (dict, OrderedDict):
+    _class = _get(v, CLASS)
+    if _class in (dict, OrderedDict):
         m = _new(Data)
         _set(m, SLOT, v)
         return m
-    elif type_ is tuple:
+    elif _class in (tuple, list):
         return list_to_data(v)
-    elif type_ is list:
-        return list_to_data(v)
-    elif type_ in (Data, DataObject, FlatList, NullType):
+    elif _class in (Data, DataObject, FlatList, NullType):
         return v
-    elif type_ in generator_types:
+    elif _class in generator_types:
         return (to_data(vv) for vv in v)
-
-    return DataObject(v)
+    elif is_known_data_type(_class):
+        return DataObject(v)
+    else:
+        return v
 
 
 class DataClass(object):
@@ -178,10 +179,10 @@ class DataClass(object):
     ALLOW CONSTRUCTOR TO ACCEPT @override
     """
 
-    def __init__(self, class_):
-        WRAPPED_CLASSES.add(class_)
-        self.class_ = class_
-        self.constructor = class_.__init__
+    def __init__(self, _class):
+        register_type(_class)
+        self.class_ = _class
+        self.constructor = _class.__init__
 
     def __call__(self, *args, **kwargs):
         settings = to_data(kwargs).settings

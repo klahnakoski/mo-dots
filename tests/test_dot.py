@@ -6,6 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import timedelta
 
@@ -104,7 +105,7 @@ class TestDot(FuzzyTestCase):
         c = a.b["test"]
         self.assertTrue(c == None)
 
-    def test_null(self):
+    def test_null1(self):
         a = 0
         b = 0
         c = Null
@@ -432,7 +433,7 @@ class TestDot(FuzzyTestCase):
 
     def test_object_wrap(self):
         d = SampleData()
-        dd = datawrap(d)
+        dd = object_to_data(d)
 
         self.assertEqual(dd["a"], 20)
         self.assertEqual(dd, {"a": 20, "b": 30})
@@ -441,7 +442,7 @@ class TestDot(FuzzyTestCase):
     def test_object_wrap_w_deep_path(self):
         d = SampleData()
         d.a = Data(c=3)
-        dd = datawrap(d)
+        dd = object_to_data(d)
 
         self.assertEqual(dd["a.c"], 3)
         self.assertEqual(dd, {"a": {"c": 3}, "b": 30})
@@ -511,7 +512,7 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(value is from_data(wrapped), "expecting identical object")
 
     def test_leaves_of_mappings(self):
-        a = to_data({"a": _TestMapping()})
+        a = object_to_data({"a": _TestMapping()})
         a.a.a = {"a": 1}
         a.a.b = {"b": 2}
 
@@ -669,9 +670,9 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(a == a)
         self.assertTrue(b == b)
         self.assertTrue(b == c)
-        self.assertTrue(b == None)
+        self.assertFalse(b == None)
         self.assertTrue(b == Null)
-        self.assertTrue(None == b)
+        self.assertFalse(None == b)
         self.assertTrue(Null == b)
 
     def test_add_1(self):
@@ -755,7 +756,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue([] == Null)
         self.assertTrue(empty == Null)
-        self.assertTrue(empty == None)
+        self.assertFalse(empty == None)
 
     def test_none_and_magic(self):
         self.assertEqual(list(Null), Null)
@@ -803,7 +804,7 @@ class TestDot(FuzzyTestCase):
         x = leaves_to_data({"a": to_data({"b.c": 42})})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
-    def test_leaves_w_dict(self):
+    def test_leaves_w_dict1(self):
         x = leaves_to_data({"a": {"b.c": 42}})
         self.assertEqual(x, {"a": {"b": {"c": 42}}})
 
@@ -924,7 +925,7 @@ class TestDot(FuzzyTestCase):
         b = to_data({"a": 42})
         self.assertEqual(list(iter(b)), [("a", 42)])
 
-    def test_null(self):
+    def test_null2(self):
         with self.assertRaises(Exception):
             int(Null)
 
@@ -1136,9 +1137,9 @@ class TestDot(FuzzyTestCase):
         result = list(leaves(data))
         self.assertEqual(result, [("value.one.two", [{"test": 1}, {"test": 2}, "3"])])
 
-    def test_leaves_w_dict(self):
+    def test_leaves_w_dict2(self):
         result = list(_leaves("a", dict.values, tuple()))
-        self.assertEqual(result, [])
+        self.assertEqual(result, [["a", dict.values]])
 
     def test_leaves_loop(self):
         d = to_data({"a": 1})
@@ -1146,8 +1147,32 @@ class TestDot(FuzzyTestCase):
         result = list(d.leaves())
         self.assertEqual(result, [("a", d)])
 
-# TODO: remove me
-register_primitive(Date)
+    def test_object_leaves_loop(self):
+        d = object_to_data({"a": 1})
+        d.a=d
+        result = list(d.leaves())
+        self.assertEqual(result, [("a", d)])
+
+    def test_leaves_w_bs4(self):
+        from bs4 import BeautifulSoup
+
+        for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
+            result = list(to_data({"p":p}).leaves())
+            self.assertEqual(result, [("p", p)])
+
+    def test_null_tuples(self):
+        temp = namedtuple("temp", "a")
+        temp1 = temp(1)
+        self.assertTrue(is_not_null(temp1))
+        self.assertTrue(exists(temp1))
+        self.assertFalse(is_null(temp1))
+        self.assertFalse(is_missing(temp1))
+
+        temp2 = tuple()
+        self.assertFalse(is_null(temp2))
+        self.assertTrue(is_not_null(temp2))
+        self.assertTrue(is_missing(temp2))
+        self.assertFalse(exists(temp2))
 
 
 class _TestMapping(object):
@@ -1155,6 +1180,7 @@ class _TestMapping(object):
         self.a = None
         self.b = None
 
+register_type(_TestMapping)
 
 class SampleData(object):
     def __init__(self, a=None):
@@ -1163,6 +1189,9 @@ class SampleData(object):
 
     def __str__(self):
         return str(self.a) + str(self.b)
+
+
+register_type(SampleData)
 
 
 class StructuredLogger_usingList(object):

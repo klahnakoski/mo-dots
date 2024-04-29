@@ -6,12 +6,12 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_dots import utils
+from mo_dots import utils, logging
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
 from mo_dots import *
-from mo_dots.utils import PoorLogger
+from mo_dots.logging import PoorLogger
 
 
 class TestUtils(FuzzyTestCase):
@@ -67,7 +67,7 @@ class TestUtils(FuzzyTestCase):
     def test_poor_logger(self):
         logger = PoorLogger()
         lines = []
-        utils.STDOUT, old = Data(write=lambda t: lines.append(t)), utils.STDOUT
+        logging.STDOUT, old = Data(write=lambda t: lines.append(t)), logging.STDOUT
 
         logger.info("test1")
         logger.warning("test2")

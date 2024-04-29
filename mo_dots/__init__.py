@@ -15,7 +15,8 @@ from mo_dots.fields import *
 from mo_dots.lists import *
 from mo_dots.nones import *
 from mo_dots.objects import DataObject, DataClass, object_to_data
-from mo_dots.utils import get_module, CLASS, get_logger, SLOT
+from mo_dots.utils import *
+from mo_dots.utils import _null_types as null_types
 
 __all__ = [
     "coalesce",
@@ -23,7 +24,6 @@ __all__ = [
     "Data",
     "DataClass",
     "DataObject",
-    "datawrap",
     "dict_to_data",
     "endswith_field",
     "exists",
@@ -51,12 +51,14 @@ __all__ = [
     "missing",
     "Null",
     "NullType",
+    "null_types",
     "object_to_data",
     "PATH_NOT_FOUND",
     "relative_field",
     "register_data",
     "register_many",
     "register_primitive",
+    "register_type",
     "set_attr",
     "set_default",
     "split_field",
@@ -129,7 +131,7 @@ def set_default(d, *dicts):
     :param dicts: dicts IN PRIORITY ORDER, HIGHEST TO LOWEST
     :return: d
     """
-    agg = d if d or _get(d, CLASS) in datas._data_types else {}
+    agg = d if d or is_data(d) else {}
     for p in dicts:
         _set_default(agg, p, seen={})
     return to_data(agg)
@@ -152,7 +154,7 @@ def _set_default(d, default, seen=None):
 
         if is_null(existing_value):
             if default_value != None:
-                if _get(default_value, CLASS) in datas._data_types:
+                if is_data(default_value):
                     df = seen.get(id(raw_value))
                     if df is not None:
                         _set_attr(d, [k], df)
@@ -171,9 +173,7 @@ def _set_default(d, default, seen=None):
         elif is_list(existing_value) or is_list(default_value):
             _set_attr(d, [k], None)
             _set_attr(d, [k], listwrap(existing_value) + listwrap(default_value))
-        elif (hasattr(existing_value, "__setattr__") or _get(existing_value, CLASS) in datas._data_types) and _get(
-            default_value, CLASS
-        ) in datas._data_types:
+        elif (hasattr(existing_value, "__setattr__") or is_data(existing_value)) and is_data(default_value):
             df = seen.get(id(raw_value))
             if df is not None:
                 _set_attr(d, [k], df)
@@ -475,7 +475,17 @@ def tuplewrap(value):
         return (from_data(value),)
 
 
-datawrap = object_to_data
+# LEGACY PROPERTIES
+class _DeferManyTypes:
+    def __iter__(self):
+        yield from utils._many_types
+setattr(lists, '_many_types', _DeferManyTypes())
+
+
+class _DeferDataTypes:
+    def __iter__(self):
+        yield from utils._data_types
+setattr(datas, '_data_types', _DeferDataTypes())
 
 
 # EXPORT
