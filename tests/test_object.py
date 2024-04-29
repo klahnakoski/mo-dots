@@ -36,14 +36,14 @@ class TestObject(FuzzyTestCase):
         self.assertEqual(d(42), 42)
 
     def test_wrap(self):
-        self.assertEqual(datawrap((1, 2)), (1, 2))
+        self.assertEqual(object_to_data((1, 2)), (1, 2))
         self.assertEqual(to_data([1, 2]), (1, 2))
         self.assertEqual(to_data(gen()), (1, 2))
 
     def test_datawrap(self):
-        self.assertEqual(datawrap(None), Null)
-        self.assertEqual(datawrap(Null), Null)
-        self.assertEqual(list(datawrap(gen())), [1, 2])
+        self.assertEqual(object_to_data(None), Null)
+        self.assertEqual(object_to_data(Null), Null)
+        self.assertEqual(list(object_to_data(gen())), [1, 2])
         self.assertEqual(to_data({"a": 3}), {"a": 3})
 
     def test_dict_class(self):

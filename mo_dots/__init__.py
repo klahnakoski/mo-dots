@@ -24,7 +24,6 @@ __all__ = [
     "Data",
     "DataClass",
     "DataObject",
-    "datawrap",
     "dict_to_data",
     "endswith_field",
     "exists",
@@ -477,8 +476,6 @@ def tuplewrap(value):
 
 
 # LEGACY PROPERTIES
-datawrap = object_to_data
-
 class _DeferManyTypes:
     def __iter__(self):
         yield from utils._many_types

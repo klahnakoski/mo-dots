@@ -8,23 +8,33 @@
 
 #### Changes in version 10.x.x
 
-Only instances of registered types will be treated as data, otherwise they are assumed to be atoms.
+* Data now navigates `@dataclass` and `namedtuple` instances. All other types must be registered to be treated as data, otherwise they are assumed to be atoms.
+  ```
+  class MyType:
+      ...
+    
+  register_type(MyType)
+  ```
+* Removed `datawrap`.  It is now `object_to_data`
+* Comparision with `None` no longer works in all cases.
 
-    class MyType:
-        ...
+  Instead of 
 
-    register_type(MyType)
+  ```
+  FlatList() == None  
+  ```
 
-datawrap = object_to_data
+  you now use 
 
-Old 
+  ```
+  FlatList() == Null
+  ```
 
-    assertTrue(FlatList() == None),
+  or 
 
-New
-
-    is_missing(FlatList()) == True
-
+  ```
+  is_missing(FlatList())
+  ```
 
 
 #### Changes in version 9.x.x
@@ -50,7 +60,7 @@ Define `Data` using named parameters, just like you would a `dict`
     >>> Data(b=42, c="hello world")
     Data({'b': 42, 'c': 'hello world'})
 
-You can also wrap existing `dict`s so they can be used like `Data`
+You can also box an existing `dict`s so they can be used like `Data`
 
     >>> from mo_dots import to_data
     >>> to_data({'b': 42, 'c': 'hello world'})
@@ -68,16 +78,16 @@ Access properties by dot-delimited path.
 	>>> a["b.c"] == 42
 	True
 
-### Safe Access
+### Null-Safe Access
 
 If a property does not exist then return `Null` rather than raising an error.
 
 	>>> a = Data()
-	>>> a.b == None
+	>>> a.b == Null
 	True
-	>>> a.b.c == None
+	>>> a.b.c == Null
 	True
-	>>> a[None] == None
+	>>> a[None] == Null
 	True
 
 ### Path assignment
@@ -122,6 +132,6 @@ Alternatively, you may consider [mo-json](https://pypi.org/project/mo-json/) whi
 
 ## Summary
 
-This library is the basis for a data transformation algebra: We want a succinct way of transforming data in Python. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library is solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. 
+This library is the basis for a data transformation algebra: We want a succinct way of transforming data in Python. We want operations on data to result in yet more data. We do not want data operations to raise exceptions. This library also solves Python's lack of consistency (lack of closure) under the dot (`.`) and slice `[::]` operators when operating on data objects. 
 
 [Full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs)

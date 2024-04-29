@@ -18,25 +18,25 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
 
 
 1. `a.b == a["b"]`
-2. missing property names are handled gracefully, which is beneficial when being used in set operations (database operations) without raising exceptions 
+2. property access is null-safe, which is beneficial when being used in larger expressions without raising exceptions 
    ```python
    >>> a = to_data({})
    a == {}
-   >>> a.b == None
+   >>> a.b == Null
    True
-   >>> a.b.c == None
+   >>> a.b.c == Null
    True
-   >>> a[None] == None
+   >>> a[None] == Null
    True
    ```
    missing property names are common when dealing with JSON, which is often almost anything.
-    Unfortunately, you do loose the ability to perform <code>a is None</code>
-    checks: **You must always use <code>a == None</code> instead**.
+    Unfortunately, you do loose the ability to perform `a is None`
+    checks: **You must always use <code>a == Null</code> instead**.
  3. Accessing missing properties does not change the data; unlike `defaultdict`
  4. Remove an attribute by assigning `None` (eg `a.b = None`)
  5. Dot-separated path access: `a["b.c"] == a.b.c`.
     * Use double-dot (`..`) to refer to literal dot (`.`) - Eg `to_data(a)['c..b'] == from_data(a)['c.b']`
-    * Alternativly, use bell (`\b`) to refer to literal dot (`.`) - this allows dots to be the last character in a key (`a['c\b.d'] == a['c.']['d']`)
+    * Alternatively, use bell (`\b`) to refer to literal dot (`.`) - this allows dots to be the last character in a key (`a['c\b.d'] == a['c.']['d']`)
  6. you can set paths to values, missing dicts along the path are created:
     ```python
     >>> a = to_data({})
@@ -82,7 +82,7 @@ paths rather than literal string values; but, the internal representation of
 `Data` is the same as `dict`; the property names are treated as black box
 strings. `[]` just provides convenience.
 
-When wrapping `dict`, the property names are **NOT** interpreted as paths;
+When boxing a `dict`, the property names are **NOT** interpreted as paths;
 property names can include dots (`.`).
 
 ```python
@@ -125,10 +125,10 @@ Upon importing such files, it is good practice to convert it to standard form
 immediately:
 
 ```python
-config = wrap_leaves(config)
+config = leaves_to_data(config)
 ```
 
-`wrap_leaves()` assumes any dots found in JSON names are referring to paths
+`leaves_to_data()` assumes any dots found in JSON names are referring to paths
 into objects, not a literal dots.
 
 When accepting input from other automations and users, your property names
@@ -175,8 +175,6 @@ simplifying iteration over deep inner object structures.
 b.c: 42
 ```
 
-
-
 ## What does Null mean?
 
 In many applications the meaning of null is always in the context of
@@ -188,15 +186,15 @@ Another interpretation for null, is that the instance simply does not
 have that property: Asking for the physical height of poem is nonsense, and
 we return null to indicate this. Databases use `NULL` in this way to
 allow tables to be polymorphic; represent records of multiple types and minimize query complexity. 
-Call this version of None the "*Out of Context*" definition.
+Call this version of null the "*Out of Context*" definition.
 
 Python, and the *pythonic way*, and many of its libraries, assume `None` is a
 *Missing Value*. This assumption results in an excess of exception handling
 and decision code when processing a multitude of types with a single
 method, or when dealing with unknown future polymorphic types, or working with
-one of many ephemeral 'types' who's existence is limited to a few lines of a method.
+one of many ephemeral 'types' whose existence is limited to a few lines of a method.
 
-Assuming None means *Out of Context* makes our code forgiving when encountering
+Assuming null means *Out of Context* makes our code forgiving when encountering
 changing type definitions, flexible in the face of polymorphism, makes code
 more generic when dealing with sets and lists containing members of non-uniform type.
 
@@ -205,12 +203,16 @@ more generic when dealing with sets and lists containing members of non-uniform 
 * A clear demonstration of how converting a schema to be "null-free" tends toward a columnar datastore: [Missing-info-without-nulls.pdf](https://www.dcs.warwick.ac.uk/~hugh/TTM/Missing-info-without-nulls.pdf) 
 * Programmers use variables in their programs; they are used to hold (or point to) values. Insisting that variables continue to exist even when they do not point to a legitimate value results in the need for `null` to represent that missing value: [The Logical Disaster of Null](https://rob.conery.io/2018/05/01/the-logical-disaster-of-null/)
 
-### `Null` replaces Python's `None`
+### `Null` expands Python's `None`
 
-I would like to override `None` in order to change its behaviour.
-Unfortunately, `None` is a primitive that can not be extended, so we create
-a new type, `NullType` and instances, `Null` ([a null object](https://en.wikipedia.org/wiki/Null_Object_pattern)), which are closed under the dot(`.`), access (`[]`), and slice (`[::]`)
-operators. `Null` acts as both an impotent list and an impotent dict:
+We define `Null` to represent *Out of Context* ([a null object](https://en.wikipedia.org/wiki/Null_Object_pattern)). It is an equivalence class encompassing a few "missing" values:
+
+* Python `None`
+* Empty lists, `[]`, and other empty collections
+* Empty strings (`""`)
+* Other `NullType` instances
+
+`Null` is closed under the dot(`.`), item access (`[]`), and slice (`[::]`) operators. `Null` acts as both an impotent list and an impotent dict:
 
  1. `a[Null] == Null`
  2. `Null.a == Null`
@@ -226,8 +228,7 @@ replaced with `None` in all cases.
 
 ### Identity and Absorbing (Zero) Elements
 
-With `Null` defined, we have met the requirements for an [algebraic semigroup](https://en.wikipedia.org/wiki/Semigroup): The identity element is the dot string (`"."`) and the zero element is `Null`
-(or `None`).
+With `Null` defined, we have met the requirements for an [algebraic semigroup](https://en.wikipedia.org/wiki/Semigroup): The identity element is the dot string (`"."`) and the zero element is `Null`.
 
  1. `a[Null] == Null`
  2. `a["."] == a`
@@ -248,8 +249,9 @@ True
 >>> a.b.c == 42
 True
 ```
+
 in this case, specific `Nulls`, like `x`, keep track of the path
-assignment so it can be used in later programming logic. This feature proves
+assignment, so it can be used in later programming logic. This feature proves
 useful when transforming hierarchical data; adding deep children to an
 incomplete tree.
 
@@ -330,7 +332,7 @@ The dot operator on a `FlatList` performs a simple projection; it will return a 
 
 ## DataObject for data
 
-You can wrap any object to make it appear as `Data`.
+You can box any object to make it appear as `Data`.
 
 ```python
 	d = DataObject(my_data_object)
