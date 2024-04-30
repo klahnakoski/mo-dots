@@ -1,4 +1,4 @@
-# Tests pass with these versions 2024-04-29
+# Tests pass with these versions 2024-04-30
 # pip install --no-deps -r tests/requirements.lock
 beautifulsoup4==4.12.3
 certifi==2023.11.17
