@@ -203,3 +203,19 @@ def is_many(value):
         return True
     return False
 
+
+def cache(func):
+    """
+    DECORATOR TO CACHE THE RESULT OF A FUNCTION
+    """
+    cache = {}
+
+    def wrapper(*args):
+        if args in cache:
+            return cache[args]
+        else:
+            result = func(*args)
+            cache[args] = result
+            return result
+
+    return wrapper

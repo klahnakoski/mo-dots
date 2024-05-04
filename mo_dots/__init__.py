@@ -6,7 +6,6 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from functools import cache
 from math import isnan
 
 from mo_dots import datas
