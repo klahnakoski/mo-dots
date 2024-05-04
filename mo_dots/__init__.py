@@ -477,16 +477,25 @@ def tuplewrap(value):
 
 # LEGACY PROPERTIES
 class _DeferManyTypes:
+
+    @cache
+    def warning(self):
+        get_logger().warning("DEPRECATED: Use mo_dots.utils._data_types", stack_depth=2)
+
     def __iter__(self):
-        get_logger().warning("DEPRECATED: Use mo_dots.utils._many_types")
         yield from utils._many_types
 setattr(lists, '_many_types', _DeferManyTypes())
 setattr(lists, 'many_types', _DeferManyTypes())
 
 
 class _DeferDataTypes:
+
+    @cache
+    def warning(self):
+        get_logger().warning("DEPRECATED: Use mo_dots.utils._data_types", stack_depth=2)
+
     def __iter__(self):
-        get_logger().warning("DEPRECATED: Use mo_dots.utils._data_types")
+        self.warning()
         yield from utils._data_types
 setattr(datas, '_data_types', _DeferDataTypes())
 
