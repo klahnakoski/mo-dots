@@ -204,6 +204,11 @@ def is_many(value):
     return False
 
 
+def register_many(_type):
+    global _many_types
+    _many_types = _many_types + (_type,)
+
+
 def cache(func):
     """
     DECORATOR TO CACHE THE RESULT OF A FUNCTION
