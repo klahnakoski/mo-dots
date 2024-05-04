@@ -209,6 +209,8 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
 
 
+
+
 def cache(func):
     """
     DECORATOR TO CACHE THE RESULT OF A FUNCTION

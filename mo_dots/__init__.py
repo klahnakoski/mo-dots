@@ -58,6 +58,7 @@ __all__ = [
     "relative_field",
     "register_data",
     "register_many",
+    "register_list",
     "register_primitive",
     "register_type",
     "set_attr",
