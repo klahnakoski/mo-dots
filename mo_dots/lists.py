@@ -329,10 +329,5 @@ def list_to_data(v):
     return output
 
 
-def register_many(_type):
-    global _many_types
-    _many_types = _many_types + (_type,)
-
-
 export("mo_dots.datas", list_to_data)
 export("mo_dots.datas", FlatList)
