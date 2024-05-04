@@ -498,6 +498,7 @@ class _DeferDataTypes:
         self.warning()
         yield from utils._data_types
 setattr(datas, '_data_types', _DeferDataTypes())
+setattr(datas, 'data_types', _DeferDataTypes())
 
 
 # EXPORT
