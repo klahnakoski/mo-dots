@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_dots import utils, logging
+from mo_dots import utils, logging, datas
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
@@ -76,3 +76,10 @@ class TestUtils(FuzzyTestCase):
 
         with self.assertRaises("test4"):
             logger.error("test3", cause=Exception("test4"))
+
+    def test_old_lists(self):
+        # TODO: REMOVE THIS TEST
+        result = list(datas._data_types)
+        self.assertGreater(len(result), 1)
+        result = list(datas._data_types)
+        self.assertGreater(len(result), 1)
