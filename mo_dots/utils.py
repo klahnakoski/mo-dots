@@ -43,10 +43,6 @@ def is_null(value):
     _class = _get(value, CLASS)
     if _class in _null_types:
         return True
-    if _class in _known_data_types:
-        return False
-    # if _class in finite_types:
-    #     return not value
     return False
 
 
@@ -54,10 +50,6 @@ def is_not_null(value):
     _class = _get(value, CLASS)
     if _class in _null_types:
         return False
-    if _class in _known_data_types:
-        return True
-    # if _class in finite_types:
-    #     return bool(value)
     return True
 
 
@@ -66,10 +58,10 @@ def is_missing(t) -> bool:
     _class = _get(t, CLASS)
     if _class in _null_types:
         return True
+    elif not t and isinstance(t, finite_types):
+        return True
     elif _class in _data_types or _class in _known_data_types:
         return False
-    elif _class in finite_types and not t:
-        return True
     elif _class is str and not t:
         return True
     return False
