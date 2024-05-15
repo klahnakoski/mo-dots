@@ -229,7 +229,7 @@ class NullType(object):
         return Null
 
     def __str__(self):
-        return "None"
+        return ""
 
     def __repr__(self):
         return "Null"
