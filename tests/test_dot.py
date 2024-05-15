@@ -1180,6 +1180,9 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue(is_many(_TestList()))
 
+    def test_str_of_null(self):
+        self.assertEqual(str(Null), "")
+
 
 class _TestMapping(object):
     def __init__(self):
