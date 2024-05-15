@@ -31,7 +31,9 @@ def get_module(name):
             "`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e,
         )
 
+
 _null_types = (none_type,)
+
 
 def register_null_type(_type):
     global _null_types
@@ -55,7 +57,7 @@ def is_not_null(value):
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    return not t and isinstance(t, (str, *_null_types, *many_types))
+    return not t and isinstance(t, (str, *_null_types, *_many_types))
 
 
 def exists(value) -> bool:
@@ -109,21 +111,21 @@ def is_data(d):
     return _get(d, CLASS) in _data_types
 
 
-
-
 _known_data_types = tuple()
 
 
 def register_type(*_classes):
     global _known_data_types
-    _known_data_types = tuple(set(_known_data_types+_classes))
+    _known_data_types = tuple(set(_known_data_types + _classes))
 
 
 def is_namedtuple(obj):
-    return isinstance(obj, tuple) and hasattr(obj, '_fields')
+    return isinstance(obj, tuple) and hasattr(obj, "_fields")
+
 
 def is_data_object(obj):
     return isinstance(obj, _known_data_types) or is_namedtuple(obj) or is_dataclass(obj)
+
 
 def is_known_data_type(_class):
     return _class in _known_data_types
@@ -133,17 +135,17 @@ list_types = (list,)
 container_types = (list, set)
 finite_types = (list, set, tuple)
 sequence_types = (list, tuple) + generator_types
-_many_types = many_types = tuple(set(list_types + container_types + sequence_types))
+_many_types = tuple(set(list_types + container_types + sequence_types))
 
 
 def register_list(_type):
     # lists belong to all categories
-    global list_types, container_types, finite_types, sequence_types, _many_types, many_types
+    global list_types, container_types, finite_types, sequence_types, _many_types
     list_types = tuple(set(list_types + (_type,)))
     container_types = tuple(set(container_types + (_type,)))
     finite_types = tuple(set(finite_types + (_type,)))
     sequence_types = tuple(set(sequence_types + (_type,)))
-    _many_types = many_types = tuple(set(_many_types + (_type,)))
+    _many_types = tuple(set(_many_types + (_type,)))
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -191,8 +193,6 @@ def is_many(value):
 def register_many(_type):
     global _many_types
     _many_types = _many_types + (_type,)
-
-
 
 
 def cache(func):

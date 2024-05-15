@@ -482,12 +482,14 @@ class _DeferManyTypes:
 
     @cache
     def warning(self):
-        get_logger().warning("DEPRECATED: Use mo_dots.utils._data_types", stack_depth=2)
+        get_logger().warning("DEPRECATED: Use mo_dots.utils._many_types", stack_depth=2)
 
     def __iter__(self):
         yield from utils._many_types
 setattr(lists, '_many_types', _DeferManyTypes())
 setattr(lists, 'many_types', _DeferManyTypes())
+setattr(utils, 'many_types', _DeferManyTypes())
+
 
 
 class _DeferDataTypes:
