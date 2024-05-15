@@ -55,16 +55,7 @@ def is_not_null(value):
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(t, CLASS)
-    if _class in _null_types:
-        return True
-    elif not t and isinstance(t, finite_types):
-        return True
-    elif _class in _data_types or _class in _known_data_types:
-        return False
-    elif _class is str and not t:
-        return True
-    return False
+    return not t and isinstance(t, (str, *_null_types, *many_types))
 
 
 def exists(value) -> bool:
@@ -120,11 +111,12 @@ def is_data(d):
 
 
 
-_known_data_types = set()
+_known_data_types = tuple()
 
 
 def register_type(*_classes):
-    _known_data_types.update(_classes)
+    global _known_data_types
+    _known_data_types = tuple(set(_known_data_types+_classes))
 
 
 def is_namedtuple(obj):
