@@ -1174,6 +1174,12 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(is_missing(temp2))
         self.assertFalse(exists(temp2))
 
+    def test_inherited_many_is_many(self):
+        class _TestList(FlatList):
+            pass
+
+        self.assertTrue(is_many(_TestList()))
+
 
 class _TestMapping(object):
     def __init__(self):
