@@ -185,10 +185,10 @@ def is_many(value):
     # I WOULD LIKE TO POSITIVELY CATCH many_types, BUT MAYBE IT IS EASIER TO DETECT: Iterable, BUT NOT PRIMITIVE
     # UNTIL WE HAVE A COMPLETE SLOT, WE KEEP ALL THIS warning() CODE
     global _many_types
-    type_ = _get(value, CLASS)
-    if type_ in _many_types:
+    if isinstance(value, _many_types):
         return True
 
+    type_ = _get(value, CLASS)
     if issubclass(type_, types.GeneratorType):
         _many_types = _many_types + (type_,)
         get_logger.warning("is_many() can not detect generator {type}", type=type_.__name__)
