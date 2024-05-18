@@ -154,22 +154,22 @@ not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "D
 
 def is_list(l):
     # ORDERED, AND CAN CHANGE CONTENTS
-    return _get(l, CLASS) in list_types
+    return isinstance(l, list_types)
 
 
 def is_container(l):
     # CAN ADD AND REMOVE ELEMENTS
-    return _get(l, CLASS) in container_types
+    return isinstance(l, container_types)
 
 
 def is_sequence(l):
     # HAS AN ORDER, INCLUDES GENERATORS
-    return _get(l, CLASS) in sequence_types
+    return isinstance(l, sequence_types)
 
 
 def is_finite(l):
     # CAN PERFORM len(l); NOT A GENERATOR
-    return _get(l, CLASS) in finite_types
+    return isinstance(l, finite_types)
 
 
 def is_many(value):

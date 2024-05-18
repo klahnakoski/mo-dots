@@ -1180,6 +1180,12 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue(is_many(_TestList()))
 
+    def test_inherited_list_is_list(self):
+        class _TestList(FlatList):
+            pass
+
+        self.assertTrue(is_list(_TestList()))
+
     def test_str_of_null(self):
         self.assertEqual(str(Null), "")
 
