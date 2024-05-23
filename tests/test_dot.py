@@ -1189,6 +1189,9 @@ class TestDot(FuzzyTestCase):
     def test_str_of_null(self):
         self.assertEqual(str(Null), "")
 
+    def test_no_bool_exists(self):
+        self.assertFalse(is_missing(NoBool()))
+
 
 class _TestMapping(object):
     def __init__(self):
@@ -1207,6 +1210,17 @@ class SampleData(object):
 
 
 register_type(SampleData)
+
+
+
+class NoBool:
+
+    def __bool__(self):
+        raise Exception("problem")
+
+
+register_data(NoBool)
+
 
 
 class StructuredLogger_usingList(object):

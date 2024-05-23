@@ -57,7 +57,7 @@ def is_not_null(value):
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    return not t and isinstance(t, (str, *_null_types, *_many_types))
+    return isinstance(t, (str, *_null_types, *_many_types)) and not t
 
 
 def exists(value) -> bool:
