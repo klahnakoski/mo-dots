@@ -43,7 +43,7 @@ def unliteral_field(field):
 
 def tail_field(field):
     """
-    RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAILf
+    RETURN THE FIRST STEP IN PATH, ALONG WITH THE REMAINING TAIL
     IN (first, rest) PAIR
     """
     if field == "." or is_missing(field):

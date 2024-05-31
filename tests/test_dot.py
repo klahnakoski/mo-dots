@@ -825,7 +825,7 @@ class TestDot(FuzzyTestCase):
 
     def test_leaves_on_dict_w_prefix(self):
         x = leaves({"a": to_data({"b.c": 42})}, prefix="::")
-        self.assertEqual(x, [("::a.b..c", 42)])
+        self.assertEqual(list(x), [("::a.b..c", 42)])
 
     def test_to_generator(self):
         def gen():
@@ -1189,6 +1189,9 @@ class TestDot(FuzzyTestCase):
     def test_str_of_null(self):
         self.assertEqual(str(Null), "")
 
+    def test_no_bool_exists(self):
+        self.assertFalse(is_missing(NoBool()))
+
 
 class _TestMapping(object):
     def __init__(self):
@@ -1207,6 +1210,17 @@ class SampleData(object):
 
 
 register_type(SampleData)
+
+
+
+class NoBool:
+
+    def __bool__(self):
+        raise Exception("problem")
+
+
+register_data(NoBool)
+
 
 
 class StructuredLogger_usingList(object):
