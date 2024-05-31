@@ -825,7 +825,7 @@ class TestDot(FuzzyTestCase):
 
     def test_leaves_on_dict_w_prefix(self):
         x = leaves({"a": to_data({"b.c": 42})}, prefix="::")
-        self.assertEqual(x, [("::a.b..c", 42)])
+        self.assertEqual(list(x), [("::a.b..c", 42)])
 
     def test_to_generator(self):
         def gen():
