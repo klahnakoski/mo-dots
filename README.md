@@ -12,7 +12,7 @@ Box your JSON-like data in a `Data` object to get null-safe dot access.  This li
 
 > See [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`
 
-> See [change log](https://github.com/klahnakoski/mo-dots/tree/dev/docs/CHANGELOG.md) for the latest changes
+> See [change log](https://github.com/klahnakoski/mo-dots/tree/dev/docs/CHANGELOG.md) to read about major changes
 
 ### Create instances
 
