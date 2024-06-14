@@ -6,51 +6,13 @@
 [![Coverage Status](https://coveralls.io/repos/github/klahnakoski/mo-dots/badge.svg?branch=dev)](https://coveralls.io/github/klahnakoski/mo-dots?branch=dev)
 [![Downloads](https://pepy.tech/badge/mo-dots/month)](https://pepy.tech/project/mo-dots)
 
-#### Changes in version 10.x.x
-
-* Data now navigates `@dataclass` and `namedtuple` instances. All other types must be registered to be treated as data, otherwise they are assumed to be atoms.
-  ```
-  class MyType:
-      ...
-    
-  register_type(MyType)
-  ```
-* Removed `datawrap`.  It is now `object_to_data`
-* Comparision with `None` no longer works in all cases.
-
-  Instead of 
-
-  ```
-  FlatList() == None  
-  ```
-
-  you now use 
-
-  ```
-  FlatList() == Null
-  ```
-
-  or 
-
-  ```
-  is_missing(FlatList())
-  ```
-
-
-#### Changes in version 9.x.x
-
-Escaping a literal dot (`.`) is no longer (`\\.`) rather double-dot (`..`). Escaping a literal dot can still be done with bell (`\b`) 
-
-#### Changes in version 5.x.x
-
-The `Data()` constructor only accepts keyword parameters. It no longer accepts a dict, nor does it attempt to clean the input.  Replace `Data(my_var)` with `to_data(my_var)`
-  
-
 ## Overview
 
-This library defines a `Data` class that can serve as a replacement for `dict`, and acts much like a null-safe dataclass.
+Box your JSON-like data in a `Data` object to get null-safe dot access.  This library is a replacement for `dict` that is more consistent and easier to use.
 
-> See the [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`
+> See [full documentation](https://github.com/klahnakoski/mo-dots/tree/dev/docs) for all the features of `mo-dots`
+
+> See [change log](https://github.com/klahnakoski/mo-dots/tree/dev/docs/CHANGELOG.md) to read about major changes
 
 ### Create instances
 
