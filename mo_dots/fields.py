@@ -105,13 +105,7 @@ def startswith_field(field, prefix):
     if prefix == None:
         return False
     if prefix.startswith("."):
-        return True
-        # f_back = len(field) - len(field.strip("."))
-        # p_back = len(prefix) - len(prefix.strip("."))
-        # if f_back > p_back:
-        #     return False
-        # else:
-        #     return True
+        return len(prefix) == 1
 
     if field.startswith(prefix):
         lp = len(prefix)
