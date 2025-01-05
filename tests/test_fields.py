@@ -54,6 +54,8 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(concat_field("a.b.c", "...d"), "a.d")
 
     def test_startswith(self):
+        self.assertFalse(startswith_field('no_exist.VALUE', '...AppData.Local.Programs.PyCharm Community.plugins.python-ce.helpers.pycharm._jb_unittest_runner'))
+
         self.assertFalse(startswith_field("a.b.c", None))
         self.assertTrue(startswith_field("a.b.c", "."))
         self.assertTrue(startswith_field("a.b.c", "a"))
