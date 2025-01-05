@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     author='Kyle Lahnakoski',
     author_email='kyle@lahnakoski.com',
-    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12"],
+    classifiers=["Development Status :: 5 - Production/Stable","Topic :: Software Development :: Libraries","Topic :: Software Development :: Libraries :: Python Modules","License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)","Programming Language :: Python :: 3.8","Programming Language :: Python :: 3.9","Programming Language :: Python :: 3.10","Programming Language :: Python :: 3.11","Programming Language :: Python :: 3.12","Programming Language :: Python :: 3.13"],
     description='More Dots! Dot-access to Python dicts like Javascript',
     extras_require={"tests":["mo-logs>=8.632.24139","mo-json>=6.637.24140","mo-threads>=6.634.24139","mo-testing>=8.644.24152","pyLibrary>=3.264.22338","mo-math>=7.632.24139","mo-times>=5.632.24139","jx-elasticsearch>=3.99.20292","beautifulsoup4>=4.12.3"]},
     include_package_data=True,
