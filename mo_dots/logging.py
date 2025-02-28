@@ -25,7 +25,6 @@ def get_logger():
         return _Log
 
 
-
 class PoorLogger(object):
     @classmethod
     def info(cls, note, **kwargs):

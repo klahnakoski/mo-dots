@@ -159,7 +159,7 @@ class Data:
         except Exception as e:
             from mo_logs import Log
 
-            Log.error("can not set key={{key}}", key=key, cause=e)
+            Log.error("can not set key={key}", key=key, cause=e)
 
     def __getattr__(self, key):
         d = _get(self, SLOT)
@@ -393,6 +393,7 @@ class Data:
 
 MutableMapping.register(Data)
 register_data(Data)
+
 
 def leaves(value, prefix=None):
     """
