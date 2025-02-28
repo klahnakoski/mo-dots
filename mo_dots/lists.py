@@ -319,7 +319,6 @@ def last(values):
     return values
 
 
-
 def list_to_data(v):
     """
     to_data, BUT WITHOUT CHECKS

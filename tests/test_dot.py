@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from copy import copy, deepcopy
 from datetime import timedelta
 
@@ -1191,6 +1191,10 @@ class TestDot(FuzzyTestCase):
 
     def test_no_bool_exists(self):
         self.assertFalse(is_missing(NoBool()))
+
+    def test_ordered_dict_is_data(self):
+        data = to_data({"a": OrderedDict(b=2)})
+        self.assertEqual(data.a.b, 2)
 
 
 class _TestMapping(object):

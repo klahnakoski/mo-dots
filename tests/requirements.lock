@@ -1,4 +1,4 @@
-# Tests pass with python 3.8 on 2025-02-05 and with these versions
+# Tests pass with python 3.8 on 2025-02-28 and with these versions
 # pip install --no-deps -r tests/requirements.lock
 beautifulsoup4==4.13.3
 certifi==2023.11.17
@@ -9,17 +9,17 @@ jx-elasticsearch==3.99.20292
 jx-python==3.99.20292
 mo-collections==3.96.20290
 mo-files==3.92.20258
-mo-future==7.672.25036
+mo-future==7.676.25059
 mo-http==3.99.20292
-mo-imports==7.672.25036
-mo-json==6.671.25036
+mo-imports==7.677.25059
+mo-json==6.672.25036
 mo-json-config==3.77.20190
-mo-kwargs==7.671.25036
-mo-logs==8.671.25036
-mo-math==7.671.25036
-mo-testing==8.667.25032
-mo-threads==6.671.25036
-mo-times==5.671.25036
+mo-kwargs==7.672.25036
+mo-logs==8.672.25036
+mo-math==7.672.25036
+mo-testing==8.674.25037
+mo-threads==6.672.25036
+mo-times==5.672.25036
 pyLibrary==3.264.22338
 pytz==2024.1
 requests==2.31.0
