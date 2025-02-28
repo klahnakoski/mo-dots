@@ -15,14 +15,14 @@
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "extras_require": {"tests": [
-                "mo-logs>=8.667.25032",         "mo-json>=6.667.25032",
-             "mo-threads>=6.668.25032",      "mo-testing>=8.667.25032",
-              "pyLibrary>=3.264.22338",         "mo-math>=7.659.25005",
-               "mo-times>=5.667.25032", "jx-elasticsearch>=3.99.20292",
+                "mo-logs>=8.671.25036",         "mo-json>=6.671.25036",
+             "mo-threads>=6.671.25036",      "mo-testing>=8.667.25032",
+              "pyLibrary>=3.264.22338",         "mo-math>=7.671.25036",
+               "mo-times>=5.671.25036", "jx-elasticsearch>=3.99.20292",
               "beautifulsoup4>=4.13.3"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==7.672.25036", "mo-imports==7.672.25036"],
+    "install_requires": ["mo-future==7.676.25059", "mo-imports==7.677.25059"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -133,6 +133,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "10.672.25036",
+    "version": "10.677.25059",
     "zip_safe": false
 }
