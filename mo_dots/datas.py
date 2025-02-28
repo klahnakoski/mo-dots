@@ -167,7 +167,7 @@ class Data:
         t = _get(v, CLASS)
 
         # OPTIMIZED to_data()
-        if t is dict:
+        if t in (dict, OrderedDict):
             return dict_to_data(v)
         elif t in utils._null_types:
             return NullType(d, key)
