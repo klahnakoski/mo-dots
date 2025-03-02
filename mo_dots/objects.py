@@ -181,7 +181,7 @@ def object_to_data(v):
         return v
 
 
-class DataClass(object):
+class DataClass:
     """
     ALLOW INSTANCES OF class_ TO ACT LIKE dicts
     ALLOW CONSTRUCTOR TO ACCEPT @override

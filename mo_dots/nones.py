@@ -18,7 +18,7 @@ _zero_list = []
 _null_hash = hash(None)
 
 
-class NullType(object):
+class NullType:
     """
     Structural Null provides closure under the dot (.) operator
         Null[x] == Null

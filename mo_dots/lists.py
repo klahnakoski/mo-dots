@@ -27,7 +27,7 @@ _set = object.__setattr__
 _new = object.__new__
 
 
-class FlatList(object):
+class FlatList:
     """
     ENCAPSULATES HANDING OF Nulls BY wrapING ALL MEMBERS AS NEEDED
     ENCAPSULATES FLAT SLICES ([::]) FOR USE IN WINDOW FUNCTIONS

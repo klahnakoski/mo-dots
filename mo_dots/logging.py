@@ -25,7 +25,7 @@ def get_logger():
         return _Log
 
 
-class PoorLogger(object):
+class PoorLogger:
     @classmethod
     def info(cls, note, **kwargs):
         STDOUT.write(note.encode("utf8") + b"\n")
