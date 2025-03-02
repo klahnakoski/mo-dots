@@ -232,7 +232,7 @@ def set_attr(obj, path, value):
     except Exception as cause:
         Log = get_logger()
         if PATH_NOT_FOUND in cause:
-            Log.warning(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
+            Log.warning(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
             Log.error("Problem setting value", cause=cause)
 
@@ -246,7 +246,7 @@ def get_attr(obj, path):
     except Exception as cause:
         Log = get_logger()
         if PATH_NOT_FOUND in cause:
-            Log.error(PATH_NOT_FOUND + ": {{path}}", path=path, cause=cause)
+            Log.error(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
             Log.error("Problem setting value", cause=cause)
 
@@ -479,21 +479,20 @@ def tuplewrap(value):
 
 # LEGACY PROPERTIES
 class _DeferManyTypes:
-
     @cache
     def warning(self):
         get_logger().warning("DEPRECATED: Use mo_dots.utils._many_types", stack_depth=2)
 
     def __iter__(self):
         yield from utils._many_types
-setattr(lists, '_many_types', _DeferManyTypes())
-setattr(lists, 'many_types', _DeferManyTypes())
-setattr(utils, 'many_types', _DeferManyTypes())
 
+
+setattr(lists, "_many_types", _DeferManyTypes())
+setattr(lists, "many_types", _DeferManyTypes())
+setattr(utils, "many_types", _DeferManyTypes())
 
 
 class _DeferDataTypes:
-
     @cache
     def warning(self):
         get_logger().warning("DEPRECATED: Use mo_dots.utils._data_types", stack_depth=2)
@@ -501,8 +500,10 @@ class _DeferDataTypes:
     def __iter__(self):
         self.warning()
         yield from utils._data_types
-setattr(datas, '_data_types', _DeferDataTypes())
-setattr(datas, 'data_types', _DeferDataTypes())
+
+
+setattr(datas, "_data_types", _DeferDataTypes())
+setattr(datas, "data_types", _DeferDataTypes())
 
 
 # EXPORT
