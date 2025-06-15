@@ -1,9 +1,9 @@
-mo-logs>=8.672.25036
-mo-json>=6.672.25036
-mo-threads>=6.672.25036
-mo-testing>=8.674.25037
+mo-logs>=8.678.25061
+mo-json>=6.682.25104
+mo-threads>=6.682.25104
+mo-testing>=8.684.25166
 pyLibrary>=3.264.22338
-mo-math>=7.672.25036
-mo-times>=5.672.25036
+mo-math>=7.678.25061
+mo-times>=5.682.25104
 jx-elasticsearch>=3.99.20292
-beautifulsoup4>=4.13.3
+beautifulsoup4>=4.13.4
