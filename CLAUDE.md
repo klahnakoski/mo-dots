@@ -26,6 +26,13 @@ surprised.
   falsy. `if a.b != "x"` silently takes the false branch when `b` is missing; write the
   positive form, `not (a.b == "x")`. And `x == None` is deliberate wherever mo-dots is in
   play - `Null is None` is False, so an `is None` "fix" breaks it.
+- Merge with `|`, not `.update()`. When a `Data` or `Null` is an operand, `a | b` is
+  *recursive coalesce*: the left side wins and the right only fills its gaps (`config |
+  defaults` reads "config, defaulted by") - the opposite of stdlib dict `|`, where the
+  right side wins; two plain dicts keep Python's meaning. `x | Null` and `Null | x` are
+  both `x`, so a maybe-absent piece merges without a guard: `line = {...} | timing |
+  failure`, with `failure=Null` in the signature, replaces two `.update()` calls and an
+  `if`. `Data | <non-data>` is an error.
 - A real default still uses `or`: `port or DEFAULT_PORT` binds a value the code needs.
   What mo-dots deletes is only the null-guard noise - `or None`, `or ""`, `or {}`,
   `or []` written so a later read would not raise.
