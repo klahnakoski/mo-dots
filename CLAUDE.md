@@ -17,9 +17,11 @@ surprised.
   `list(Null)` is `[]`, `len(Null)` is `0`, `str(Null)` is `""`, and calling it answers
   `Null`. Write the operation as if the value were there; absence flows through and stays
   falsy. Guard only at the point a real value is required, not at every step on the way.
-- Boundaries convert: `to_data` on the way in, `from_data` on the way out. For JSON,
-  `json.dumps(line, default=from_data)` serializes `Null` as `null` and `Data` as an
-  object - no `or None` per field at the dump site.
+- Boundaries convert: `to_data` on the way in, `from_data` on the way out. For JSON text
+  prefer mo-json - `value2json(line)` scrubs whole structures and `json2value(text)`
+  answers `Data` - and fall back to `json.dumps(line, default=from_data)` only where
+  mo-json is not a dependency. Where the serializer is not yours to call (flask building
+  a response), convert each field with `from_data`.
 - The comparison trap: against a real value, `Null == x` and `Null != x` are *both*
   falsy. `if a.b != "x"` silently takes the false branch when `b` is missing; write the
   positive form, `not (a.b == "x")`. And `x == None` is deliberate wherever mo-dots is in
