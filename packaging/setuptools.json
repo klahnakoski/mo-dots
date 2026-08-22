@@ -24,7 +24,7 @@
               "beautifulsoup4>=4.15.0"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==7.686.26234", "mo-imports==7.686.26234"],
+    "install_requires": ["mo-future==7.687.26234", "mo-imports==7.687.26234"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -135,6 +135,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "10.687.26234",
+    "version": "10.688.26234",
     "zip_safe": false
 }
