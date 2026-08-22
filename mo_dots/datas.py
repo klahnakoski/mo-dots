@@ -257,11 +257,13 @@ class Data:
         if not is_data(other):
             return False
         e = other
+        # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
+        # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
-            if e.get(k) != v:
+            if not (e.get(k) == v):
                 return False
         for k, v in e.items():
-            if d.get(k) != v:
+            if not (d.get(k) == v):
                 return False
         return True
 

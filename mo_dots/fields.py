@@ -13,7 +13,7 @@ _get = object.__getattribute__
 
 ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
 ESCAPE_DOTS2 = re.compile(r"(?<!^)\.(?!$)")  # INTERNAL DOTS
-ILLEGAL_DOTS = re.compile(r"[^.]\.(?:\.\.)+")  # ODD DOTS ARE NOT ALLOWED
+ILLEGAL_DOTS = re.compile(r"[^.]\.(?:\.\.)+(?!\.)")  # ODD DOTS ARE NOT ALLOWED
 SPLIT_DOTS = re.compile(r"(?<!\.)\.(?!\.)")  # SINGLE DOTS
 UNESCAPE_DOTS = re.compile(r"\x08|(?:\.\.)")  # ENCODED DOTS
 
@@ -59,8 +59,10 @@ def tail_field(field):
 
 def split_field(field):
     """
-    RETURN field AS ARRAY OF DOT-SEPARATED FIELDS
+    SPLIT field ON DOTS; "." OR MISSING MEANS NO STEPS
     """
+    if field == "." or is_missing(field):
+        return []
     if ILLEGAL_DOTS.search(field):
         get_logger().error("Odd number of dots is not allowed")
     if field.startswith(".."):

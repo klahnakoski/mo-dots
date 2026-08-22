@@ -59,6 +59,7 @@ __all__ = [
     "register_data",
     "register_many",
     "register_list",
+    "register_sequence",
     "register_primitive",
     "register_type",
     "set_attr",
