@@ -11,15 +11,17 @@
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13"
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.15"
     ],
     "description": "More Dots! Dot-access to Python dicts like Javascript",
     "extras_require": {"tests": [
-                "mo-logs>=8.672.25036",         "mo-json>=6.672.25036",
-             "mo-threads>=6.672.25036",      "mo-testing>=8.674.25037",
-              "pyLibrary>=3.264.22338",         "mo-math>=7.672.25036",
-               "mo-times>=5.672.25036", "jx-elasticsearch>=3.99.20292",
-              "beautifulsoup4>=4.13.3"
+                "mo-logs>=8.678.25061",         "mo-json>=6.682.25104",
+             "mo-threads>=6.682.25104",      "mo-testing>=8.684.25166",
+              "pyLibrary>=3.264.22338",         "mo-math>=7.678.25061",
+               "mo-times>=5.682.25104", "jx-elasticsearch>=3.99.20292",
+              "beautifulsoup4>=4.13.4"
     ]},
     "include_package_data": true,
     "install_requires": ["mo-future==7.685.25166", "mo-imports==7.685.25166"],
@@ -133,6 +135,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "10.685.25166",
+    "version": "10.686.26234",
     "zip_safe": false
 }
