@@ -9,7 +9,6 @@
 import importlib
 import types
 from collections import OrderedDict
-from dataclasses import is_dataclass
 from datetime import datetime, date, timedelta, time
 from decimal import Decimal
 
@@ -124,7 +123,8 @@ def is_namedtuple(obj):
 
 
 def is_data_object(obj):
-    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or is_dataclass(obj)
+    # __dataclass_fields__ is the dataclass marker; dataclasses costs 10ms to import
+    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or hasattr(obj, "__dataclass_fields__")
 
 
 def is_known_data_type(_class):
