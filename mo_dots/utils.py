@@ -148,6 +148,13 @@ def register_list(_type):
     _many_types = tuple(set(_many_types + (_type,)))
 
 
+def register_sequence(_type):
+    # ORDERED, BUT MAY BE INFINITE, SO NOT finite_types NOR container_types
+    global sequence_types, _many_types
+    sequence_types = tuple(set(sequence_types + (_type,)))
+    _many_types = tuple(set(_many_types + (_type,)))
+
+
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
 not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "Data")
 
