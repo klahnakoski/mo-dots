@@ -1,6 +1,5 @@
 # Tests pass with python 3.15 on 2026-08-22 and with these versions
 # pip install --no-deps -r tests/requirements-3.15.lock
-# charset-normalizer held at 3.4.9: last release without a cp315 binary wheel
 beautifulsoup4==4.15.0
 certifi==2026.7.22
 charset-normalizer==3.4.9
