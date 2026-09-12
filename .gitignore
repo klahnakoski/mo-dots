@@ -7,6 +7,9 @@
 /pyLibrary
 /mo_dots.egg-info
 /mo_dots/*.pyc
+/mo_dots/*.pyd
+/mo_dots/*.so
+/wheelhouse
 /.coverage
 /tests/*.pyc
 .svn

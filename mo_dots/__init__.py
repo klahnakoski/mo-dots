@@ -523,6 +523,34 @@ setattr(datas, "_data_types", _DeferDataTypes())
 setattr(datas, "data_types", _DeferDataTypes())
 
 
+# OPTIONAL C ACCELERATOR: REBIND BEFORE EXPORT SO EXPECTING MODULES RECEIVE C VERSIONS
+if utils._speedups:
+    _speedups = utils._speedups
+
+    def _from_data_gen(v):
+        return (from_data(vv) for vv in v)
+
+    _speedups._init(
+        Data,
+        FlatList,
+        NullType,
+        Null,
+        DataObject,
+        OrderedDict,
+        tuple(generator_types),
+        _from_data_gen,
+    )
+    to_data = _speedups.to_data
+    from_data = _speedups.from_data
+    dict_to_data = _speedups.dict_to_data
+    list_to_data = _speedups.list_to_data
+    wrap = to_data
+    unwrap = from_data
+    datas.dict_to_data = dict_to_data
+    datas.list_to_data = list_to_data
+    lists.list_to_data = list_to_data
+
+
 # EXPORT
 export("mo_dots.datas", to_data)
 export("mo_dots.datas", from_data)

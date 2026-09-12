@@ -7,6 +7,7 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 import importlib
+import os
 import types
 from collections import OrderedDict
 from datetime import datetime, date, timedelta, time
@@ -48,6 +49,8 @@ def register_null_type(_type):
     _null_types = tuple(set(_null_types + (_type,)))
     _null_type_set = frozenset(_null_types)
     _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types)
     for callback in _null_type_listeners:
         callback()
 
@@ -159,6 +162,8 @@ def register_list(_type):
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types)
 
 
 def register_sequence(_type):
@@ -167,6 +172,8 @@ def register_sequence(_type):
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -217,6 +224,24 @@ def register_many(_type):
     global _many_types, _missing_types
     _many_types = _many_types + (_type,)
     _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types)
+
+
+# OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
+try:
+    if os.environ.get("MO_DOTS_PURE"):
+        _speedups = None
+    else:
+        import mo_dots._speedups as _speedups
+except ImportError:
+    _speedups = None
+
+if _speedups:
+    _speedups._sync(_null_types, _missing_types)
+    is_null = _speedups.is_null
+    is_not_null = _speedups.is_not_null
+    is_missing = _speedups.is_missing
 
 
 def cache(func):
