@@ -5,42 +5,87 @@
  *
  * Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
  *
- * C ACCELERATORS FOR mo_dots HOT FUNCTIONS
+ * C ACCELERATORS FOR mo_dots
  *
- * Pure-Python equivalents remain in utils.py / __init__.py; this module is
- * optional and the package falls back when it is absent.  Semantics must
- * match the Python versions exactly - the test suite is the conformance test.
+ * Pure-Python equivalents remain in the .py modules; this module is optional
+ * and the package falls back when absent (MO_DOTS_PURE=1 forces the fallback).
+ * Semantics must match the Python versions exactly - the test suite is the
+ * conformance test.
  *
- * Wiring: utils.py calls _sync() at import and on every type registration;
- * mo_dots/__init__.py calls _init() once all classes exist, then rebinds the
- * module-level names before export() distributes them.
+ * Two layers:
+ *  - hot functions: is_null, is_missing, to_data, from_data, ...
+ *  - hot base types: _StoreBase (single slot, shared by Data and FlatList so
+ *    __class__ reassignment keeps compatible layouts), _DataBase (C getattro/
+ *    setattro/subscript/bool), _NullBase (C slots for nearly every dunder).
+ *    The Python classes are rebuilt as subclasses; their pure methods remain
+ *    as the slow path for exotic cases (dotted paths, non-dict slots).
+ *
+ * Wiring: utils.py imports this and calls _sync() on every type registration;
+ * nones/datas/lists call _init_null/_init_data/_init_list as their classes are
+ * built; mo_dots/__init__.py calls _init() once everything exists, then
+ * rebinds the module-level functions before export() distributes them.
  */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <math.h>
 
-static PyObject *DataClass = NULL;       /* mo_dots.datas.Data           */
-static PyObject *FlatListClass = NULL;   /* mo_dots.lists.FlatList       */
-static PyObject *NullTypeClass = NULL;   /* mo_dots.nones.NullType       */
+#if PY_VERSION_HEX >= 0x030C0000
+#define MEMBER_OBJ_EX Py_T_OBJECT_EX
+#else
+#include <structmember.h>
+#define MEMBER_OBJ_EX T_OBJECT_EX
+#endif
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *store; /* _internal_value */
+} StoreObject;
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *store; /* _internal_value */
+    PyObject *key;   /* _key */
+} NullObject;
+
+#define STORE(op) (((StoreObject *)(op))->store)
+#define NKEY(op) (((NullObject *)(op))->key)
+
+static PyObject *DataClass = NULL;       /* final mo_dots.datas.Data     */
+static PyObject *FlatListClass = NULL;   /* final mo_dots.lists.FlatList */
+static PyObject *NullTypeClass = NULL;   /* final mo_dots.nones.NullType */
 static PyObject *NullSingleton = NULL;   /* mo_dots.nones.Null           */
 static PyObject *DataObjectClass = NULL; /* mo_dots.objects.DataObject   */
 static PyObject *OrderedDictClass = NULL;
 static PyObject *generator_types = NULL; /* tuple of generator classes   */
 static PyObject *from_data_gen = NULL;   /* lazy generator helper        */
 static PyObject *slot_str = NULL;        /* "_internal_value"            */
+static PyObject *empty_tuple = NULL;
+static PyObject *empty_str = NULL;
+static PyObject *null_repr_str = NULL;
+static Py_hash_t null_hash = 0;
 
 static PyObject *null_types_tuple = NULL;    /* tuple of null classes    */
 static PyObject *missing_types_tuple = NULL; /* (str, *null, *many)      */
+static PyObject *sequence_types_tuple = NULL;
 
-/* slot descriptors, cached so wrap/unwrap skips the MRO walk */
-static PyObject *data_slot_descr = NULL;
-static PyObject *flat_slot_descr = NULL;
+/* PURE-PYTHON SLOW PATHS (THE ORIGINAL METHODS) */
+static PyObject *null_getattr_slow = NULL;
+static PyObject *null_getitem_slow = NULL;
+static PyObject *data_getattr_slow = NULL;
+static PyObject *data_getitem_slow = NULL;
+
+static PyTypeObject StoreBase_Type;
+static PyTypeObject DataBase_Type;
+static PyTypeObject NullBase_Type;
 
 
 static inline int
 type_in_tuple(PyTypeObject *t, PyObject *tuple)
 {
-    Py_ssize_t i, n = PyTuple_GET_SIZE(tuple);
+    Py_ssize_t i, n;
+    if (tuple == NULL)
+        return 0;
+    n = PyTuple_GET_SIZE(tuple);
     for (i = 0; i < n; i++) {
         if (PyTuple_GET_ITEM(tuple, i) == (PyObject *)t)
             return 1;
@@ -48,6 +93,96 @@ type_in_tuple(PyTypeObject *t, PyObject *tuple)
     return 0;
 }
 
+
+/* LOOK name UP THE MRO'S TYPE DICTS; NEW REF, NULL ON MISS (CHECK PyErr) */
+static PyObject *
+mro_lookup(PyTypeObject *tp, PyObject *name)
+{
+    PyObject *mro = tp->tp_mro;
+    Py_ssize_t i, n;
+    if (mro == NULL)
+        return NULL;
+    n = PyTuple_GET_SIZE(mro);
+    for (i = 0; i < n; i++) {
+        PyTypeObject *base = (PyTypeObject *)PyTuple_GET_ITEM(mro, i);
+        PyObject *res;
+#if PY_VERSION_HEX >= 0x030C0000
+        PyObject *dict = PyType_GetDict(base);
+#else
+        PyObject *dict = base->tp_dict;
+        Py_XINCREF(dict);
+#endif
+        if (dict == NULL)
+            continue;
+        res = PyDict_GetItemWithError(dict, name);
+        Py_XINCREF(res);
+        Py_DECREF(dict);
+        if (res != NULL)
+            return res;
+        if (PyErr_Occurred())
+            return NULL;
+    }
+    return NULL;
+}
+
+
+/* type-attr access equivalent to the successful part of object.__getattribute__ */
+static PyObject *
+bind_type_attr(PyObject *self, PyObject *name, int *found)
+{
+    descrgetfunc f;
+    PyObject *descr = mro_lookup(Py_TYPE(self), name);
+    if (descr == NULL) {
+        *found = PyErr_Occurred() ? 1 : 0; /* real error: caller returns NULL */
+        return NULL;
+    }
+    *found = 1;
+    f = Py_TYPE(descr)->tp_descr_get;
+    if (f != NULL) {
+        PyObject *res = f(descr, self, (PyObject *)Py_TYPE(self));
+        Py_DECREF(descr);
+        return res;
+    }
+    return descr;
+}
+
+
+/* ================= INSTANCE CREATION (NO __init__, NO __setattr__) ========= */
+
+static PyObject *
+new_store(PyObject *cls, PyObject *value)
+{
+    PyTypeObject *tp = (PyTypeObject *)cls;
+    PyObject *m = tp->tp_alloc(tp, 0);
+    if (m == NULL)
+        return NULL;
+    Py_INCREF(value);
+    STORE(m) = value;
+    return m;
+}
+
+
+static PyObject *
+new_null(PyObject *obj, PyObject *key)
+{
+    PyTypeObject *tp = (PyTypeObject *)NullTypeClass;
+    PyObject *m;
+    if (tp == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "mo_dots._speedups not initialized");
+        return NULL;
+    }
+    m = tp->tp_alloc(tp, 0);
+    if (m == NULL)
+        return NULL;
+    Py_INCREF(obj);
+    STORE(m) = obj;
+    Py_INCREF(key);
+    NKEY(m) = key;
+    return m;
+}
+
+
+/* ======================= HOT FUNCTIONS ==================================== */
 
 static PyObject *
 speedups_is_null(PyObject *self, PyObject *v)
@@ -84,36 +219,6 @@ speedups_is_missing(PyObject *self, PyObject *v)
 }
 
 
-/* EQUIVALENT OF _new(cls) PLUS _set(m, SLOT, value): NO __init__, NO __setattr__ */
-static PyObject *
-new_wrapped(PyObject *cls, PyObject *slot_descr, PyObject *value)
-{
-    PyTypeObject *tp = (PyTypeObject *)cls;
-    PyObject *m = tp->tp_alloc(tp, 0);
-    if (m == NULL)
-        return NULL;
-    if (Py_TYPE(slot_descr)->tp_descr_set(slot_descr, m, value) < 0) {
-        Py_DECREF(m);
-        return NULL;
-    }
-    return m;
-}
-
-
-static PyObject *
-speedups_dict_to_data(PyObject *self, PyObject *d)
-{
-    return new_wrapped(DataClass, data_slot_descr, d);
-}
-
-
-static PyObject *
-speedups_list_to_data(PyObject *self, PyObject *v)
-{
-    return new_wrapped(FlatListClass, flat_slot_descr, v);
-}
-
-
 static PyObject *speedups_from_data(PyObject *self, PyObject *v);
 
 
@@ -123,16 +228,16 @@ c_to_data(PyObject *v)
     PyTypeObject *t = Py_TYPE(v);
 
     if (t == &PyDict_Type || (PyObject *)t == OrderedDictClass)
-        return new_wrapped(DataClass, data_slot_descr, v);
+        return new_store(DataClass, v);
     if (v == Py_None) {
         Py_INCREF(NullSingleton);
         return NullSingleton;
     }
     if (t == &PyList_Type || t == &PyTuple_Type)
-        return new_wrapped(FlatListClass, flat_slot_descr, v);
+        return new_store(FlatListClass, v);
     if (type_in_tuple(t, generator_types)) {
         /* list_to_data(list(from_data(vv) for vv in v)) */
-        PyObject *item, *converted, *out;
+        PyObject *item, *converted, *out, *result;
         PyObject *iter = PyObject_GetIter(v);
         if (iter == NULL)
             return NULL;
@@ -157,7 +262,7 @@ c_to_data(PyObject *v)
             Py_DECREF(out);
             return NULL;
         }
-        PyObject *result = new_wrapped(FlatListClass, flat_slot_descr, out);
+        result = new_store(FlatListClass, out);
         Py_DECREF(out);
         return result;
     }
@@ -179,16 +284,22 @@ speedups_to_data(PyObject *self, PyObject *args)
 static PyObject *
 speedups_from_data(PyObject *self, PyObject *v)
 {
+    PyObject *t;
     if (v == Py_None)
         Py_RETURN_NONE;
 
-    PyObject *t = (PyObject *)Py_TYPE(v);
+    t = (PyObject *)Py_TYPE(v);
     if (t == NullTypeClass)
         Py_RETURN_NONE;
-    if (t == DataClass)
-        return Py_TYPE(data_slot_descr)->tp_descr_get(data_slot_descr, v, DataClass);
-    if (t == FlatListClass)
-        return Py_TYPE(flat_slot_descr)->tp_descr_get(flat_slot_descr, v, FlatListClass);
+    if (t == DataClass || t == FlatListClass) {
+        PyObject *d = STORE(v);
+        if (d == NULL) {
+            PyErr_SetObject(PyExc_AttributeError, slot_str);
+            return NULL;
+        }
+        Py_INCREF(d);
+        return d;
+    }
     if (t == DataObjectClass)
         return PyObject_GenericGetAttr(v, slot_str);
     if (type_in_tuple((PyTypeObject *)t, generator_types))
@@ -203,15 +314,676 @@ speedups_from_data(PyObject *self, PyObject *v)
 
 
 static PyObject *
+speedups_dict_to_data(PyObject *self, PyObject *d)
+{
+    return new_store(DataClass, d);
+}
+
+
+static PyObject *
+speedups_list_to_data(PyObject *self, PyObject *v)
+{
+    return new_store(FlatListClass, v);
+}
+
+
+/* ======================= _StoreBase ======================================= */
+
+static int
+store_traverse(PyObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(STORE(self));
+    return 0;
+}
+
+
+static int
+store_clear_(PyObject *self)
+{
+    Py_CLEAR(STORE(self));
+    return 0;
+}
+
+
+static void
+store_dealloc(PyObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    Py_CLEAR(STORE(self));
+    Py_TYPE(self)->tp_free(self);
+}
+
+
+static PyMemberDef store_members[] = {
+    {"_internal_value", MEMBER_OBJ_EX, offsetof(StoreObject, store), 0, NULL},
+    {NULL},
+};
+
+
+static PyTypeObject StoreBase_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mo_dots._speedups._StoreBase",
+    .tp_basicsize = sizeof(StoreObject),
+    .tp_dealloc = store_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = store_traverse,
+    .tp_clear = store_clear_,
+    .tp_members = store_members,
+    .tp_new = PyType_GenericNew,
+};
+
+
+/* ======================= _DataBase ======================================== */
+
+/* WRAP A VALUE FOUND UNDER name IN d; MIRRORS datas._getattr_dispatch */
+static PyObject *
+wrap_attr_value(PyObject *v, PyObject *d, PyObject *name)
+{
+    PyTypeObject *t = Py_TYPE(v);
+
+    if (v == Py_None || type_in_tuple(t, null_types_tuple)) {
+        if (NullTypeClass == NULL) {
+            Py_INCREF(v); /* IMPORT WINDOW: BEHAVE LIKE AN EMPTY DISPATCH */
+            return v;
+        }
+        return new_null(d, name);
+    }
+    if (t == &PyDict_Type || (PyObject *)t == OrderedDictClass) {
+        if (DataClass == NULL) {
+            Py_INCREF(v);
+            return v;
+        }
+        return new_store(DataClass, v);
+    }
+    if (t == &PyList_Type) {
+        if (FlatListClass == NULL) {
+            Py_INCREF(v);
+            return v;
+        }
+        return new_store(FlatListClass, v);
+    }
+    if (type_in_tuple(t, generator_types) && from_data_gen != NULL) {
+        PyObject *out, *lst = PySequence_List(v);
+        if (lst == NULL)
+            return NULL;
+        {
+            Py_ssize_t i, n = PyList_GET_SIZE(lst);
+            for (i = 0; i < n; i++) {
+                PyObject *conv = speedups_from_data(NULL, PyList_GET_ITEM(lst, i));
+                if (conv == NULL) {
+                    Py_DECREF(lst);
+                    return NULL;
+                }
+                PyList_SetItem(lst, i, conv);
+            }
+        }
+        out = new_store(FlatListClass, lst);
+        Py_DECREF(lst);
+        return out;
+    }
+    Py_INCREF(v);
+    return v;
+}
+
+
+static PyObject *
+data_getattro(PyObject *self, PyObject *name)
+{
+    int found;
+    PyObject *d, *v;
+    PyObject *attr = bind_type_attr(self, name, &found);
+    if (found)
+        return attr; /* MAY BE NULL ON ERROR */
+
+    d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, name);
+        return NULL;
+    }
+    if (PyDict_CheckExact(d)) {
+        v = PyDict_GetItemWithError(d, name); /* borrowed */
+        if (v == NULL) {
+            if (PyErr_Occurred())
+                return NULL;
+            if (NullTypeClass == NULL)
+                Py_RETURN_NONE; /* IMPORT WINDOW: d.get(key) IS None */
+            return new_null(d, name);
+        }
+        return wrap_attr_value(v, d, name);
+    }
+    /* NON-dict SLOT: ORIGINAL PYTHON __getattr__ (MAY RAISE, AS BEFORE) */
+    return PyObject_CallFunctionObjArgs(data_getattr_slow, self, name, NULL);
+}
+
+
+static int
+data_setattro(PyObject *self, PyObject *name, PyObject *value)
+{
+    PyObject *d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, name);
+        return -1;
+    }
+
+    if (value == NULL) {
+        /* __delattr__: d.pop(key, None) */
+        if (PyDict_CheckExact(d)) {
+            if (PyDict_DelItem(d, name) < 0) {
+                if (!PyErr_ExceptionMatches(PyExc_KeyError))
+                    return -1;
+                PyErr_Clear();
+            }
+            return 0;
+        }
+        {
+            PyObject *r = PyObject_CallMethod(d, "pop", "OO", name, Py_None);
+            if (r == NULL)
+                return -1;
+            Py_DECREF(r);
+            return 0;
+        }
+    }
+
+    {
+        PyObject *unwrapped = speedups_from_data(NULL, value);
+        int rc;
+        if (unwrapped == NULL)
+            return -1;
+        if (unwrapped == Py_None) {
+            Py_DECREF(unwrapped);
+            if (PyDict_CheckExact(d)) {
+                if (PyDict_DelItem(d, name) < 0) {
+                    if (!PyErr_ExceptionMatches(PyExc_KeyError))
+                        return -1;
+                    PyErr_Clear();
+                }
+                return 0;
+            }
+            {
+                PyObject *r = PyObject_CallMethod(d, "pop", "OO", name, Py_None);
+                if (r == NULL)
+                    return -1;
+                Py_DECREF(r);
+                return 0;
+            }
+        }
+        if (PyDict_CheckExact(d))
+            rc = PyDict_SetItem(d, name, unwrapped);
+        else
+            rc = PyObject_SetItem(d, name, unwrapped);
+        Py_DECREF(unwrapped);
+        return rc;
+    }
+}
+
+
+static PyObject *
+data_subscript(PyObject *self, PyObject *key)
+{
+    if (PyUnicode_CheckExact(key)) {
+        Py_ssize_t len = PyUnicode_GET_LENGTH(key);
+        if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+            PyObject *d = STORE(self);
+            if (d != NULL && PyDict_CheckExact(d)) {
+                PyObject *v = PyDict_GetItemWithError(d, key); /* borrowed */
+                if (v == NULL) {
+                    if (PyErr_Occurred())
+                        return NULL;
+                    return new_null(d, key);
+                }
+                if (v == Py_None || type_in_tuple(Py_TYPE(v), null_types_tuple))
+                    return new_null(d, key);
+                return c_to_data(v);
+            }
+        }
+    }
+    /* DOTTED PATHS, ".", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    return PyObject_CallFunctionObjArgs(data_getitem_slow, self, key, NULL);
+}
+
+
+static int
+data_bool(PyObject *self)
+{
+    PyObject *d = STORE(self);
+    PyObject *r;
+    int t;
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return -1;
+    }
+    if (PyDict_CheckExact(d))
+        return 1;
+    r = PyObject_RichCompare(d, Py_None, Py_NE);
+    if (r == NULL)
+        return -1;
+    t = PyObject_IsTrue(r);
+    Py_DECREF(r);
+    return t;
+}
+
+
+static PyNumberMethods data_as_number = {
+    .nb_bool = data_bool,
+};
+
+static PyMappingMethods data_as_mapping = {
+    .mp_subscript = data_subscript,
+};
+
+
+static PyTypeObject DataBase_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mo_dots._speedups._DataBase",
+    .tp_basicsize = sizeof(StoreObject),
+    .tp_dealloc = store_dealloc,
+    .tp_getattro = data_getattro,
+    .tp_setattro = data_setattro,
+    .tp_as_number = &data_as_number,
+    .tp_as_mapping = &data_as_mapping,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = store_traverse,
+    .tp_clear = store_clear_,
+    .tp_base = &StoreBase_Type,
+};
+
+
+/* ======================= _NullBase ======================================== */
+
+static int
+nullb_traverse(PyObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(STORE(self));
+    Py_VISIT(NKEY(self));
+    return 0;
+}
+
+
+static int
+nullb_clear_(PyObject *self)
+{
+    Py_CLEAR(STORE(self));
+    Py_CLEAR(NKEY(self));
+    return 0;
+}
+
+
+static void
+nullb_dealloc(PyObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    Py_CLEAR(STORE(self));
+    Py_CLEAR(NKEY(self));
+    Py_TYPE(self)->tp_free(self);
+}
+
+
+static int
+nullb_init(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"obj", "key", NULL};
+    PyObject *obj = Py_None, *key = Py_None;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwlist, &obj, &key))
+        return -1;
+    Py_INCREF(obj);
+    Py_XSETREF(STORE(self), obj);
+    Py_INCREF(key);
+    Py_XSETREF(NKEY(self), key);
+    return 0;
+}
+
+
+static PyObject *
+return_null(void)
+{
+    if (NullSingleton == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "mo_dots._speedups not initialized");
+        return NULL;
+    }
+    Py_INCREF(NullSingleton);
+    return NullSingleton;
+}
+
+
+static PyObject *
+nullb_getattro(PyObject *self, PyObject *name)
+{
+    int found;
+    PyObject *o;
+    PyObject *attr = bind_type_attr(self, name, &found);
+    if (found)
+        return attr;
+
+    o = STORE(self);
+    if (o == NULL || o == Py_None || o == NullSingleton)
+        return return_null(); /* DEAD CHAIN */
+
+    if (PyDict_CheckExact(o) && NKEY(self) != NULL && PyUnicode_CheckExact(NKEY(self))) {
+        PyObject *v = PyDict_GetItemWithError(o, NKEY(self)); /* borrowed */
+        if (v == NULL) {
+            if (PyErr_Occurred())
+                return NULL;
+            return new_null(self, name);
+        }
+        if (v == Py_None || type_in_tuple(Py_TYPE(v), null_types_tuple))
+            return new_null(self, name);
+        /* VALUE MATERIALIZED SINCE: FALL THROUGH TO PYTHON */
+    }
+    else if ((PyObject *)Py_TYPE(o) == NullTypeClass) {
+        return new_null(self, name); /* LIVE NullType CHAIN */
+    }
+    return PyObject_CallFunctionObjArgs(null_getattr_slow, self, name, NULL);
+}
+
+
+static PyObject *
+nullb_subscript(PyObject *self, PyObject *key)
+{
+    PyObject *o;
+    if (PySlice_Check(key))
+        return return_null();
+    o = STORE(self);
+    if (o == NULL || o == Py_None || o == NullSingleton)
+        return return_null(); /* DEAD CHAIN */
+    if (PyLong_CheckExact(key))
+        return new_null(self, key);
+    if (PyUnicode_CheckExact(key)) {
+        Py_ssize_t len = PyUnicode_GET_LENGTH(key);
+        if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0
+            && PyUnicode_FindChar(key, '\b', 0, len, 1) < 0) {
+            return new_null(self, key);
+        }
+    }
+    return PyObject_CallFunctionObjArgs(null_getitem_slow, self, key, NULL);
+}
+
+
+static Py_ssize_t
+nullb_length(PyObject *self)
+{
+    return 0;
+}
+
+
+static int
+nullb_bool(PyObject *self)
+{
+    return 0;
+}
+
+
+static PyObject *
+nullb_richcompare(PyObject *self, PyObject *other, int op)
+{
+    int r;
+    switch (op) {
+    case Py_EQ:
+        r = PyObject_IsInstance(other, sequence_types_tuple);
+        if (r < 0)
+            return NULL;
+        if (r) {
+            r = PyObject_IsTrue(other);
+            if (r < 0)
+                return NULL;
+            if (!r)
+                Py_RETURN_TRUE;
+        }
+        if (type_in_tuple(Py_TYPE(other), null_types_tuple))
+            Py_RETURN_TRUE;
+        return return_null();
+    case Py_NE: {
+        PyObject *m = speedups_is_missing(NULL, other);
+        if (m == NULL)
+            return NULL;
+        r = (m == Py_True);
+        Py_DECREF(m);
+        if (r)
+            Py_RETURN_FALSE;
+        return return_null();
+    }
+    default:
+        return return_null();
+    }
+}
+
+
+/* BINARY SLOTS RECEIVE (a, b) WITH OUR INSTANCE ON EITHER SIDE */
+static inline PyObject *
+other_operand(PyObject *a, PyObject *b)
+{
+    return type_in_tuple(Py_TYPE(a), null_types_tuple) ? b : a;
+}
+
+
+static PyObject *
+nullb_add(PyObject *a, PyObject *b)
+{
+    PyObject *other = other_operand(a, b);
+    int r = PyObject_IsInstance(other, sequence_types_tuple);
+    if (r < 0)
+        return NULL;
+    if (r) {
+        Py_INCREF(other);
+        return other;
+    }
+    return return_null();
+}
+
+
+static PyObject *
+nullb_null_result(PyObject *a, PyObject *b)
+{
+    return return_null();
+}
+
+
+static PyObject *
+nullb_negative(PyObject *self)
+{
+    return return_null();
+}
+
+
+static PyObject *
+nullb_or(PyObject *a, PyObject *b)
+{
+    PyObject *other = other_operand(a, b);
+    Py_INCREF(other);
+    return other;
+}
+
+
+static PyObject *
+nullb_and(PyObject *a, PyObject *b)
+{
+    PyObject *other = other_operand(a, b);
+    if (other == Py_False)
+        Py_RETURN_FALSE;
+    return return_null();
+}
+
+
+static PyObject *
+nullb_int(PyObject *self)
+{
+    /* PURE __int__ RETURNS None; CPython THEN RAISES THE SAME TypeError */
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+nullb_float(PyObject *self)
+{
+    return PyFloat_FromDouble(Py_NAN);
+}
+
+
+static PyObject *
+nullb_iter(PyObject *self)
+{
+    return PyObject_GetIter(empty_tuple);
+}
+
+
+static PyObject *
+nullb_call(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return return_null();
+}
+
+
+static Py_hash_t
+nullb_hash(PyObject *self)
+{
+    return null_hash;
+}
+
+
+static PyObject *
+nullb_str(PyObject *self)
+{
+    Py_INCREF(empty_str);
+    return empty_str;
+}
+
+
+static PyObject *
+nullb_repr(PyObject *self)
+{
+    Py_INCREF(null_repr_str);
+    return null_repr_str;
+}
+
+
+static PyNumberMethods null_as_number = {
+    .nb_add = nullb_add,
+    .nb_subtract = nullb_null_result,
+    .nb_multiply = nullb_null_result,
+    .nb_bool = nullb_bool,
+    .nb_negative = nullb_negative,
+    .nb_and = nullb_and,
+    .nb_xor = nullb_null_result,
+    .nb_or = nullb_or,
+    .nb_int = nullb_int,
+    .nb_float = nullb_float,
+    .nb_floor_divide = nullb_null_result,
+    .nb_true_divide = nullb_null_result,
+    .nb_inplace_true_divide = nullb_null_result,
+};
+
+static PyMappingMethods null_as_mapping = {
+    .mp_length = nullb_length,
+    .mp_subscript = nullb_subscript,
+};
+
+static PyMemberDef null_members[] = {
+    {"_internal_value", MEMBER_OBJ_EX, offsetof(NullObject, store), 0, NULL},
+    {"_key", MEMBER_OBJ_EX, offsetof(NullObject, key), 0, NULL},
+    {NULL},
+};
+
+
+static PyTypeObject NullBase_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mo_dots._speedups._NullBase",
+    .tp_basicsize = sizeof(NullObject),
+    .tp_dealloc = nullb_dealloc,
+    .tp_repr = nullb_repr,
+    .tp_as_number = &null_as_number,
+    .tp_as_mapping = &null_as_mapping,
+    .tp_hash = nullb_hash,
+    .tp_call = nullb_call,
+    .tp_str = nullb_str,
+    .tp_getattro = nullb_getattro,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = nullb_traverse,
+    .tp_clear = nullb_clear_,
+    .tp_richcompare = nullb_richcompare,
+    .tp_iter = nullb_iter,
+    .tp_init = nullb_init,
+    .tp_members = null_members,
+    .tp_new = PyType_GenericNew,
+};
+
+
+/* ======================= WIRING =========================================== */
+
+static PyObject *
 speedups_sync(PyObject *self, PyObject *args)
 {
-    PyObject *nulls, *missings;
-    if (!PyArg_ParseTuple(args, "O!O!", &PyTuple_Type, &nulls, &PyTuple_Type, &missings))
+    PyObject *nulls, *missings, *sequences;
+    if (!PyArg_ParseTuple(
+            args, "O!O!O!",
+            &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences))
         return NULL;
     Py_INCREF(nulls);
     Py_XSETREF(null_types_tuple, nulls);
     Py_INCREF(missings);
     Py_XSETREF(missing_types_tuple, missings);
+    Py_INCREF(sequences);
+    Py_XSETREF(sequence_types_tuple, sequences);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+speedups_init_null(PyObject *self, PyObject *args)
+{
+    PyObject *cls, *getattr_slow, *getitem_slow;
+    if (!PyArg_ParseTuple(args, "OOO", &cls, &getattr_slow, &getitem_slow))
+        return NULL;
+    if (!PyType_Check(cls) || !PyType_IsSubtype((PyTypeObject *)cls, &NullBase_Type)) {
+        PyErr_SetString(PyExc_TypeError, "expected a _NullBase subclass");
+        return NULL;
+    }
+    Py_INCREF(cls);
+    Py_XSETREF(NullTypeClass, cls);
+    Py_INCREF(getattr_slow);
+    Py_XSETREF(null_getattr_slow, getattr_slow);
+    Py_INCREF(getitem_slow);
+    Py_XSETREF(null_getitem_slow, getitem_slow);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+speedups_set_null(PyObject *self, PyObject *null_)
+{
+    Py_INCREF(null_);
+    Py_XSETREF(NullSingleton, null_);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+speedups_init_data(PyObject *self, PyObject *args)
+{
+    PyObject *cls, *getattr_slow, *getitem_slow;
+    if (!PyArg_ParseTuple(args, "OOO", &cls, &getattr_slow, &getitem_slow))
+        return NULL;
+    if (!PyType_Check(cls) || !PyType_IsSubtype((PyTypeObject *)cls, &StoreBase_Type)) {
+        PyErr_SetString(PyExc_TypeError, "expected a _StoreBase subclass");
+        return NULL;
+    }
+    Py_INCREF(cls);
+    Py_XSETREF(DataClass, cls);
+    Py_INCREF(getattr_slow);
+    Py_XSETREF(data_getattr_slow, getattr_slow);
+    Py_INCREF(getitem_slow);
+    Py_XSETREF(data_getitem_slow, getitem_slow);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+speedups_init_list(PyObject *self, PyObject *cls)
+{
+    if (!PyType_Check(cls) || !PyType_IsSubtype((PyTypeObject *)cls, &StoreBase_Type)) {
+        PyErr_SetString(PyExc_TypeError, "expected a _StoreBase subclass");
+        return NULL;
+    }
+    Py_INCREF(cls);
+    Py_XSETREF(FlatListClass, cls);
     Py_RETURN_NONE;
 }
 
@@ -226,18 +998,10 @@ speedups_init(PyObject *self, PyObject *args)
             &PyTuple_Type, &gens, &gen_helper))
         return NULL;
 
-    PyObject *d_descr = PyObject_GetAttr(data, slot_str);
-    if (d_descr == NULL)
-        return NULL;
-    PyObject *f_descr = PyObject_GetAttr(flat, slot_str);
-    if (f_descr == NULL) {
-        Py_DECREF(d_descr);
-        return NULL;
-    }
-    if (Py_TYPE(d_descr)->tp_descr_set == NULL || Py_TYPE(f_descr)->tp_descr_set == NULL) {
-        Py_DECREF(d_descr);
-        Py_DECREF(f_descr);
-        PyErr_SetString(PyExc_TypeError, "expected slot descriptors on Data and FlatList");
+    if (!PyType_Check(data) || !PyType_IsSubtype((PyTypeObject *)data, &StoreBase_Type)
+        || !PyType_Check(flat) || !PyType_IsSubtype((PyTypeObject *)flat, &StoreBase_Type)
+        || !PyType_Check(nulltype) || !PyType_IsSubtype((PyTypeObject *)nulltype, &NullBase_Type)) {
+        PyErr_SetString(PyExc_TypeError, "expected rebuilt C-backed classes");
         return NULL;
     }
 
@@ -257,8 +1021,6 @@ speedups_init(PyObject *self, PyObject *args)
     Py_XSETREF(generator_types, gens);
     Py_INCREF(gen_helper);
     Py_XSETREF(from_data_gen, gen_helper);
-    Py_XSETREF(data_slot_descr, d_descr);
-    Py_XSETREF(flat_slot_descr, f_descr);
     Py_RETURN_NONE;
 }
 
@@ -271,7 +1033,11 @@ static PyMethodDef speedups_methods[] = {
     {"from_data", speedups_from_data, METH_O, "unwrap to the underlying python value"},
     {"dict_to_data", speedups_dict_to_data, METH_O, "wrap dict as Data, no checks"},
     {"list_to_data", speedups_list_to_data, METH_O, "wrap list as FlatList, no checks"},
-    {"_sync", speedups_sync, METH_VARARGS, "(null_types, missing_types) - refresh type registries"},
+    {"_sync", speedups_sync, METH_VARARGS, "(null_types, missing_types, sequence_types) - refresh registries"},
+    {"_init_null", speedups_init_null, METH_VARARGS, "(NullType, getattr_slow, getitem_slow)"},
+    {"_set_null", speedups_set_null, METH_O, "store the Null singleton"},
+    {"_init_data", speedups_init_data, METH_VARARGS, "(Data, getattr_slow, getitem_slow)"},
+    {"_init_list", speedups_init_list, METH_O, "(FlatList)"},
     {"_init", speedups_init, METH_VARARGS,
      "(Data, FlatList, NullType, Null, DataObject, OrderedDict, generator_types, from_data_gen)"},
     {NULL, NULL, 0, NULL},
@@ -286,13 +1052,38 @@ static struct PyModuleDef speedups_module = {
 PyMODINIT_FUNC
 PyInit__speedups(void)
 {
+    PyObject *m;
+
     slot_str = PyUnicode_InternFromString("_internal_value");
-    if (slot_str == NULL)
-        return NULL;
-    /* EMPTY REGISTRIES UNTIL _sync(); is_null ON AN UNSYNCED MODULE ANSWERS False */
+    empty_str = PyUnicode_InternFromString("");
+    null_repr_str = PyUnicode_InternFromString("Null");
+    empty_tuple = PyTuple_New(0);
     null_types_tuple = PyTuple_New(0);
     missing_types_tuple = PyTuple_New(0);
-    if (null_types_tuple == NULL || missing_types_tuple == NULL)
+    sequence_types_tuple = PyTuple_New(0);
+    if (!slot_str || !empty_str || !null_repr_str || !empty_tuple
+        || !null_types_tuple || !missing_types_tuple || !sequence_types_tuple)
         return NULL;
-    return PyModule_Create(&speedups_module);
+    null_hash = PyObject_Hash(Py_None);
+
+    if (PyType_Ready(&StoreBase_Type) < 0)
+        return NULL;
+    if (PyType_Ready(&DataBase_Type) < 0)
+        return NULL;
+    if (PyType_Ready(&NullBase_Type) < 0)
+        return NULL;
+
+    m = PyModule_Create(&speedups_module);
+    if (m == NULL)
+        return NULL;
+    Py_INCREF(&StoreBase_Type);
+    if (PyModule_AddObject(m, "_StoreBase", (PyObject *)&StoreBase_Type) < 0)
+        return NULL;
+    Py_INCREF(&DataBase_Type);
+    if (PyModule_AddObject(m, "_DataBase", (PyObject *)&DataBase_Type) < 0)
+        return NULL;
+    Py_INCREF(&NullBase_Type);
+    if (PyModule_AddObject(m, "_NullBase", (PyObject *)&NullBase_Type) < 0)
+        return NULL;
+    return m;
 }

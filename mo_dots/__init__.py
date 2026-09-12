@@ -383,7 +383,7 @@ def to_data(v=None) -> object:
     type_ = _get(v, CLASS)
 
     if type_ in (dict, OrderedDict):
-        m = _new(Data)
+        m = Data.__new__(Data)
         _set(m, SLOT, v)
         return m
     elif type_ is none_type:

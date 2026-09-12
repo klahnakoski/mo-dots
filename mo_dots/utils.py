@@ -50,7 +50,7 @@ def register_null_type(_type):
     _null_type_set = frozenset(_null_types)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types)
     for callback in _null_type_listeners:
         callback()
 
@@ -163,7 +163,7 @@ def register_list(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types)
 
 
 def register_sequence(_type):
@@ -173,7 +173,7 @@ def register_sequence(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -225,7 +225,7 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types)
 
 
 # OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
@@ -238,10 +238,22 @@ except ImportError:
     _speedups = None
 
 if _speedups:
-    _speedups._sync(_null_types, _missing_types)
+    _speedups._sync(_null_types, _missing_types, sequence_types)
     is_null = _speedups.is_null
     is_not_null = _speedups.is_not_null
     is_missing = _speedups.is_missing
+
+
+def _rebuild_class(pure, base, hot):
+    # REBUILD pure OVER C base; DROP hot DUNDERS SO THE C SLOTS SHOW THROUGH.
+    # THE PURE CLASS REMAINS THE SLOW PATH FOR EXOTIC CASES.
+    ns = {
+        k: v
+        for k, v in vars(pure).items()
+        if k not in hot and k not in ("__slots__", "__dict__", "__weakref__", SLOT, KEY)
+    }
+    ns["__slots__"] = ()
+    return type(pure.__name__, (base,), ns)
 
 
 def cache(func):

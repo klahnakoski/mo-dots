@@ -14,7 +14,15 @@ from mo_imports import expect, delay_import, export
 from mo_dots import utils
 from mo_dots.datas import is_missing, hash_value
 from mo_dots.nones import Null, NullType
-from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
+from mo_dots.utils import (
+    CLASS,
+    SLOT,
+    is_null,
+    is_many,
+    is_list,
+    is_sequence,
+    register_list,
+)
 
 Log = delay_import("mo_logs.Log")
 object_to_data, coalesce, to_data, from_data, get_attr = expect(
@@ -53,7 +61,9 @@ class FlatList:
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
-                Log.error("slice step must be None, do not know how to deal with values")
+                Log.error(
+                    "slice step must be None, do not know how to deal with values"
+                )
             length = len(_get(self, SLOT))
 
             i = index.start
@@ -124,7 +134,9 @@ class FlatList:
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return list_to_data([from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))])
+        return list_to_data([
+            from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
+        ])
 
     def map(self, oper, includeNone=True):
         if includeNone:
@@ -295,6 +307,13 @@ class FlatList:
         return Null
 
 
+if utils._speedups:
+    # SAME C STORAGE BASE AS Data SO __class__ REASSIGNMENT (datas.__setitem__ ".")
+    # KEEPS COMPATIBLE LAYOUTS; ALL FlatList BEHAVIOR STAYS PYTHON
+    _pure_FlatList = FlatList
+    FlatList = utils._rebuild_class(_pure_FlatList, utils._speedups._StoreBase, set())
+    utils._speedups._init_list(FlatList)
+
 register_list(FlatList)
 
 
@@ -323,7 +342,7 @@ def list_to_data(v):
     """
     to_data, BUT WITHOUT CHECKS
     """
-    output = _new(FlatList)
+    output = FlatList.__new__(FlatList)
     _set(output, SLOT, v)
     return output
 

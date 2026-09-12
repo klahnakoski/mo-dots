@@ -390,6 +390,17 @@ class Data:
             return "Data(?)"
 
 
+if utils._speedups:
+    # REBUILD OVER THE C BASE: getattr/setattr/delattr/getitem/bool BECOME C SLOTS,
+    # THE PURE METHODS REMAIN AS THE SLOW PATH (DOTTED PATHS, NON-dict SLOTS)
+    _pure_Data = Data
+    Data = utils._rebuild_class(
+        _pure_Data,
+        utils._speedups._DataBase,
+        {"__getattr__", "__setattr__", "__delattr__", "__getitem__", "__bool__"},
+    )
+    utils._speedups._init_data(Data, _pure_Data.__getattr__, _pure_Data.__getitem__)
+
 MutableMapping.register(Data)
 register_data(Data)
 
@@ -453,7 +464,7 @@ def _iadd(self, other):
         d = _get(self, SLOT)
         if isinstance(d, dict) and not len(d):
             # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
-            # ∀ x, x += {} => x
+            # âˆ€ x, x += {} => x
             d = Data()
         else:
             d = dict_to_data({"$": self})
@@ -517,7 +528,7 @@ def dict_to_data(d):
     :param d: dict
     :return: Data
     """
-    m = _new(Data)
+    m = Data.__new__(Data)
     _set(m, SLOT, d)
     return m
 

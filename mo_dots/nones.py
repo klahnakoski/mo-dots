@@ -17,6 +17,8 @@ from mo_dots.utils import (
     is_sequence,
     register_null_type,
     is_many,
+    _speedups,
+    _rebuild_class,
 )
 
 to_data, get_attr = expect("to_data", "get_attr")
@@ -255,9 +257,58 @@ class NullType:
         return _null_hash
 
 
+# DUNDERS THE C _NullBase IMPLEMENTS AS TYPE SLOTS
+_NULL_HOT = {
+    "__init__",
+    "__bool__",
+    "__getattr__",
+    "__getitem__",
+    "__hash__",
+    "__str__",
+    "__repr__",
+    "__call__",
+    "__iter__",
+    "__len__",
+    "__eq__",
+    "__ne__",
+    "__gt__",
+    "__ge__",
+    "__le__",
+    "__lt__",
+    "__add__",
+    "__radd__",
+    "__sub__",
+    "__rsub__",
+    "__neg__",
+    "__mul__",
+    "__rmul__",
+    "__truediv__",
+    "__rtruediv__",
+    "__floordiv__",
+    "__rfloordiv__",
+    "__itruediv__",
+    "__or__",
+    "__ror__",
+    "__and__",
+    "__rand__",
+    "__xor__",
+    "__rxor__",
+    "__int__",
+    "__float__",
+}
+
+if _speedups:
+    _pure_NullType = NullType
+    NullType = _rebuild_class(_pure_NullType, _speedups._NullBase, _NULL_HOT)
+    _speedups._init_null(
+        NullType, _pure_NullType.__getattr__, _pure_NullType.__getitem__
+    )
+
 register_null_type(NullType)
 Null = NullType()  # INSTEAD OF None!!!
 _set(Null, SLOT, Null)
+if _speedups:
+    _speedups._set_null(Null)
 
 
 def _assign_to_null(obj, path, value, force=True):
