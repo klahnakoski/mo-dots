@@ -27,10 +27,32 @@
   `Null == 5` 2x. Known trade-offs: `iter(Null)` is a tuple-iterator (was
   list-iterator); default pickling of C-backed instances is unsupported (was
   slot-based; nothing in the repo pickles them).
-- C extension, phase 3 candidates: dotted-path `w['a.b.c']` walk in C (only ~13%
-  today — it routes through the pure `__getitem__`), C `Data.get`/`items`,
-  `Data.__setitem__` fast path. Publishing: hook wheelhouse upload into the
-  release flow (today the workflow only uploads artifacts).
+- C extension, phase 3 IN PROGRESS: dotted-path `w['a.b.c']` walk in C, C
+  `Data.get`/`items`, `mp_ass_subscript` fast path (set + delete). Design
+  decided, implementation partially in `_speedups.c`:
+  - `_sync` grows a 4th tuple (`_data_types`, for the `items` filter);
+    `register_data` must also call it. `_init_data` grows to
+    `(cls, getattr_slow, getitem_slow, setitem_slow, delitem_slow, items_slow)`
+    — pure `__setitem__`/`__delitem__`/`items` move from the ns copy to slow
+    paths, so datas.py drop set becomes {`__getattr__`, `__setattr__`,
+    `__delattr__`, `__getitem__`, `__setitem__`, `__delitem__`, `__bool__`,
+    `get`, `items`}.
+  - Dotted walk fast path: exact-str key, no `\b`, no `..`, no empty segments,
+    split on "."; per step exact-dict → PyDict get (hit returns RAW value,
+    None included), miss → NullType(d, seg); NullType step → chain
+    NullType(d, seg); anything else (is_many, None mid-walk, DataObject) →
+    bail to pure. TRAP: `_getdefault` falls back to `obj[int(key)]` on a dict
+    miss when the segment parses as float — so on a miss with a numeric-ish
+    segment (chars in [0-9.+-eE_]) bail to pure. After the loop `to_data(d)`
+    (final None → bare Null, matching pure; the simple no-dot path instead
+    answers NullType(d, key) — they differ deliberately).
+  - C `get(key, default=Null)`: v = self[key]; NullType class → default, with
+    default-is-Null → NullType(self, key) (parent is the Data, not the dict).
+  - C `items()`: exact-dict slot only (else items_slow); keep v unless v is
+    None or a null type; scalars/dict/list keep; exotic types use
+    `v != None` richcompare then is_data(); wrap kept values with to_data.
+  Publishing: hook wheelhouse upload into the release flow (today the workflow
+  only uploads artifacts).
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
   fields, patch a few, emit text — NDJSON ETL shape). Measured on an 819-byte line,
   2 changes + 1 append: naive pure-Python splice 1,175ns vs stdlib

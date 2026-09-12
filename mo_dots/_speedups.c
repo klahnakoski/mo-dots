@@ -67,12 +67,17 @@ static Py_hash_t null_hash = 0;
 static PyObject *null_types_tuple = NULL;    /* tuple of null classes    */
 static PyObject *missing_types_tuple = NULL; /* (str, *null, *many)      */
 static PyObject *sequence_types_tuple = NULL;
+static PyObject *data_types_tuple = NULL;    /* is_data() classes        */
 
 /* PURE-PYTHON SLOW PATHS (THE ORIGINAL METHODS) */
 static PyObject *null_getattr_slow = NULL;
 static PyObject *null_getitem_slow = NULL;
 static PyObject *data_getattr_slow = NULL;
 static PyObject *data_getitem_slow = NULL;
+static PyObject *data_setitem_slow = NULL;
+static PyObject *data_delitem_slow = NULL;
+static PyObject *data_items_slow = NULL;
+static PyObject *dot_str = NULL; /* "." */
 
 static PyTypeObject StoreBase_Type;
 static PyTypeObject DataBase_Type;
