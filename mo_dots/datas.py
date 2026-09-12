@@ -166,19 +166,14 @@ class Data:
     def __getattr__(self, key):
         d = _get(self, SLOT)
         v = d.get(key)
-        t = _get(v, CLASS)
 
-        # OPTIMIZED to_data()
-        if t in (dict, OrderedDict):
-            return dict_to_data(v)
-        elif t in utils._null_types:
-            return NullType(d, key)
-        elif t is list:
-            return list_to_data(v)
-        elif t in generator_types:
-            return FlatList(list(from_data(vv) for vv in v))
-        else:
+        # OPTIMIZED to_data(): _getattr_dispatch MAPS VALUE CLASS TO WRAPPER
+        handler = _getattr_dispatch.get(_get(v, CLASS))
+        if handler is None:
             return v
+        if handler is NullType:
+            return NullType(d, key)
+        return handler(v)
 
     def __setattr__(self, key, value):
         d = _get(self, SLOT)
@@ -525,6 +520,29 @@ def dict_to_data(d):
     m = _new(Data)
     _set(m, SLOT, d)
     return m
+
+
+def _gen_to_data(v):
+    return FlatList(list(from_data(vv) for vv in v))
+
+
+_getattr_dispatch = {}
+
+
+def _rebuild_getattr_dispatch():
+    # NullType IS A SENTINEL: __getattr__ CONSTRUCTS NullType(d, key) FOR NULL VALUES
+    _getattr_dispatch.clear()
+    for t in utils._null_types:
+        _getattr_dispatch[t] = NullType
+    _getattr_dispatch[dict] = dict_to_data
+    _getattr_dispatch[OrderedDict] = dict_to_data
+    _getattr_dispatch[list] = list_to_data
+    for t in generator_types:
+        _getattr_dispatch[t] = _gen_to_data
+
+
+utils.on_null_type_change(_rebuild_getattr_dispatch)
+_rebuild_getattr_dispatch()
 
 
 def leaves_to_data(value):

@@ -543,3 +543,6 @@ export("mo_dots.objects", from_data)
 export("mo_dots.objects", get_attr)
 export("mo_dots.objects", set_attr)
 export("mo_dots.objects", set_default)
+
+# REBUILD NOW THAT EXPORTS RESOLVED PLACEHOLDERS
+datas._rebuild_getattr_dispatch()

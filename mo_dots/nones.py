@@ -180,7 +180,11 @@ class NullType:
     def __getitem__(self, key):
         if isinstance(key, slice):
             return Null
-        elif isinstance(key, int):
+        o = _get(self, SLOT)
+        if o is None or o is Null:
+            # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
+            return Null
+        if isinstance(key, int):
             return NullType(self, key)
 
         path = _split_field(key)
@@ -192,7 +196,11 @@ class NullType:
     def __getattr__(self, key):
         key = str(key)
 
-        o = to_data(_get(self, SLOT))
+        o = _get(self, SLOT)
+        if o is None or o is Null:
+            # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
+            return Null
+        o = to_data(o)
         k = _get(self, KEY)
         if is_null(o):
             return NullType(self, key)

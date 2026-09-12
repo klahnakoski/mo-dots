@@ -222,6 +222,23 @@ class TestDot(FuzzyTestCase):
         expected = {"c": {"d": "test1", "e": "test2"}}
         self.assertEqual(a, expected)
 
+    def test_assign2b(self):
+        # HELD DEEP NULL CHAIN STILL TRACKS FULL PATH FOR ASSIGNMENT
+        a = {}
+        b = to_data(a)
+        b_pq = b.p.q
+        b_pq.r = "test1"
+
+        expected = {"p": {"q": {"r": "test1"}}}
+        self.assertEqual(a, expected)
+
+    def test_assign_through_dead_chain(self):
+        # CHAINS ROOTED AT BARE Null HAVE NO CONTAINER: ASSIGNMENT IS A NO-OP
+        x = Null.a.b
+        x.c = "test1"
+        self.assertEqual(x.c, None)
+        self.assertIs(from_data(x), None)
+
     def test_assign3(self):
         # IMPOTENT ASSIGNMENTS DO NOTHING
         a = {}

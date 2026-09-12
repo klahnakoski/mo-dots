@@ -35,31 +35,35 @@ def get_module(name):
 
 
 _null_types = (none_type,)
+_null_type_set = frozenset(_null_types)
+_null_type_listeners = []
+
+
+def on_null_type_change(callback):
+    _null_type_listeners.append(callback)
 
 
 def register_null_type(_type):
-    global _null_types
+    global _null_types, _null_type_set, _missing_types
     _null_types = tuple(set(_null_types + (_type,)))
+    _null_type_set = frozenset(_null_types)
+    _missing_types = (str, *_null_types, *_many_types)
+    for callback in _null_type_listeners:
+        callback()
 
 
 def is_null(value):
     # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(value, CLASS)
-    if _class in _null_types:
-        return True
-    return False
+    return _get(value, CLASS) in _null_type_set
 
 
 def is_not_null(value):
-    _class = _get(value, CLASS)
-    if _class in _null_types:
-        return False
-    return True
+    return _get(value, CLASS) not in _null_type_set
 
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    return isinstance(t, (str, *_null_types, *_many_types)) and not t
+    return isinstance(t, _missing_types) and not t
 
 
 def exists(value) -> bool:
@@ -143,23 +147,26 @@ container_types = (list, set)
 finite_types = (list, set, tuple)
 sequence_types = (list, tuple) + generator_types
 _many_types = tuple(set(list_types + container_types + sequence_types))
+_missing_types = (str, *_null_types, *_many_types)
 
 
 def register_list(_type):
     # lists belong to all categories
-    global list_types, container_types, finite_types, sequence_types, _many_types
+    global list_types, container_types, finite_types, sequence_types, _many_types, _missing_types
     list_types = tuple(set(list_types + (_type,)))
     container_types = tuple(set(container_types + (_type,)))
     finite_types = tuple(set(finite_types + (_type,)))
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
+    _missing_types = (str, *_null_types, *_many_types)
 
 
 def register_sequence(_type):
     # ORDERED, BUT MAY BE INFINITE, SO NOT finite_types NOR container_types
-    global sequence_types, _many_types
+    global sequence_types, _many_types, _missing_types
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
+    _missing_types = (str, *_null_types, *_many_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -207,8 +214,9 @@ def is_many(value):
 
 
 def register_many(_type):
-    global _many_types
+    global _many_types, _missing_types
     _many_types = _many_types + (_type,)
+    _missing_types = (str, *_null_types, *_many_types)
 
 
 def cache(func):
