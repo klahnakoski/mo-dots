@@ -50,7 +50,7 @@ def register_null_type(_type):
     _null_type_set = frozenset(_null_types)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
     for callback in _null_type_listeners:
         callback()
 
@@ -110,6 +110,8 @@ def register_data(type_):
     """
     global _data_types
     _data_types = tuple(set(_data_types + (type_,)))
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
 
 
 def is_data(d):
@@ -163,7 +165,7 @@ def register_list(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
 
 
 def register_sequence(_type):
@@ -173,7 +175,7 @@ def register_sequence(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -225,7 +227,7 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
 
 
 # OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
@@ -238,7 +240,7 @@ except ImportError:
     _speedups = None
 
 if _speedups:
-    _speedups._sync(_null_types, _missing_types, sequence_types)
+    _speedups._sync(_null_types, _missing_types, sequence_types, _data_types)
     is_null = _speedups.is_null
     is_not_null = _speedups.is_not_null
     is_missing = _speedups.is_missing

@@ -522,27 +522,127 @@ data_setattro(PyObject *self, PyObject *name, PyObject *value)
 }
 
 
+/* _getdefault FALLS BACK TO obj[int(seg)] ON A dict MISS WHEN seg PARSES AS
+ * float; ANY SEGMENT THAT COULD PARSE SENDS THE WALK TO PURE PYTHON */
+static int
+numeric_candidate(PyObject *seg)
+{
+    Py_ssize_t i, len = PyUnicode_GET_LENGTH(seg);
+    if (len == 0)
+        return 1;
+    for (i = 0; i < len; i++) {
+        Py_UCS4 c = PyUnicode_READ_CHAR(seg, i);
+        if ((c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-' || c == 'e' || c == 'E'
+            || c == '_' || c <= ' ')
+            continue;
+        return 0;
+    }
+    return 1;
+}
+
+
+/* THE DOTTED WALK OF Data.__getitem__; RETURNS NULL WITH NO ERROR SET TO BAIL */
+static PyObject *
+dotted_walk(PyObject *d, PyObject *key)
+{
+    PyObject *segments, *cur, *result;
+    Py_ssize_t i, n;
+    Py_ssize_t len = PyUnicode_GET_LENGTH(key);
+
+    if (PyUnicode_FindChar(key, '\b', 0, len, 1) >= 0)
+        return NULL; /* ESCAPED-DOT KEYS: PURE */
+    segments = PyUnicode_Split(key, dot_str, -1);
+    if (segments == NULL)
+        return NULL; /* ERROR SET; CALLER BAILS TO PURE WHICH RE-RAISES */
+    n = PyList_GET_SIZE(segments);
+    for (i = 0; i < n; i++) {
+        /* EMPTY SEGMENT MEANS "." ITSELF, A LEADING/TRAILING DOT, OR ".." */
+        if (PyUnicode_GET_LENGTH(PyList_GET_ITEM(segments, i)) == 0) {
+            Py_DECREF(segments);
+            return NULL;
+        }
+    }
+
+    cur = d;
+    Py_INCREF(cur);
+    for (i = 0; i < n; i++) {
+        PyObject *seg = PyList_GET_ITEM(segments, i); /* borrowed */
+        PyObject *next;
+        if ((PyObject *)Py_TYPE(cur) == NullTypeClass) {
+            next = new_null(cur, seg);
+            if (next == NULL)
+                goto error;
+        }
+        else if (PyDict_CheckExact(cur)) {
+            next = PyDict_GetItemWithError(cur, seg); /* borrowed */
+            if (next == NULL) {
+                if (PyErr_Occurred())
+                    goto error;
+                if (numeric_candidate(seg))
+                    goto bail; /* MAY BE AN int KEY: PURE _getdefault DECIDES */
+                next = new_null(cur, seg);
+                if (next == NULL)
+                    goto error;
+            }
+            else {
+                if (next == Py_None && i + 1 < n)
+                    goto bail; /* None MID-WALK: PURE _getdefault SEMANTICS */
+                Py_INCREF(next);
+            }
+        }
+        else {
+            goto bail; /* is_many, None, DataObject, ...: PURE */
+        }
+        Py_DECREF(cur);
+        cur = next;
+    }
+    Py_DECREF(segments);
+    result = c_to_data(cur);
+    Py_DECREF(cur);
+    return result;
+
+bail:
+    Py_DECREF(segments);
+    Py_DECREF(cur);
+    return NULL; /* NO ERROR SET */
+error:
+    Py_DECREF(segments);
+    Py_DECREF(cur);
+    return NULL; /* ERROR SET */
+}
+
+
 static PyObject *
 data_subscript(PyObject *self, PyObject *key)
 {
     if (PyUnicode_CheckExact(key)) {
         Py_ssize_t len = PyUnicode_GET_LENGTH(key);
-        if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
-            PyObject *d = STORE(self);
-            if (d != NULL && PyDict_CheckExact(d)) {
-                PyObject *v = PyDict_GetItemWithError(d, key); /* borrowed */
-                if (v == NULL) {
-                    if (PyErr_Occurred())
-                        return NULL;
-                    return new_null(d, key);
+        PyObject *d = STORE(self);
+        if (d != NULL) {
+            if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+                if (PyDict_CheckExact(d)) {
+                    PyObject *v = PyDict_GetItemWithError(d, key); /* borrowed */
+                    if (v == NULL) {
+                        if (PyErr_Occurred())
+                            return NULL;
+                        return new_null(d, key);
+                    }
+                    if (v == Py_None || type_in_tuple(Py_TYPE(v), null_types_tuple))
+                        return new_null(d, key);
+                    return c_to_data(v);
                 }
-                if (v == Py_None || type_in_tuple(Py_TYPE(v), null_types_tuple))
-                    return new_null(d, key);
-                return c_to_data(v);
+            }
+            else if (len > 1) {
+                PyObject *r = dotted_walk(d, key);
+                if (r != NULL)
+                    return r;
+                if (PyErr_Occurred())
+                    return NULL;
+                /* BAILED: FALL THROUGH TO PURE */
             }
         }
     }
-    /* DOTTED PATHS, ".", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    /* DOTTED EDGE CASES, ".", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
     return PyObject_CallFunctionObjArgs(data_getitem_slow, self, key, NULL);
 }
 
@@ -568,12 +668,154 @@ data_bool(PyObject *self)
 }
 
 
+static int
+data_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
+{
+    PyObject *r;
+    if (PyUnicode_CheckExact(key)) {
+        Py_ssize_t len = PyUnicode_GET_LENGTH(key);
+        if (len > 0 && PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+            PyObject *d = STORE(self);
+            if (d != NULL && PyDict_CheckExact(d)) {
+                if (value == NULL) {
+                    /* __delitem__: d.pop(key, None) */
+                    if (PyDict_DelItem(d, key) < 0) {
+                        if (!PyErr_ExceptionMatches(PyExc_KeyError))
+                            return -1;
+                        PyErr_Clear();
+                    }
+                    return 0;
+                }
+                {
+                    PyObject *unwrapped = speedups_from_data(NULL, value);
+                    int rc;
+                    if (unwrapped == NULL)
+                        return -1;
+                    if (unwrapped == Py_None) {
+                        Py_DECREF(unwrapped);
+                        if (PyDict_DelItem(d, key) < 0) {
+                            if (!PyErr_ExceptionMatches(PyExc_KeyError))
+                                return -1;
+                            PyErr_Clear();
+                        }
+                        return 0;
+                    }
+                    rc = PyDict_SetItem(d, key, unwrapped);
+                    Py_DECREF(unwrapped);
+                    return rc;
+                }
+            }
+        }
+    }
+    /* DOTTED KEYS, ".", "", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    if (value == NULL)
+        r = PyObject_CallFunctionObjArgs(data_delitem_slow, self, key, NULL);
+    else
+        r = PyObject_CallFunctionObjArgs(data_setitem_slow, self, key, value, NULL);
+    if (r == NULL)
+        return -1;
+    Py_DECREF(r);
+    return 0;
+}
+
+
+static PyObject *
+databs_get(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"key", "default", NULL};
+    PyObject *key, *dflt = NULL, *v;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &key, &dflt))
+        return NULL;
+    if (dflt == NULL)
+        dflt = NullSingleton;
+    v = PyObject_GetItem(self, key);
+    if (v == NULL)
+        return NULL;
+    if ((PyObject *)Py_TYPE(v) == NullTypeClass) {
+        Py_DECREF(v);
+        if (dflt == NullSingleton)
+            return new_null(self, key);
+        Py_INCREF(dflt);
+        return dflt;
+    }
+    return v;
+}
+
+
+static PyObject *
+databs_items(PyObject *self, PyObject *unused)
+{
+    PyObject *d = STORE(self);
+    PyObject *out, *k, *v;
+    Py_ssize_t pos = 0;
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return NULL;
+    }
+    if (!PyDict_CheckExact(d))
+        return PyObject_CallFunctionObjArgs(data_items_slow, self, NULL);
+
+    out = PyList_New(0);
+    if (out == NULL)
+        return NULL;
+    while (PyDict_Next(d, &pos, &k, &v)) {
+        int keep;
+        PyTypeObject *t = Py_TYPE(v);
+        if (v == Py_None || type_in_tuple(t, null_types_tuple))
+            keep = 0;
+        else if (t == &PyDict_Type || t == &PyUnicode_Type || t == &PyLong_Type
+                 || t == &PyFloat_Type || t == &PyList_Type || t == &PyBool_Type)
+            keep = 1;
+        else {
+            /* KEEP IF v != None IS TRUTHY, ELSE IF is_data(v) */
+            PyObject *r = PyObject_RichCompare(v, Py_None, Py_NE);
+            if (r == NULL)
+                goto error;
+            keep = PyObject_IsTrue(r);
+            Py_DECREF(r);
+            if (keep < 0)
+                goto error;
+            if (!keep)
+                keep = type_in_tuple(t, data_types_tuple);
+        }
+        if (keep) {
+            PyObject *wrapped = c_to_data(v);
+            PyObject *pair;
+            if (wrapped == NULL)
+                goto error;
+            pair = PyTuple_Pack(2, k, wrapped);
+            Py_DECREF(wrapped);
+            if (pair == NULL)
+                goto error;
+            if (PyList_Append(out, pair) < 0) {
+                Py_DECREF(pair);
+                goto error;
+            }
+            Py_DECREF(pair);
+        }
+    }
+    return out;
+error:
+    Py_DECREF(out);
+    return NULL;
+}
+
+
+static PyMethodDef data_methods[] = {
+    {"get", (PyCFunction)(void (*)(void))databs_get, METH_VARARGS | METH_KEYWORDS,
+     "get(key, default=Null) - value at key, wrapped; default on miss"},
+    {"items", databs_items, METH_NOARGS, "[(key, to_data(value))] with null values dropped"},
+    {NULL, NULL, 0, NULL},
+};
+
+
 static PyNumberMethods data_as_number = {
     .nb_bool = data_bool,
 };
 
 static PyMappingMethods data_as_mapping = {
     .mp_subscript = data_subscript,
+    .mp_ass_subscript = data_ass_subscript,
 };
 
 
@@ -589,6 +831,7 @@ static PyTypeObject DataBase_Type = {
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_traverse = store_traverse,
     .tp_clear = store_clear_,
+    .tp_methods = data_methods,
     .tp_base = &StoreBase_Type,
 };
 
@@ -916,10 +1159,11 @@ static PyTypeObject NullBase_Type = {
 static PyObject *
 speedups_sync(PyObject *self, PyObject *args)
 {
-    PyObject *nulls, *missings, *sequences;
+    PyObject *nulls, *missings, *sequences, *datas;
     if (!PyArg_ParseTuple(
-            args, "O!O!O!",
-            &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences))
+            args, "O!O!O!O!",
+            &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences,
+            &PyTuple_Type, &datas))
         return NULL;
     Py_INCREF(nulls);
     Py_XSETREF(null_types_tuple, nulls);
@@ -927,6 +1171,8 @@ speedups_sync(PyObject *self, PyObject *args)
     Py_XSETREF(missing_types_tuple, missings);
     Py_INCREF(sequences);
     Py_XSETREF(sequence_types_tuple, sequences);
+    Py_INCREF(datas);
+    Py_XSETREF(data_types_tuple, datas);
     Py_RETURN_NONE;
 }
 
@@ -963,8 +1209,10 @@ speedups_set_null(PyObject *self, PyObject *null_)
 static PyObject *
 speedups_init_data(PyObject *self, PyObject *args)
 {
-    PyObject *cls, *getattr_slow, *getitem_slow;
-    if (!PyArg_ParseTuple(args, "OOO", &cls, &getattr_slow, &getitem_slow))
+    PyObject *cls, *getattr_slow, *getitem_slow, *setitem_slow, *delitem_slow, *items_slow;
+    if (!PyArg_ParseTuple(
+            args, "OOOOOO",
+            &cls, &getattr_slow, &getitem_slow, &setitem_slow, &delitem_slow, &items_slow))
         return NULL;
     if (!PyType_Check(cls) || !PyType_IsSubtype((PyTypeObject *)cls, &StoreBase_Type)) {
         PyErr_SetString(PyExc_TypeError, "expected a _StoreBase subclass");
@@ -976,6 +1224,12 @@ speedups_init_data(PyObject *self, PyObject *args)
     Py_XSETREF(data_getattr_slow, getattr_slow);
     Py_INCREF(getitem_slow);
     Py_XSETREF(data_getitem_slow, getitem_slow);
+    Py_INCREF(setitem_slow);
+    Py_XSETREF(data_setitem_slow, setitem_slow);
+    Py_INCREF(delitem_slow);
+    Py_XSETREF(data_delitem_slow, delitem_slow);
+    Py_INCREF(items_slow);
+    Py_XSETREF(data_items_slow, items_slow);
     Py_RETURN_NONE;
 }
 
@@ -1062,12 +1316,15 @@ PyInit__speedups(void)
     slot_str = PyUnicode_InternFromString("_internal_value");
     empty_str = PyUnicode_InternFromString("");
     null_repr_str = PyUnicode_InternFromString("Null");
+    dot_str = PyUnicode_InternFromString(".");
     empty_tuple = PyTuple_New(0);
     null_types_tuple = PyTuple_New(0);
     missing_types_tuple = PyTuple_New(0);
     sequence_types_tuple = PyTuple_New(0);
-    if (!slot_str || !empty_str || !null_repr_str || !empty_tuple
-        || !null_types_tuple || !missing_types_tuple || !sequence_types_tuple)
+    data_types_tuple = PyTuple_New(0);
+    if (!slot_str || !empty_str || !null_repr_str || !dot_str || !empty_tuple
+        || !null_types_tuple || !missing_types_tuple || !sequence_types_tuple
+        || !data_types_tuple)
         return NULL;
     null_hash = PyObject_Hash(Py_None);
 

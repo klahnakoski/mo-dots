@@ -27,30 +27,18 @@
   `Null == 5` 2x. Known trade-offs: `iter(Null)` is a tuple-iterator (was
   list-iterator); default pickling of C-backed instances is unsupported (was
   slot-based; nothing in the repo pickles them).
-- C extension, phase 3 IN PROGRESS: dotted-path `w['a.b.c']` walk in C, C
-  `Data.get`/`items`, `mp_ass_subscript` fast path (set + delete). Design
-  decided, implementation partially in `_speedups.c`:
-  - `_sync` grows a 4th tuple (`_data_types`, for the `items` filter);
-    `register_data` must also call it. `_init_data` grows to
-    `(cls, getattr_slow, getitem_slow, setitem_slow, delitem_slow, items_slow)`
-    — pure `__setitem__`/`__delitem__`/`items` move from the ns copy to slow
-    paths, so datas.py drop set becomes {`__getattr__`, `__setattr__`,
-    `__delattr__`, `__getitem__`, `__setitem__`, `__delitem__`, `__bool__`,
-    `get`, `items`}.
-  - Dotted walk fast path: exact-str key, no `\b`, no `..`, no empty segments,
-    split on "."; per step exact-dict → PyDict get (hit returns RAW value,
-    None included), miss → NullType(d, seg); NullType step → chain
-    NullType(d, seg); anything else (is_many, None mid-walk, DataObject) →
-    bail to pure. TRAP: `_getdefault` falls back to `obj[int(key)]` on a dict
-    miss when the segment parses as float — so on a miss with a numeric-ish
-    segment (chars in [0-9.+-eE_]) bail to pure. After the loop `to_data(d)`
-    (final None → bare Null, matching pure; the simple no-dot path instead
-    answers NullType(d, key) — they differ deliberately).
-  - C `get(key, default=Null)`: v = self[key]; NullType class → default, with
-    default-is-Null → NullType(self, key) (parent is the Data, not the dict).
-  - C `items()`: exact-dict slot only (else items_slow); keep v unless v is
-    None or a null type; scalars/dict/list keep; exotic types use
-    `v != None` richcompare then is_data(); wrap kept values with to_data.
+- C extension, phase 3 DONE — dotted-path `w['a.b.c']` walk in C (bails to pure
+  on `\b`, `..`, empty or numeric-ish segments — `_getdefault` falls back to
+  `obj[int(key)]` on a dict miss — is_many steps, None mid-walk), C
+  `Data.get`/`items`, `mp_ass_subscript` fast path (set + delete). `_sync`
+  carries 4 tuples (adds `_data_types`); `_init_data` takes
+  (cls, getattr, getitem, setitem, delitem, items) pure slow paths. Measured:
+  `w['a.b.c']` 1,805→107ns (~19x vs pure; ~2.2x plain dict) — the dotted form
+  is now FASTER than `w.a.b.c` attribute chaining (~257ns), which materializes
+  intermediate Data wrappers.
+- C extension, phase 4 candidates: `tp_iter`/`__contains__`/`__len__` in C;
+  attribute-chain intermediates (a `w.a.b.c` walk cannot be fused — each `.`
+  is a separate getattro — but wrapper allocation could get a freelist).
   Publishing: hook wheelhouse upload into the release flow (today the workflow
   only uploads artifacts).
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few

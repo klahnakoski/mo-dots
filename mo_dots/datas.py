@@ -391,15 +391,33 @@ class Data:
 
 
 if utils._speedups:
-    # REBUILD OVER THE C BASE: getattr/setattr/delattr/getitem/bool BECOME C SLOTS,
-    # THE PURE METHODS REMAIN AS THE SLOW PATH (DOTTED PATHS, NON-dict SLOTS)
+    # REBUILD OVER THE C BASE: getattr/setattr/delattr/getitem/setitem/delitem/
+    # bool/get/items BECOME C SLOTS AND METHODS; THE PURE METHODS REMAIN AS THE
+    # SLOW PATH (DOTTED EDGE CASES, NON-dict SLOTS)
     _pure_Data = Data
     Data = utils._rebuild_class(
         _pure_Data,
         utils._speedups._DataBase,
-        {"__getattr__", "__setattr__", "__delattr__", "__getitem__", "__bool__"},
+        {
+            "__getattr__",
+            "__setattr__",
+            "__delattr__",
+            "__getitem__",
+            "__setitem__",
+            "__delitem__",
+            "__bool__",
+            "get",
+            "items",
+        },
     )
-    utils._speedups._init_data(Data, _pure_Data.__getattr__, _pure_Data.__getitem__)
+    utils._speedups._init_data(
+        Data,
+        _pure_Data.__getattr__,
+        _pure_Data.__getitem__,
+        _pure_Data.__setitem__,
+        _pure_Data.__delitem__,
+        _pure_Data.items,
+    )
 
 MutableMapping.register(Data)
 register_data(Data)
