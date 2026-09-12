@@ -361,14 +361,22 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c..a"].d += 1
 
-        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
+        self.assertEqual(
+            a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
+        )
 
         b.c1.d += 2
         b.c2.e += "f"
         b.c3.f += ["g"]
         b["c..a"].d += 3
         self.assertEqual(
-            a, {"c1": {"d": 3}, "c2": {"e": "ef"}, "c3": {"f": ["f", "g"]}, "c.a": {"d": 4},},
+            a,
+            {
+                "c1": {"d": 3},
+                "c2": {"e": "ef"},
+                "c3": {"f": ["f", "g"]},
+                "c.a": {"d": 4},
+            },
         )
 
     def test_slicing(self):
@@ -531,7 +539,9 @@ class TestDot(FuzzyTestCase):
         e = temp.e
         e.s.t = 1
         e.s.s = 2
-        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
+        self.assertEqual(
+            temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical"
+        )
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
@@ -580,13 +590,17 @@ class TestDot(FuzzyTestCase):
         a = {"a": "test"}
         b = {"a": [1, 2]}
         self.assertAlmostEqual(
-            set_default(a, b), {"a": ["test", 1, 2]}, "expecting string, not list, nor some hybrid",
+            set_default(a, b),
+            {"a": ["test", 1, 2]},
+            "expecting string, not list, nor some hybrid",
         )
 
     def test_unicode_or_list(self):
         a = to_data({"a": "test"})
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
+        self.assertAlmostEqual(
+            a | b, {"a": "test"}, "expecting string, not list, nor some hybrid"
+        )
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
@@ -622,7 +636,9 @@ class TestDot(FuzzyTestCase):
     def test_add_null_to_list(self):
         expected = to_data(["test", "list"])
         test = expected + None
-        self.assertEqual(test, expected, "expecting adding None to list does not change list")
+        self.assertEqual(
+            test, expected, "expecting adding None to list does not change list"
+        )
 
     def test_pop_list(self):
         l = to_data([1, 2, 3, 4])
@@ -1037,7 +1053,9 @@ class TestDot(FuzzyTestCase):
         d = Data()
         for i in range(3):
             d = Data(a=d)
-        self.assertEqual(repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})")
+        self.assertEqual(
+            repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})"
+        )
 
     def test_add_one_to_dict(self):
         x = to_data({"a": {"b": 42}})
@@ -1105,20 +1123,20 @@ class TestDot(FuzzyTestCase):
 
     def test_or_w_dot1(self):
         data = Data()
-        data |= leaves_to_data({".":1})
+        data |= leaves_to_data({".": 1})
         self.assertEqual(data, 1)
 
     def test_or_w_dot2(self):
         data = Data()
-        data['.'] |= 1
+        data["."] |= 1
         self.assertEqual(data, 1)
 
     def test_object_of_unknown(self):
-
         class Unknown:
             parent = None
 
             __slots__ = ["a"]
+
             def __init__(self, a):
                 self.a = a
 
@@ -1143,21 +1161,23 @@ class TestDot(FuzzyTestCase):
 
     def test_leaves_loop(self):
         d = to_data({"a": 1})
-        d.a=d
+        d.a = d
         result = list(d.leaves())
         self.assertEqual(result, [("a", d)])
 
     def test_object_leaves_loop(self):
         d = object_to_data({"a": 1})
-        d.a=d
+        d.a = d
         result = list(d.leaves())
         self.assertEqual(result, [("a", d)])
 
     def test_leaves_w_bs4(self):
         from bs4 import BeautifulSoup
 
-        for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
-            result = list(to_data({"p":p}).leaves())
+        for p in BeautifulSoup(
+            "<html><body><p>test</p></body></html>", "html.parser"
+        ).find_all("p"):
+            result = list(to_data({"p": p}).leaves())
             self.assertEqual(result, [("p", p)])
 
     def test_null_tuples(self):
@@ -1202,7 +1222,9 @@ class _TestMapping(object):
         self.a = None
         self.b = None
 
+
 register_type(_TestMapping)
+
 
 class SampleData(object):
     def __init__(self, a=None):
@@ -1216,15 +1238,12 @@ class SampleData(object):
 register_type(SampleData)
 
 
-
 class NoBool:
-
     def __bool__(self):
         raise Exception("problem")
 
 
 register_data(NoBool)
-
 
 
 class StructuredLogger_usingList(object):

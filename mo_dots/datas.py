@@ -61,7 +61,9 @@ class Data:
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception("only keywords are allowed, not " + args[0].__class__.__name__)
+            raise Exception(
+                "only keywords are allowed, not " + args[0].__class__.__name__
+            )
         _set(self, SLOT, kwargs)
 
     def __bool__(self):

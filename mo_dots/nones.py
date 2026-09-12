@@ -8,7 +8,16 @@
 #
 from mo_imports import expect, export
 
-from mo_dots.utils import CLASS, KEY, SLOT, is_null, is_missing, is_sequence, register_null_type, is_many
+from mo_dots.utils import (
+    CLASS,
+    KEY,
+    SLOT,
+    is_null,
+    is_missing,
+    is_sequence,
+    register_null_type,
+    is_many,
+)
 
 to_data, get_attr = expect("to_data", "get_attr")
 

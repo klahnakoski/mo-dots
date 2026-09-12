@@ -27,7 +27,10 @@ def get_module(name):
         return importlib.import_module(name)
     except Exception as e:
         get_logger().error(
-            "`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e,
+            "`pip install "
+            + name.split(".")[0].replace("_", "-")
+            + "` to enable this feature",
+            cause=e,
         )
 
 
@@ -124,7 +127,11 @@ def is_namedtuple(obj):
 
 def is_data_object(obj):
     # __dataclass_fields__ is the dataclass marker; dataclasses costs 10ms to import
-    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or hasattr(obj, "__dataclass_fields__")
+    return (
+        isinstance(obj, _known_data_types)
+        or is_namedtuple(obj)
+        or hasattr(obj, "__dataclass_fields__")
+    )
 
 
 def is_known_data_type(_class):
@@ -192,7 +199,9 @@ def is_many(value):
     type_ = _get(value, CLASS)
     if issubclass(type_, types.GeneratorType):
         _many_types = _many_types + (type_,)
-        get_logger.warning("is_many() can not detect generator {type}", type=type_.__name__)
+        get_logger.warning(
+            "is_many() can not detect generator {type}", type=type_.__name__
+        )
         return True
     return False
 
