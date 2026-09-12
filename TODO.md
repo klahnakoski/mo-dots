@@ -57,8 +57,14 @@
   intermediates (`w.a.b.c` cannot be fused — each `.` is a separate getattro —
   laziness would change aliasing semantics under mutation). Precompiled path
   objects (`p = path("a.b.c"); p(w)`) in fields.py for re.compile-style reuse.
-  Publishing: hook wheelhouse upload into the release flow (today the workflow
-  only uploads artifacts).
+  Publishing DONE — `packaging/build_wheels.py` (ported from mo-black's
+  deploy.py) fills dist/ with sdist (extension optional), pure py3-none-any
+  wheel, and cibuildwheel binaries (windows native, linux via docker; macos
+  still needs a Mac — CI wheels.yml covers it but nothing uploads those);
+  mo-deploy's pypi() runs it as a repo-owned hook when the file exists, then
+  twines dist/*. `packaging/install_speedups.py` pip-installs the optimized
+  build locally. mo-deploy also runs `packaging/add_speedups.py` on every
+  generated setup.py, so per-python wheel tests compile the extension.
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
   fields, patch a few, emit text — NDJSON ETL shape). Measured on an 819-byte line,
   2 changes + 1 append: naive pure-Python splice 1,175ns vs stdlib
