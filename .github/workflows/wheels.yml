@@ -1,6 +1,7 @@
-# BUILD MACOS BINARY WHEELS (C ACCELERATOR); macos-13 = x86_64, macos-14 = arm64.
-# WINDOWS AND LINUX WHEELS BUILD LOCALLY (packaging/build_wheels.py), WHICH ALSO
-# DISPATCHES THIS WORKFLOW (--github) AND COLLECTS THE ARTIFACTS INTO dist/.
+# BUILD MACOS BINARY WHEELS (C ACCELERATOR), arm64 AND x86_64, ON ONE ARM RUNNER
+# (macos-13 INTEL RUNNERS ARE RETIRED). WINDOWS AND LINUX WHEELS BUILD LOCALLY
+# (packaging/build_wheels.py), WHICH ALSO DISPATCHES THIS WORKFLOW (--github)
+# AND COLLECTS THE ARTIFACTS INTO dist/.
 
 name: wheels
 
@@ -13,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13, macos-14] # x86_64, arm64
+        os: [macos-14] # arm64 HOST; x86_64 CROSS-COMPILED, TESTED VIA ROSETTA
 
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_SKIP: "pp*"
+          CIBW_ARCHS_MACOS: "arm64 x86_64"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_COMMAND: >
             python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None"
