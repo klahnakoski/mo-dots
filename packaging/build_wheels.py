@@ -47,8 +47,10 @@ SMOKE = (
 CIBUILDWHEEL_PLATFORM = {"win32": "windows", "darwin": "macos", "linux": "linux"}
 
 CIBW_ENV = {
-    # NO musllinux: ONE CONTAINER IMAGE; ALPINE INSTALLS FALL BACK TO THE SDIST
+    # NO musllinux: ONE IMAGE PER ARCH; ALPINE INSTALLS FALL BACK TO THE SDIST
     "CIBW_SKIP": "pp* *musllinux*",
+    # aarch64 COMPILES AND TESTS UNDER qemu (docker desktop binfmt); SLOW BUT REAL
+    "CIBW_ARCHS_LINUX": "x86_64 aarch64",
     "CIBW_TEST_COMMAND": SMOKE,
     "CIBW_BUILD_VERBOSITY": "1",
     # KEEP OUTPUT LINE-Y: mo-deploy KILLS A COMMAND SILENT FOR TOO LONG
