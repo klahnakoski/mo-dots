@@ -25,7 +25,7 @@ jobs:
           python packaging/add_speedups.py setup.py --required
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_SKIP: "pp*"
           CIBW_BUILD_VERBOSITY: 1
