@@ -36,11 +36,22 @@
   `w['a.b.c']` 1,805→107ns (~19x vs pure; ~2.2x plain dict) — the dotted form
   is now FASTER than `w.a.b.c` attribute chaining (~257ns), which materializes
   intermediate Data wrappers.
-- C extension, phase 4 candidates: `tp_iter`/`__contains__`/`__len__` in C;
-  attribute-chain intermediates (a `w.a.b.c` walk cannot be fused — each `.`
-  is a separate getattro — but wrapper allocation could get a freelist).
-  Publishing: hook wheelhouse upload into the release flow (today the workflow
-  only uploads artifacts).
+- C extension, phase 4 DONE — FlatList column extract in C: `_ListBase`
+  (same `_StoreBase` layout, so Data↔FlatList `__class__` reassignment stays
+  compatible) implements `tp_getattro` + `get` — per exact-dict element a raw
+  dict lookup, mirroring the pure wrap→`get_attr`→`from_data` round trip:
+  None/null/NaN/""/empty-list skipped, lists extended, Data/FlatList values
+  unwrap to their slot. Bails to pure `get` on dotted/numeric-ish/escaped
+  keys, Data-method-shadowed names, and non-dict elements. `_sync` carries
+  `_many_types` (5 tuples). Measured: `flist.name` over 1000 dicts
+  4,514→16ns/element (287x) — faster than a plain list comprehension (27ns),
+  the loop never enters the interpreter.
+- C extension, phase 5 candidates: `tp_iter`/`__contains__`/`__len__` in C;
+  Data-wrapper freelist for attribute-chain intermediates (`w.a.b.c` cannot
+  be fused — each `.` is a separate getattro — laziness would change aliasing
+  semantics under mutation). Precompiled path objects (`p = path("a.b.c");
+  p(w)`) in fields.py for re.compile-style reuse. Publishing: hook wheelhouse
+  upload into the release flow (today the workflow only uploads artifacts).
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
   fields, patch a few, emit text — NDJSON ETL shape). Measured on an 819-byte line,
   2 changes + 1 append: naive pure-Python splice 1,175ns vs stdlib

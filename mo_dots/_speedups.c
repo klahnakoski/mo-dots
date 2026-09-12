@@ -68,6 +68,7 @@ static PyObject *null_types_tuple = NULL;    /* tuple of null classes    */
 static PyObject *missing_types_tuple = NULL; /* (str, *null, *many)      */
 static PyObject *sequence_types_tuple = NULL;
 static PyObject *data_types_tuple = NULL;    /* is_data() classes        */
+static PyObject *many_types_tuple = NULL;    /* is_many() classes        */
 
 /* PURE-PYTHON SLOW PATHS (THE ORIGINAL METHODS) */
 static PyObject *null_getattr_slow = NULL;
@@ -77,7 +78,10 @@ static PyObject *data_getitem_slow = NULL;
 static PyObject *data_setitem_slow = NULL;
 static PyObject *data_delitem_slow = NULL;
 static PyObject *data_items_slow = NULL;
-static PyObject *dot_str = NULL; /* "." */
+static PyObject *flatlist_get_slow = NULL;
+static PyObject *dot_str = NULL;  /* "." */
+static PyObject *json_str = NULL; /* "__json__" */
+static PyObject *call_str = NULL; /* "__call__" */
 
 static PyTypeObject StoreBase_Type;
 static PyTypeObject DataBase_Type;
@@ -1154,16 +1158,229 @@ static PyTypeObject NullBase_Type = {
 };
 
 
+/* ======================= _ListBase ======================================== */
+
+/* APPEND THE COLUMN VALUE FOR ONE RAW dict-VALUE; 0 OK, -1 ERROR, 1 BAIL */
+static int
+flat_classify_append(PyObject *out, PyObject *raw)
+{
+    PyTypeObject *t = Py_TYPE(raw);
+
+    if (raw == Py_None || type_in_tuple(t, null_types_tuple))
+        return 0; /* SKIPPED */
+    if (t == &PyFloat_Type) {
+        if (isnan(PyFloat_AS_DOUBLE(raw)))
+            return 0; /* from_data(nan) IS None */
+        return PyList_Append(out, raw);
+    }
+    if (t == &PyUnicode_Type) {
+        if (PyUnicode_GET_LENGTH(raw) == 0)
+            return 0; /* is_missing("") */
+        return PyList_Append(out, raw);
+    }
+    if (t == &PyList_Type || t == &PyTuple_Type) {
+        /* is_missing(EMPTY) SKIPS; is_many EXTENDS RAW ITEMS */
+        Py_ssize_t i, n = PySequence_Fast_GET_SIZE(raw);
+        for (i = 0; i < n; i++) {
+            if (PyList_Append(out, PySequence_Fast_GET_ITEM(raw, i)) < 0)
+                return -1;
+        }
+        return 0;
+    }
+    if (t == &PyDict_Type || t == &PyLong_Type || t == &PyBool_Type)
+        return PyList_Append(out, raw);
+    if ((PyObject *)t == DataClass || (PyObject *)t == FlatListClass) {
+        /* from_data FIRST: THE SLOT RIDES IN */
+        PyObject *slot = STORE(raw);
+        if (slot == NULL)
+            return 1;
+        return flat_classify_append(out, slot);
+    }
+    if (type_in_tuple(t, generator_types))
+        return 1; /* PURE from_data-MAPS THE ITEMS */
+    {
+        /* GENERIC: is_missing -> SKIP; is_many -> EXTEND; ELSE APPEND */
+        int r = PyObject_IsInstance(raw, missing_types_tuple);
+        if (r < 0)
+            return -1;
+        if (r) {
+            r = PyObject_IsTrue(raw);
+            if (r < 0)
+                return -1;
+            if (!r)
+                return 0;
+        }
+        r = PyObject_IsInstance(raw, many_types_tuple);
+        if (r < 0)
+            return -1;
+        if (r) {
+            PyObject *item, *iter = PyObject_GetIter(raw);
+            if (iter == NULL)
+                return -1;
+            while ((item = PyIter_Next(iter)) != NULL) {
+                if (PyList_Append(out, item) < 0) {
+                    Py_DECREF(item);
+                    Py_DECREF(iter);
+                    return -1;
+                }
+                Py_DECREF(item);
+            }
+            Py_DECREF(iter);
+            return PyErr_Occurred() ? -1 : 0;
+        }
+        return PyList_Append(out, raw);
+    }
+}
+
+
+/* FlatList.get(key) COLUMN EXTRACT; RETURNS NULL WITH NO ERROR SET TO BAIL */
+static PyObject *
+flatlist_get_impl(PyObject *self, PyObject *key)
+{
+    PyObject *d, *out, *result;
+    Py_ssize_t i, n, len;
+
+    if (!PyUnicode_CheckExact(key))
+        return NULL;
+    len = PyUnicode_GET_LENGTH(key);
+    if (len == 0 || PyUnicode_FindChar(key, '.', 0, len, 1) >= 0
+        || PyUnicode_FindChar(key, '\b', 0, len, 1) >= 0 || numeric_candidate(key))
+        return NULL; /* ".", DOTTED, ESCAPED, obj[int(key)] CANDIDATES: PURE */
+    if (DataClass == NULL)
+        return NULL;
+    {
+        /* A Data TYPE ATTR SHADOWS THE dict VALUE PER ELEMENT: PURE */
+        PyObject *descr = mro_lookup((PyTypeObject *)DataClass, key);
+        if (descr != NULL) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+        if (PyErr_Occurred())
+            return NULL;
+    }
+    d = STORE(self);
+    if (d == NULL || !PyList_CheckExact(d))
+        return NULL;
+
+    out = PyList_New(0);
+    if (out == NULL)
+        return NULL;
+    n = PyList_GET_SIZE(d);
+    for (i = 0; i < n; i++) {
+        PyObject *v = PyList_GET_ITEM(d, i);
+        if (v == Py_None)
+            continue; /* Null NAVIGATION ANSWERS None: SKIPPED */
+        if (!PyDict_CheckExact(v))
+            goto bail; /* OBJECTS, NESTED LISTS, ...: PURE */
+        {
+            PyObject *raw = PyDict_GetItemWithError(v, key); /* borrowed */
+            int rc;
+            if (raw == NULL) {
+                if (PyErr_Occurred())
+                    goto error;
+                continue;
+            }
+            rc = flat_classify_append(out, raw);
+            if (rc < 0)
+                goto error;
+            if (rc > 0)
+                goto bail;
+        }
+    }
+    result = new_store(FlatListClass, out);
+    Py_DECREF(out);
+    return result;
+
+bail:
+    Py_DECREF(out);
+    PyErr_Clear();
+    return NULL; /* NO ERROR SET */
+error:
+    Py_DECREF(out);
+    return NULL; /* ERROR SET */
+}
+
+
+static PyObject *
+flatlist_getattro(PyObject *self, PyObject *name)
+{
+    int found;
+    PyObject *r;
+    PyObject *attr = bind_type_attr(self, name, &found);
+    if (found)
+        return attr;
+
+    {
+        int eq = PyObject_RichCompareBool(name, json_str, Py_EQ);
+        if (eq < 0)
+            return NULL;
+        if (!eq) {
+            eq = PyObject_RichCompareBool(name, call_str, Py_EQ);
+            if (eq < 0)
+                return NULL;
+        }
+        if (eq) {
+            PyErr_SetObject(PyExc_AttributeError, name);
+            return NULL;
+        }
+    }
+
+    r = flatlist_get_impl(self, name);
+    if (r != NULL)
+        return r;
+    if (PyErr_Occurred())
+        return NULL;
+    return PyObject_CallFunctionObjArgs(flatlist_get_slow, self, name, NULL);
+}
+
+
+static PyObject *
+listbs_get(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"key", NULL};
+    PyObject *key, *r;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &key))
+        return NULL;
+    r = flatlist_get_impl(self, key);
+    if (r != NULL)
+        return r;
+    if (PyErr_Occurred())
+        return NULL;
+    return PyObject_CallFunctionObjArgs(flatlist_get_slow, self, key, NULL);
+}
+
+
+static PyMethodDef list_methods[] = {
+    {"get", (PyCFunction)(void (*)(void))listbs_get, METH_VARARGS | METH_KEYWORDS,
+     "get(key) - column extract: value at key for each element, nulls dropped, lists flattened"},
+    {NULL, NULL, 0, NULL},
+};
+
+
+static PyTypeObject ListBase_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "mo_dots._speedups._ListBase",
+    .tp_basicsize = sizeof(StoreObject),
+    .tp_dealloc = store_dealloc,
+    .tp_getattro = flatlist_getattro,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+    .tp_traverse = store_traverse,
+    .tp_clear = store_clear_,
+    .tp_methods = list_methods,
+    .tp_base = &StoreBase_Type,
+};
+
+
 /* ======================= WIRING =========================================== */
 
 static PyObject *
 speedups_sync(PyObject *self, PyObject *args)
 {
-    PyObject *nulls, *missings, *sequences, *datas;
+    PyObject *nulls, *missings, *sequences, *datas, *manys;
     if (!PyArg_ParseTuple(
-            args, "O!O!O!O!",
+            args, "O!O!O!O!O!",
             &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences,
-            &PyTuple_Type, &datas))
+            &PyTuple_Type, &datas, &PyTuple_Type, &manys))
         return NULL;
     Py_INCREF(nulls);
     Py_XSETREF(null_types_tuple, nulls);
@@ -1173,6 +1390,8 @@ speedups_sync(PyObject *self, PyObject *args)
     Py_XSETREF(sequence_types_tuple, sequences);
     Py_INCREF(datas);
     Py_XSETREF(data_types_tuple, datas);
+    Py_INCREF(manys);
+    Py_XSETREF(many_types_tuple, manys);
     Py_RETURN_NONE;
 }
 
@@ -1235,14 +1454,19 @@ speedups_init_data(PyObject *self, PyObject *args)
 
 
 static PyObject *
-speedups_init_list(PyObject *self, PyObject *cls)
+speedups_init_list(PyObject *self, PyObject *args)
 {
+    PyObject *cls, *get_slow;
+    if (!PyArg_ParseTuple(args, "OO", &cls, &get_slow))
+        return NULL;
     if (!PyType_Check(cls) || !PyType_IsSubtype((PyTypeObject *)cls, &StoreBase_Type)) {
         PyErr_SetString(PyExc_TypeError, "expected a _StoreBase subclass");
         return NULL;
     }
     Py_INCREF(cls);
     Py_XSETREF(FlatListClass, cls);
+    Py_INCREF(get_slow);
+    Py_XSETREF(flatlist_get_slow, get_slow);
     Py_RETURN_NONE;
 }
 
@@ -1296,7 +1520,7 @@ static PyMethodDef speedups_methods[] = {
     {"_init_null", speedups_init_null, METH_VARARGS, "(NullType, getattr_slow, getitem_slow)"},
     {"_set_null", speedups_set_null, METH_O, "store the Null singleton"},
     {"_init_data", speedups_init_data, METH_VARARGS, "(Data, getattr_slow, getitem_slow)"},
-    {"_init_list", speedups_init_list, METH_O, "(FlatList)"},
+    {"_init_list", speedups_init_list, METH_VARARGS, "(FlatList, get_slow)"},
     {"_init", speedups_init, METH_VARARGS,
      "(Data, FlatList, NullType, Null, DataObject, OrderedDict, generator_types, from_data_gen)"},
     {NULL, NULL, 0, NULL},
@@ -1317,14 +1541,17 @@ PyInit__speedups(void)
     empty_str = PyUnicode_InternFromString("");
     null_repr_str = PyUnicode_InternFromString("Null");
     dot_str = PyUnicode_InternFromString(".");
+    json_str = PyUnicode_InternFromString("__json__");
+    call_str = PyUnicode_InternFromString("__call__");
     empty_tuple = PyTuple_New(0);
     null_types_tuple = PyTuple_New(0);
     missing_types_tuple = PyTuple_New(0);
     sequence_types_tuple = PyTuple_New(0);
     data_types_tuple = PyTuple_New(0);
-    if (!slot_str || !empty_str || !null_repr_str || !dot_str || !empty_tuple
-        || !null_types_tuple || !missing_types_tuple || !sequence_types_tuple
-        || !data_types_tuple)
+    many_types_tuple = PyTuple_New(0);
+    if (!slot_str || !empty_str || !null_repr_str || !dot_str || !json_str || !call_str
+        || !empty_tuple || !null_types_tuple || !missing_types_tuple
+        || !sequence_types_tuple || !data_types_tuple || !many_types_tuple)
         return NULL;
     null_hash = PyObject_Hash(Py_None);
 
@@ -1333,6 +1560,8 @@ PyInit__speedups(void)
     if (PyType_Ready(&DataBase_Type) < 0)
         return NULL;
     if (PyType_Ready(&NullBase_Type) < 0)
+        return NULL;
+    if (PyType_Ready(&ListBase_Type) < 0)
         return NULL;
 
     m = PyModule_Create(&speedups_module);
@@ -1346,6 +1575,9 @@ PyInit__speedups(void)
         return NULL;
     Py_INCREF(&NullBase_Type);
     if (PyModule_AddObject(m, "_NullBase", (PyObject *)&NullBase_Type) < 0)
+        return NULL;
+    Py_INCREF(&ListBase_Type);
+    if (PyModule_AddObject(m, "_ListBase", (PyObject *)&ListBase_Type) < 0)
         return NULL;
     return m;
 }

@@ -308,11 +308,14 @@ class FlatList:
 
 
 if utils._speedups:
-    # SAME C STORAGE BASE AS Data SO __class__ REASSIGNMENT (datas.__setitem__ ".")
-    # KEEPS COMPATIBLE LAYOUTS; ALL FlatList BEHAVIOR STAYS PYTHON
+    # _ListBase SHARES _StoreBase LAYOUT WITH Data SO __class__ REASSIGNMENT
+    # (datas.__setitem__ ".") STAYS COMPATIBLE; getattr/get COLUMN EXTRACT IS C,
+    # THE PURE get REMAINS THE SLOW PATH (DOTTED KEYS, NON-dict ELEMENTS)
     _pure_FlatList = FlatList
-    FlatList = utils._rebuild_class(_pure_FlatList, utils._speedups._StoreBase, set())
-    utils._speedups._init_list(FlatList)
+    FlatList = utils._rebuild_class(
+        _pure_FlatList, utils._speedups._ListBase, {"__getattr__", "get"}
+    )
+    utils._speedups._init_list(FlatList, _pure_FlatList.get)
 
 register_list(FlatList)
 
