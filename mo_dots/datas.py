@@ -392,8 +392,8 @@ class Data:
 
 if utils._speedups:
     # REBUILD OVER THE C BASE: getattr/setattr/delattr/getitem/setitem/delitem/
-    # bool/get/items BECOME C SLOTS AND METHODS; THE PURE METHODS REMAIN AS THE
-    # SLOW PATH (DOTTED EDGE CASES, NON-dict SLOTS)
+    # bool/iter/contains/len/get/items BECOME C SLOTS AND METHODS; THE PURE
+    # METHODS REMAIN AS THE SLOW PATH (DOTTED EDGE CASES, NON-dict SLOTS)
     _pure_Data = Data
     Data = utils._rebuild_class(
         _pure_Data,
@@ -406,6 +406,9 @@ if utils._speedups:
             "__setitem__",
             "__delitem__",
             "__bool__",
+            "__iter__",
+            "__contains__",
+            "__len__",
             "get",
             "items",
         },

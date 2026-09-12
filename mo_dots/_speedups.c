@@ -82,6 +82,7 @@ static PyObject *flatlist_get_slow = NULL;
 static PyObject *dot_str = NULL;  /* "." */
 static PyObject *json_str = NULL; /* "__json__" */
 static PyObject *call_str = NULL; /* "__call__" */
+static PyObject *list_contains_meth = NULL; /* list.__contains__ descriptor */
 
 static PyTypeObject StoreBase_Type;
 static PyTypeObject DataBase_Type;
@@ -805,6 +806,64 @@ error:
 }
 
 
+static PyObject *
+data_iter(PyObject *self)
+{
+    PyObject *d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return NULL;
+    }
+    if (PyDict_CheckExact(d)) {
+        /* yield from d.items(): ITERATE THE LIVE VIEW */
+        PyObject *it, *items = PyObject_CallMethod(d, "items", NULL);
+        if (items == NULL)
+            return NULL;
+        it = PyObject_GetIter(items);
+        Py_DECREF(items);
+        return it;
+    }
+    return PyObject_GetIter(d);
+}
+
+
+static int
+data_contains(PyObject *self, PyObject *key)
+{
+    /* is_data(self[key]) or bool(self[key]) */
+    int r;
+    PyObject *v = data_subscript(self, key);
+    if (v == NULL)
+        return -1;
+    if (type_in_tuple(Py_TYPE(v), data_types_tuple))
+        r = 1;
+    else
+        r = PyObject_IsTrue(v);
+    Py_DECREF(v);
+    return r;
+}
+
+
+static Py_ssize_t
+data_length(PyObject *self)
+{
+    PyObject *d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return -1;
+    }
+    if (!PyDict_Check(d)) {
+        /* PURE CALLS dict.__len__(d): SAME TypeError ON A NON-dict SLOT */
+        PyErr_Format(
+            PyExc_TypeError,
+            "descriptor '__len__' requires a 'dict' object but received a '%s'",
+            Py_TYPE(d)->tp_name);
+        return -1;
+    }
+    return PyDict_Size(d);
+}
+
+
 static PyMethodDef data_methods[] = {
     {"get", (PyCFunction)(void (*)(void))databs_get, METH_VARARGS | METH_KEYWORDS,
      "get(key, default=Null) - value at key, wrapped; default on miss"},
@@ -818,8 +877,13 @@ static PyNumberMethods data_as_number = {
 };
 
 static PyMappingMethods data_as_mapping = {
+    .mp_length = data_length,
     .mp_subscript = data_subscript,
     .mp_ass_subscript = data_ass_subscript,
+};
+
+static PySequenceMethods data_as_sequence = {
+    .sq_contains = data_contains,
 };
 
 
@@ -830,7 +894,9 @@ static PyTypeObject DataBase_Type = {
     .tp_dealloc = store_dealloc,
     .tp_getattro = data_getattro,
     .tp_setattro = data_setattro,
+    .tp_iter = data_iter,
     .tp_as_number = &data_as_number,
+    .tp_as_sequence = &data_as_sequence,
     .tp_as_mapping = &data_as_mapping,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_traverse = store_traverse,
@@ -1350,10 +1416,109 @@ listbs_get(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+static PyObject *
+list_iter(PyObject *self)
+{
+    /* iter([to_data(v) for v in slot]) */
+    PyObject *d = STORE(self);
+    PyObject *out, *it;
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return NULL;
+    }
+    if (PyList_CheckExact(d) || PyTuple_CheckExact(d)) {
+        Py_ssize_t i, n = PySequence_Fast_GET_SIZE(d);
+        out = PyList_New(n);
+        if (out == NULL)
+            return NULL;
+        for (i = 0; i < n; i++) {
+            PyObject *w = c_to_data(PySequence_Fast_GET_ITEM(d, i));
+            if (w == NULL) {
+                Py_DECREF(out);
+                return NULL;
+            }
+            PyList_SET_ITEM(out, i, w);
+        }
+    }
+    else {
+        PyObject *item, *src = PyObject_GetIter(d);
+        if (src == NULL)
+            return NULL;
+        out = PyList_New(0);
+        if (out == NULL) {
+            Py_DECREF(src);
+            return NULL;
+        }
+        while ((item = PyIter_Next(src)) != NULL) {
+            PyObject *w = c_to_data(item);
+            Py_DECREF(item);
+            if (w == NULL || PyList_Append(out, w) < 0) {
+                Py_XDECREF(w);
+                Py_DECREF(src);
+                Py_DECREF(out);
+                return NULL;
+            }
+            Py_DECREF(w);
+        }
+        Py_DECREF(src);
+        if (PyErr_Occurred()) {
+            Py_DECREF(out);
+            return NULL;
+        }
+    }
+    it = PyObject_GetIter(out);
+    Py_DECREF(out);
+    return it;
+}
+
+
+static int
+list_contains(PyObject *self, PyObject *item)
+{
+    PyObject *d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return -1;
+    }
+    if (PyList_CheckExact(d))
+        return PySequence_Contains(d, item);
+    {
+        /* PURE CALLS list.__contains__(slot, item): SAME TypeError ON NON-list */
+        int t;
+        PyObject *r = PyObject_CallFunctionObjArgs(list_contains_meth, d, item, NULL);
+        if (r == NULL)
+            return -1;
+        t = PyObject_IsTrue(r);
+        Py_DECREF(r);
+        return t;
+    }
+}
+
+
+static Py_ssize_t
+list_length(PyObject *self)
+{
+    PyObject *d = STORE(self);
+    if (d == NULL) {
+        PyErr_SetObject(PyExc_AttributeError, slot_str);
+        return -1;
+    }
+    if (PyList_CheckExact(d))
+        return PyList_GET_SIZE(d);
+    return PyObject_Size(d);
+}
+
+
 static PyMethodDef list_methods[] = {
     {"get", (PyCFunction)(void (*)(void))listbs_get, METH_VARARGS | METH_KEYWORDS,
      "get(key) - column extract: value at key for each element, nulls dropped, lists flattened"},
     {NULL, NULL, 0, NULL},
+};
+
+
+static PySequenceMethods list_as_sequence = {
+    .sq_length = list_length,
+    .sq_contains = list_contains,
 };
 
 
@@ -1363,6 +1528,8 @@ static PyTypeObject ListBase_Type = {
     .tp_basicsize = sizeof(StoreObject),
     .tp_dealloc = store_dealloc,
     .tp_getattro = flatlist_getattro,
+    .tp_iter = list_iter,
+    .tp_as_sequence = &list_as_sequence,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_traverse = store_traverse,
     .tp_clear = store_clear_,
@@ -1543,6 +1710,7 @@ PyInit__speedups(void)
     dot_str = PyUnicode_InternFromString(".");
     json_str = PyUnicode_InternFromString("__json__");
     call_str = PyUnicode_InternFromString("__call__");
+    list_contains_meth = PyObject_GetAttrString((PyObject *)&PyList_Type, "__contains__");
     empty_tuple = PyTuple_New(0);
     null_types_tuple = PyTuple_New(0);
     missing_types_tuple = PyTuple_New(0);
@@ -1550,7 +1718,7 @@ PyInit__speedups(void)
     data_types_tuple = PyTuple_New(0);
     many_types_tuple = PyTuple_New(0);
     if (!slot_str || !empty_str || !null_repr_str || !dot_str || !json_str || !call_str
-        || !empty_tuple || !null_types_tuple || !missing_types_tuple
+        || !list_contains_meth || !empty_tuple || !null_types_tuple || !missing_types_tuple
         || !sequence_types_tuple || !data_types_tuple || !many_types_tuple)
         return NULL;
     null_hash = PyObject_Hash(Py_None);

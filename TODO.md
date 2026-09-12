@@ -46,12 +46,19 @@
   `_many_types` (5 tuples). Measured: `flist.name` over 1000 dicts
   4,514→16ns/element (287x) — faster than a plain list comprehension (27ns),
   the loop never enters the interpreter.
-- C extension, phase 5 candidates: `tp_iter`/`__contains__`/`__len__` in C;
-  Data-wrapper freelist for attribute-chain intermediates (`w.a.b.c` cannot
-  be fused — each `.` is a separate getattro — laziness would change aliasing
-  semantics under mutation). Precompiled path objects (`p = path("a.b.c");
-  p(w)`) in fields.py for re.compile-style reuse. Publishing: hook wheelhouse
-  upload into the release flow (today the workflow only uploads artifacts).
+- C extension, phase 5a DONE — `tp_iter`/`sq_contains`/`mp_length` in C for
+  Data and FlatList: Data iter is the live `d.items()` view (non-dict slots
+  iterate the slot), contains reuses the C subscript then `is_data-or-truthy`,
+  len mirrors `dict.__len__(d)` including its TypeError on non-dict slots;
+  FlatList iter wraps each element via `c_to_data`, contains/len keep
+  `list.__contains__` parity on tuple slots. Measured: `len(w)` 7.3x,
+  `'a' in w` 4x, `iter(w)` 2.3x, FlatList iter 2.1x/element, `len(flist)` 7x.
+- C extension, phase 5 remaining: Data-wrapper freelist for attribute-chain
+  intermediates (`w.a.b.c` cannot be fused — each `.` is a separate getattro —
+  laziness would change aliasing semantics under mutation). Precompiled path
+  objects (`p = path("a.b.c"); p(w)`) in fields.py for re.compile-style reuse.
+  Publishing: hook wheelhouse upload into the release flow (today the workflow
+  only uploads artifacts).
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
   fields, patch a few, emit text — NDJSON ETL shape). Measured on an 819-byte line,
   2 changes + 1 append: naive pure-Python splice 1,175ns vs stdlib
