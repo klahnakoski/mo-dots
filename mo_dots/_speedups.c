@@ -28,6 +28,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <math.h>
+#include <stddef.h> /* offsetof; NOT TRANSITIVE FROM Python.h ON gcc/3.12+ */
 
 #if PY_VERSION_HEX >= 0x030C0000
 #define MEMBER_OBJ_EX Py_T_OBJECT_EX

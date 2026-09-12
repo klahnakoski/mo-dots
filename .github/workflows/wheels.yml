@@ -1,13 +1,11 @@
-# BUILD BINARY WHEELS (C ACCELERATOR) FOR LINUX/MACOS/WINDOWS
-# macos-13 = x86_64, macos-14 = arm64; no local Mac needed
+# BUILD MACOS BINARY WHEELS (C ACCELERATOR); macos-13 = x86_64, macos-14 = arm64.
+# WINDOWS AND LINUX WHEELS BUILD LOCALLY (packaging/build_wheels.py), WHICH ALSO
+# DISPATCHES THIS WORKFLOW (--github) AND COLLECTS THE ARTIFACTS INTO dist/.
 
 name: wheels
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - '[0-9]+'
 
 jobs:
   build_wheels:
@@ -15,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+        os: [macos-14] # arm64; TODO: restore macos-13 (x86_64) for releases
 
     steps:
       - uses: actions/checkout@v4
