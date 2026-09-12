@@ -47,7 +47,8 @@ SMOKE = (
 CIBUILDWHEEL_PLATFORM = {"win32": "windows", "darwin": "macos", "linux": "linux"}
 
 CIBW_ENV = {
-    "CIBW_SKIP": "pp*",
+    # NO musllinux: ONE CONTAINER IMAGE; ALPINE INSTALLS FALL BACK TO THE SDIST
+    "CIBW_SKIP": "pp* *musllinux*",
     "CIBW_TEST_COMMAND": SMOKE,
     "CIBW_BUILD_VERBOSITY": "1",
     # KEEP OUTPUT LINE-Y: mo-deploy KILLS A COMMAND SILENT FOR TOO LONG
