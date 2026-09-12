@@ -6,6 +6,9 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+import mo_dots
 from mo_dots import Data
 
 d = Data(a=42)
+# C ACCELERATOR MUST BE ACTIVE; A FAILED COMPILE IS A BROKEN INSTALL HERE
+assert type(mo_dots.to_data).__name__ == "builtin_function_or_method"
