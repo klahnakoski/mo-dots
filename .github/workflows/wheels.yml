@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14] # arm64; TODO: restore macos-13 (x86_64) for releases
+        os: [macos-13, macos-14] # x86_64, arm64
 
     steps:
       - uses: actions/checkout@v4
