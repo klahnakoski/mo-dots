@@ -253,7 +253,10 @@ class Data:
 
         if not is_data(other):
             return False
-        e = other
+        # UNWRAP: d HOLDS RAW KEYS, AND Data.get WOULD READ A DOT AS A PATH
+        e = from_data(other)
+        if _get(e, CLASS) is not dict:
+            e = other
         # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
         # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
