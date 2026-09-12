@@ -1,5 +1,32 @@
 # TODO
 
+## BUG (blocks release): C-active `Data` breaks on some pythons — `object.__setattr__` hackcheck
+
+- First real `--deploy mo-dots` died in run_tests: `tests/smoke_test.py` →
+  `Data(a=42)` → `TypeError: can't apply this __setattr__ to Data object` at
+  `datas.py:67` `_set(self, SLOT, kwargs)`, in a pip-installed venv with the
+  C extension active. The deploy rolled back; mo-deploy needs no change.
+- Passes on 3.13 (fresh venv: smoke test plus full suite, 318 tests OK). The
+  failing interpreter is one of the other deploy pythons (3.8-3.15), not yet
+  identified. Reproduce per version: venv, generate root setup.py
+  (`cp packaging/setup.py setup.py && python packaging/add_speedups.py setup.py`),
+  `pip install .`, run `tests/smoke_test.py`.
+- Mechanism: `_DataBase` is a *static* C type with `.tp_setattro =
+  data_setattro` (`_speedups.c:897`). The rebuilt heap `Data` inherits it, so
+  `object.__setattr__` (datas.py `_set`) trips CPython's `hackcheck`, whose
+  walk past heap types to the first static type behaves differently across
+  versions — some interpreters refuse.
+- Affected pure `_set`-on-Data sites: datas.py 67, 132 (`CLASS` — sets
+  `__class__`!), 133, 225, 556. Only `_DataBase` defines `tp_setattro`, so
+  NullType/FlatList inherit generic setattr and pass hackcheck.
+- Fix options: special-case SLOT (and `__class__`) in `data_setattro`; or
+  export a C slot-setter and bind datas.py `_set` to it when C is active; or
+  expose the slot via `store_members` (`_speedups.c:368`) and assign through
+  the member descriptor.
+- Neither the cibuildwheel/wheels.yml SMOKE (`to_data` only) nor anything
+  short of `Data(a=42)` catches this — consider adding a `Data(a=42)` to that
+  shared assertion once fixed.
+
 ## Performance (measured: `w.a.b.c` ~1,700ns vs 83ns plain dict; cost is interpreter frames per dunder)
 
 - DONE — pure-Python quick wins: dispatch-dict `__getattr__`, set-based `is_null`,
