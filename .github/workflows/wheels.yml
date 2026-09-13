@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           cp packaging/setup.py setup.py
-          python packaging/add_speedups.py setup.py --required
+          python packaging/add_speedups.py setup.py
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.1

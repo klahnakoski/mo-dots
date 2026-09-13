@@ -164,15 +164,16 @@ def collect_github(run_id, deadline_minutes=30):
     shutil.rmtree(scratch, ignore_errors=True)
 
 
-def gen_setup(extension):
-    """WRITE ROOT setup.py; extension IS none, optional OR required"""
+def gen_setup():
+    """WRITE ROOT setup.py, PURE - NO EXTENSION"""
     shutil.copyfile(PACKAGING / "setup.py", SETUP)
-    if extension == "none":
-        return
-    args = [sys.executable, PACKAGING / "add_speedups.py", SETUP]
-    if extension == "required":
-        args.append("--required")
-    if run(*args):
+
+
+def gen_setup_speedups():
+    """WRITE ROOT setup.py WITH THE OPTIONAL C EXTENSION; THE SMOKE IN EVERY
+    BINARY-WHEEL TEST ASSERTS THE ACCELERATOR, WHICH MAKES IT REQUIRED THERE"""
+    gen_setup()
+    if run(sys.executable, PACKAGING / "add_speedups.py", SETUP):
         sys.exit("add_speedups failed")
 
 
@@ -224,17 +225,16 @@ def main():
     (ROOT / "MANIFEST.in").write_text("global-exclude tests/*\nglobal-exclude MANIFEST.in\n")
 
     try:
-        gen_setup("none")
+        gen_setup()
         if run(sys.executable, "-m", "build", "--wheel"):
             sys.exit("pure wheel failed")
 
-        gen_setup("optional")
+        gen_setup_speedups()
         if run(sys.executable, "-m", "build", "--sdist"):
             sys.exit("sdist failed")
         if not sdist_has_speedups():
             sys.exit("sdist is missing mo_dots/_speedups.c; source installs would be pure-only")
 
-        gen_setup("required")
         if args.only:
             env = CIBW_ENV if "aarch64" in args.only else suite_env()
             if run(sys.executable, "-m", "cibuildwheel", ".", f"--only={args.only}", "--output-dir", DIST, add_env=env):
