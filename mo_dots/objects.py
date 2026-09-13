@@ -9,10 +9,15 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
+from mo_future import (
+    generator_types,
+    get_function_arguments,
+    get_function_defaults,
+    Mapping,
+)
 from mo_imports import export, expect
 
-from mo_dots.datas import Data, _iadd, dict_to_data
+from mo_dots.datas import Data, _iadd, dict_to_data, _set as _data_set
 from mo_dots.lists import FlatList, list_to_data
 from mo_dots.nones import NullType, Null
 from mo_dots.utils import (
@@ -149,7 +154,8 @@ def get_keys(obj):
         k
         for k in dir(_type)
         if k not in ignored_attributes
-        and getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
+        and getattr(_type, k).__class__.__name__
+        in ["member_descriptor", "getset_descriptor"]
     )
     return keys
 
@@ -166,8 +172,8 @@ def object_to_data(v):
 
     _class = _get(v, CLASS)
     if _class in (dict, OrderedDict):
-        m = _new(Data)
-        _set(m, SLOT, v)
+        m = Data.__new__(Data)
+        _data_set(m, SLOT, v)  # hackcheck-SAFE FOR C-BACKED Data
         return m
     elif _class in (tuple, list):
         return list_to_data(v)
@@ -204,7 +210,9 @@ class DataClass:
 
         ordered_params = dict(zip(params, args))
 
-        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
+        output = self.class_(
+            **params_pack(params, ordered_params, kwargs, settings, defaults)
+        )
         return DataObject(output)
 
 
