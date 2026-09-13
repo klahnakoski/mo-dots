@@ -19,9 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare setup.py
+      - name: Generate setup.py
         shell: bash
-        run: cp packaging/setup.py setup.py
+        run: |
+          python -m pip install --quiet mo-deploy
+          python -m mo_deploy.gen_setup .
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.1

@@ -2,7 +2,8 @@
 """Fill dist/ with everything a release uploads: sdist, pure wheel, binary wheels.
 
 Ported from mo-black's packaging/deploy.py, minus mypyc, versioning and upload:
-mo-deploy owns the version (baked into packaging/setup.py) and the twine step.
+mo-deploy owns the version (stamped into packaging/setuptools.json) and the
+twine step; its translator (python -m mo_deploy.gen_setup) renders setup.py.
 Run standalone to rehearse a release; mo-deploy runs it in pypi() because this
 file exists.
 
@@ -35,7 +36,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 SETUP = ROOT / "setup.py"
-PACKAGING = ROOT / "packaging"
 
 # SAME ASSERTION AS .github/workflows/wheels.yml: THE C ACCELERATOR IS ACTIVE.
 # Data(a=42) EXERCISES object.__setattr__-VIA-_set, WHICH TRIPPED CPython's
@@ -165,10 +165,14 @@ def collect_github(run_id, deadline_minutes=30):
 
 
 def gen_setup():
-    """WRITE ROOT setup.py; THE GENERATED FILE CARRIES THE OPTIONAL C
-    EXTENSION (MO_DOTS_NO_EXTENSIONS DROPS IT); THE SMOKE IN EVERY
-    BINARY-WHEEL TEST ASSERTS THE ACCELERATOR, WHICH MAKES IT REQUIRED THERE"""
-    shutil.copyfile(PACKAGING / "setup.py", SETUP)
+    """ROOT setup.py: THE mo-deploy TRANSLATOR RENDERS packaging/setuptools.json
+    (IN-DEPLOY mo-deploy ALREADY WROTE IT). THE EXTENSION IS optional=True;
+    THE SMOKE IN EVERY BINARY-WHEEL TEST ASSERTS THE ACCELERATOR, WHICH MAKES
+    IT REQUIRED THERE; MO_DOTS_NO_EXTENSIONS DROPS IT FOR THE PURE WHEEL"""
+    if SETUP.exists():
+        return
+    if run(sys.executable, "-m", "mo_deploy.gen_setup", ROOT):
+        sys.exit("mo_deploy.gen_setup failed")
 
 
 def sdist_has_speedups():
@@ -198,8 +202,8 @@ def main():
     )
     args = parse.parse_args()
 
-    if run(sys.executable, "-m", "pip", "install", "--quiet", "build", "cibuildwheel"):
-        sys.exit("pip install build cibuildwheel failed")
+    if run(sys.executable, "-m", "pip", "install", "--quiet", "build", "cibuildwheel", "mo-deploy"):
+        sys.exit("pip install build cibuildwheel mo-deploy failed")
 
     # DISPATCH FIRST, SO THE MACS BUILD WHILE THIS MACHINE DOES
     github_run = None
