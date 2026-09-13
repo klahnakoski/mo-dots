@@ -2,12 +2,13 @@
 
 ## Full suite now runs against each installed wheel, gated per leg
 
-- Gating: windows suite runs per python in mo-deploy run_tests (which now
-  deletes the worktree source so the installed package is what's imported);
-  linux x86_64 suite runs in docker via packaging/build_wheels.py
-  (CIBW_TEST_SOURCES/REQUIRES/COMMAND in suite_env()); macos arm64+x86_64
-  (Rosetta) suite runs in wheels.yml. qemu aarch64 and local windows wheels
-  keep the smoke only.
+- Gating: every wheel runs the full suite against its installed self —
+  windows and linux x86_64 via packaging/build_wheels.py
+  (CIBW_TEST_SOURCES/REQUIRES/COMMAND in suite_env()), macos arm64+x86_64
+  (Rosetta) in wheels.yml. Only qemu aarch64 keeps the smoke — the suite
+  emulated adds hours. mo-deploy run_tests still runs the suite per python
+  (and now deletes the worktree source so the installed package is what's
+  imported).
 - UNVERIFIED. The first `--only cp313-manylinux_x86_64` run failed: the
   test requires are managed packages pinning mo-dots==<last release>, pip
   installs them after the wheel, and the suite tested the old pure release

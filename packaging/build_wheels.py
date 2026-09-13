@@ -11,7 +11,8 @@ file exists.
 - pure wheel (py3-none-any): no extension; what pip takes on platforms with no
   binary wheel (macos - CI wheels need a Mac), same behavior as before
 - binary wheels: cibuildwheel, windows natively, linux via docker; every wheel
-  is smoke-tested with the C accelerator asserted active
+  runs the smoke (C accelerator asserted active) then the full suite, except
+  aarch64 under qemu which keeps the smoke only
 - macos wheels: --github dispatches .github/workflows/wheels.yml (which builds
   on real Macs), waits, and downloads just the macos artifacts into dist/; the
   ref must be pushed and carry the same version as packaging/setup.py
@@ -63,9 +64,9 @@ CIBW_ENV = {
 def suite_env():
     """FULL SUITE AGAINST THE INSTALLED WHEEL; THE SMOKE STAYS AS LINE ONE.
 
-    THE SUITE RUNS WHERE EACH os IS NATIVE: windows PER python IN mo-deploy's
-    run_tests, linux x86_64 HERE IN DOCKER, macos arm64 IN wheels.yml.
-    aarch64 UNDER qemu KEEPS THE SMOKE ONLY - THE SUITE EMULATED ADDS HOURS.
+    EVERY WHEEL RUNS THE FULL SUITE, EXERCISING THE C CODE ON EACH os AND
+    python. ONLY aarch64 UNDER qemu KEEPS THE SMOKE - THE SUITE EMULATED
+    ADDS HOURS.
     """
     requires = " ".join(
         line.strip()
@@ -236,7 +237,7 @@ def main():
 
         gen_setup("required")
         if args.only:
-            env = suite_env() if "manylinux_x86_64" in args.only else CIBW_ENV
+            env = CIBW_ENV if "aarch64" in args.only else suite_env()
             if run(sys.executable, "-m", "cibuildwheel", ".", f"--only={args.only}", "--output-dir", DIST, add_env=env):
                 sys.exit(f"cibuildwheel {args.only} failed")
         else:
@@ -248,8 +249,7 @@ def main():
                         {**CIBW_ENV, "CIBW_ARCHS_LINUX": "aarch64"},
                     ]
                 else:
-                    # windows SUITE RUNS PER python IN mo-deploy run_tests
-                    runs = [CIBW_ENV]
+                    runs = [suite_env()]
                 for env in runs:
                     if run(sys.executable, "-m", "cibuildwheel", ".", "--platform", platform, "--output-dir", DIST, add_env=env):
                         sys.exit(f"cibuildwheel {platform} failed")
