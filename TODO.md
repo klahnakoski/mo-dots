@@ -8,9 +8,15 @@
   (CIBW_TEST_SOURCES/REQUIRES/COMMAND in suite_env()); macos arm64+x86_64
   (Rosetta) suite runs in wheels.yml. qemu aarch64 and local windows wheels
   keep the smoke only.
-- Verified: nothing yet beyond the smoke era. A `--only cp313-manylinux_x86_64`
-  run of the docker suite leg is in flight from the mo-deploy session; the
-  wheels.yml suite legs have not been dispatched since the change.
+- UNVERIFIED. The first `--only cp313-manylinux_x86_64` run failed: the
+  test requires are managed packages pinning mo-dots==<last release>, pip
+  installs them after the wheel, and the suite tested the old pure release
+  (smoke caught it: accelerator absent). Fix applied to both suite legs -
+  the test command now force-reinstalls "{wheel}" --no-deps first, same
+  reason mo-deploy run_tests installs self again. Rerun
+  `python packaging/build_wheels.py --only cp313-manylinux_x86_64` to
+  verify (expect 318 tests in the container); wheels.yml has not been
+  dispatched since the change.
 - The suite needs tests/requirements.txt installable on every wheel python
   (3.9-3.15 incl prereleases); a dep that grows a binary requirement would
   break the qemu-adjacent legs first.

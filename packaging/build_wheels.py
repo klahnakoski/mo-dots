@@ -76,7 +76,14 @@ def suite_env():
         **CIBW_ENV,
         "CIBW_TEST_SOURCES": "tests",
         "CIBW_TEST_REQUIRES": requires,
-        "CIBW_TEST_COMMAND": SMOKE + " && python -m unittest discover -s tests -t .",
+        # THE REQUIRES ARE MANAGED PACKAGES PINNING mo-dots==<LAST RELEASE>,
+        # AND pip INSTALLS THEM AFTER THE WHEEL: REINSTALL THE WHEEL LAST
+        # (SAME REASON mo-deploy run_tests INSTALLS SELF AGAIN)
+        "CIBW_TEST_COMMAND": (
+            'python -m pip install --quiet --force-reinstall --no-deps "{wheel}" && '
+            + SMOKE
+            + " && python -m unittest discover -s tests -t ."
+        ),
     }
 
 
