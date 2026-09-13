@@ -22,8 +22,8 @@ jobs:
       - name: Generate setup.py
         shell: bash
         run: |
-          python -m pip install --quiet mo-deploy
-          python -m mo_deploy.gen_setup .
+          python -m pip install --quiet mo-dots mo-files mo-future mo-json mo-logs
+          python packaging/gen_setup.py .
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.1

@@ -3,7 +3,8 @@
 
 Ported from mo-black's packaging/deploy.py, minus mypyc, versioning and upload:
 mo-deploy owns the version (stamped into packaging/setuptools.json) and the
-twine step; its translator (python -m mo_deploy.gen_setup) renders setup.py.
+twine step; its translator (the synced copy packaging/gen_setup.py) renders
+setup.py.
 Run standalone to rehearse a release; mo-deploy runs it in pypi() because this
 file exists.
 
@@ -165,14 +166,16 @@ def collect_github(run_id, deadline_minutes=30):
 
 
 def gen_setup():
-    """ROOT setup.py: THE mo-deploy TRANSLATOR RENDERS packaging/setuptools.json
+    """ROOT setup.py: THE SYNCED TRANSLATOR COPY RENDERS packaging/setuptools.json
     (IN-DEPLOY mo-deploy ALREADY WROTE IT). THE EXTENSION IS optional=True;
     THE SMOKE IN EVERY BINARY-WHEEL TEST ASSERTS THE ACCELERATOR, WHICH MAKES
     IT REQUIRED THERE; MO_DOTS_NO_EXTENSIONS DROPS IT FOR THE PURE WHEEL"""
     if SETUP.exists():
         return
-    if run(sys.executable, "-m", "mo_deploy.gen_setup", ROOT):
-        sys.exit("mo_deploy.gen_setup failed")
+    if run(sys.executable, "-m", "pip", "install", "--quiet", "mo-dots", "mo-files", "mo-future", "mo-json", "mo-logs"):
+        sys.exit("pip install of the translator's requirements failed")
+    if run(sys.executable, ROOT / "packaging" / "gen_setup.py", ROOT):
+        sys.exit("packaging/gen_setup.py failed")
 
 
 def sdist_has_speedups():
@@ -202,8 +205,8 @@ def main():
     )
     args = parse.parse_args()
 
-    if run(sys.executable, "-m", "pip", "install", "--quiet", "build", "cibuildwheel", "mo-deploy"):
-        sys.exit("pip install build cibuildwheel mo-deploy failed")
+    if run(sys.executable, "-m", "pip", "install", "--quiet", "build", "cibuildwheel"):
+        sys.exit("pip install build cibuildwheel failed")
 
     # DISPATCH FIRST, SO THE MACS BUILD WHILE THIS MACHINE DOES
     github_run = None
