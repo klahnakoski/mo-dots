@@ -1,0 +1,49 @@
+# BUILD MACOS BINARY WHEELS (C ACCELERATOR), arm64 AND x86_64, ON ONE ARM RUNNER
+# (macos-13 INTEL RUNNERS ARE RETIRED). WINDOWS AND LINUX WHEELS BUILD LOCALLY
+# (packaging/build_wheels.py), WHICH ALSO DISPATCHES THIS WORKFLOW (--github)
+# AND COLLECTS THE ARTIFACTS INTO dist/.
+
+name: wheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14] # arm64 HOST; x86_64 CROSS-COMPILED, TESTED VIA ROSETTA
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate setup.py
+        shell: bash
+        run: |
+          python -m pip install --quiet mo-dots mo-files mo-future mo-json mo-logs
+          python packaging/gen_setup.py .
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          CIBW_SKIP: "pp*"
+          CIBW_ARCHS_MACOS: "arm64 x86_64"
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_TEST_SOURCES: tests
+          # FULL SUITE AGAINST EACH INSTALLED WHEEL. REQUIRES VIA -r, NOT
+          # CIBW_TEST_REQUIRES (windows cibuildwheel shells the install, so
+          # version floors with > become redirects); THEY PIN
+          # mo-dots==<LAST RELEASE>, SO REINSTALL THE WHEEL LAST OR THE
+          # SUITE TESTS THE OLD RELEASE
+          CIBW_TEST_COMMAND: >
+            python -m pip install -r tests/requirements.txt
+            && python -m pip install --quiet --force-reinstall --no-deps "{wheel}"
+            && python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None; w = mo_dots.Data(a=42); assert w.a == 42; w['.'] = [1]; assert list(w) == [1]"
+            && python -m unittest discover -s tests -t .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl

@@ -21,6 +21,18 @@ Foundation for everything above it. Two things matter when working in this repo:
   `[None]*n` + index bookkeeping. Order is append order, so only use it where the
   values arrive in the order you want them stored.
 
+## The C accelerator (`_speedups.c`)
+
+- Optional C extension; `MO_DOTS_PURE=1` forces pure Python; no built `.pyd`/`.so`
+  also means pure. Build in place: `python packaging/setup_speedups.py build_ext --inplace`.
+- When active, `Data`/`FlatList`/`NullType` are rebuilt over C base types
+  (`utils._rebuild_class`) and the hot dunders run as C slots. **Editing a hot dunder
+  in the .py is not enough** — the pure method is only the slow path (dotted edge
+  cases, non-dict slots/elements): change the C twin in `_speedups.c` too, rebuild,
+  and run the suite in both modes.
+- Type registries flow to C via `utils._sync` inside every `register_*`; class and
+  helper wiring goes through `_init_null`/`_init_data`/`_init_list`/`_init`.
+
 ## Field paths (`fields.py`)
 
 Property names may contain literal dots (escaped). Never `s.split(".")` on a field name —

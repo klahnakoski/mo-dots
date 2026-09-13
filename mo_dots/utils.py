@@ -7,6 +7,7 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 import importlib
+import os
 import types
 from collections import OrderedDict
 from datetime import datetime, date, timedelta, time
@@ -27,36 +28,47 @@ def get_module(name):
         return importlib.import_module(name)
     except Exception as e:
         get_logger().error(
-            "`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e,
+            "`pip install "
+            + name.split(".")[0].replace("_", "-")
+            + "` to enable this feature",
+            cause=e,
         )
 
 
 _null_types = (none_type,)
+_null_type_set = frozenset(_null_types)
+_null_type_listeners = []
+
+
+def on_null_type_change(callback):
+    _null_type_listeners.append(callback)
 
 
 def register_null_type(_type):
-    global _null_types
+    global _null_types, _null_type_set, _missing_types
     _null_types = tuple(set(_null_types + (_type,)))
+    _null_type_set = frozenset(_null_types)
+    _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(
+            _null_types, _missing_types, sequence_types, _data_types, _many_types
+        )
+    for callback in _null_type_listeners:
+        callback()
 
 
 def is_null(value):
     # RETURN True IF EFFECTIVELY NOTHING
-    _class = _get(value, CLASS)
-    if _class in _null_types:
-        return True
-    return False
+    return _get(value, CLASS) in _null_type_set
 
 
 def is_not_null(value):
-    _class = _get(value, CLASS)
-    if _class in _null_types:
-        return False
-    return True
+    return _get(value, CLASS) not in _null_type_set
 
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    return isinstance(t, (str, *_null_types, *_many_types)) and not t
+    return isinstance(t, _missing_types) and not t
 
 
 def exists(value) -> bool:
@@ -100,6 +112,10 @@ def register_data(type_):
     """
     global _data_types
     _data_types = tuple(set(_data_types + (type_,)))
+    if _speedups:
+        _speedups._sync(
+            _null_types, _missing_types, sequence_types, _data_types, _many_types
+        )
 
 
 def is_data(d):
@@ -124,7 +140,11 @@ def is_namedtuple(obj):
 
 def is_data_object(obj):
     # __dataclass_fields__ is the dataclass marker; dataclasses costs 10ms to import
-    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or hasattr(obj, "__dataclass_fields__")
+    return (
+        isinstance(obj, _known_data_types)
+        or is_namedtuple(obj)
+        or hasattr(obj, "__dataclass_fields__")
+    )
 
 
 def is_known_data_type(_class):
@@ -136,23 +156,34 @@ container_types = (list, set)
 finite_types = (list, set, tuple)
 sequence_types = (list, tuple) + generator_types
 _many_types = tuple(set(list_types + container_types + sequence_types))
+_missing_types = (str, *_null_types, *_many_types)
 
 
 def register_list(_type):
     # lists belong to all categories
-    global list_types, container_types, finite_types, sequence_types, _many_types
+    global list_types, container_types, finite_types, sequence_types, _many_types, _missing_types
     list_types = tuple(set(list_types + (_type,)))
     container_types = tuple(set(container_types + (_type,)))
     finite_types = tuple(set(finite_types + (_type,)))
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
+    _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(
+            _null_types, _missing_types, sequence_types, _data_types, _many_types
+        )
 
 
 def register_sequence(_type):
     # ORDERED, BUT MAY BE INFINITE, SO NOT finite_types NOR container_types
-    global sequence_types, _many_types
+    global sequence_types, _many_types, _missing_types
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
+    _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(
+            _null_types, _missing_types, sequence_types, _data_types, _many_types
+        )
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -192,14 +223,51 @@ def is_many(value):
     type_ = _get(value, CLASS)
     if issubclass(type_, types.GeneratorType):
         _many_types = _many_types + (type_,)
-        get_logger.warning("is_many() can not detect generator {type}", type=type_.__name__)
+        get_logger.warning(
+            "is_many() can not detect generator {type}", type=type_.__name__
+        )
         return True
     return False
 
 
 def register_many(_type):
-    global _many_types
+    global _many_types, _missing_types
     _many_types = _many_types + (_type,)
+    _missing_types = (str, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(
+            _null_types, _missing_types, sequence_types, _data_types, _many_types
+        )
+
+
+# OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
+try:
+    if os.environ.get("MO_DOTS_PURE"):
+        _speedups = None
+    else:
+        import mo_dots._speedups as _speedups
+except ImportError:
+    _speedups = None
+
+if _speedups:
+    _speedups._sync(
+        _null_types, _missing_types, sequence_types, _data_types, _many_types
+    )
+    is_null = _speedups.is_null
+    is_not_null = _speedups.is_not_null
+    is_missing = _speedups.is_missing
+
+
+def _rebuild_class(pure, base, hot):
+    # REBUILD pure OVER C base; DROP hot DUNDERS SO THE C SLOTS SHOW THROUGH.
+    # THE PURE CLASS REMAINS THE SLOW PATH FOR EXOTIC CASES.
+    ns = {
+        k: v
+        for k, v in vars(pure).items()
+        if k not in hot and k not in ("__slots__", "__dict__", "__weakref__", SLOT, KEY)
+    }
+    ns["__slots__"] = ()
+    return type(pure.__name__, (base,), ns)
 
 
 def cache(func):

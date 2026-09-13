@@ -46,6 +46,21 @@ _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
 
+if utils._speedups:
+    # object.__setattr__ ON A C-BACKED Data TRIPS CPython's hackcheck ON
+    # 3.8-3.12 (_DataBase IS A STATIC TYPE WITH ITS OWN tp_setattro); THE
+    # SLOT MEMBER AND __class__ DESCRIPTORS CARRY NO SUCH CHECK
+    _slot_set = utils._speedups._StoreBase._internal_value.__set__
+    _class_set = vars(object)["__class__"].__set__
+
+    def _set(obj, key, value):
+        if key == SLOT:
+            _slot_set(obj, value)
+        elif key == CLASS:
+            _class_set(obj, value)
+        else:
+            object.__setattr__(obj, key, value)
+
 DEBUG = False
 
 
@@ -61,7 +76,9 @@ class Data:
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception("only keywords are allowed, not " + args[0].__class__.__name__)
+            raise Exception(
+                "only keywords are allowed, not " + args[0].__class__.__name__
+            )
         _set(self, SLOT, kwargs)
 
     def __bool__(self):
@@ -164,19 +181,14 @@ class Data:
     def __getattr__(self, key):
         d = _get(self, SLOT)
         v = d.get(key)
-        t = _get(v, CLASS)
 
-        # OPTIMIZED to_data()
-        if t in (dict, OrderedDict):
-            return dict_to_data(v)
-        elif t in utils._null_types:
-            return NullType(d, key)
-        elif t is list:
-            return list_to_data(v)
-        elif t in generator_types:
-            return FlatList(list(from_data(vv) for vv in v))
-        else:
+        # OPTIMIZED to_data(): _getattr_dispatch MAPS VALUE CLASS TO WRAPPER
+        handler = _getattr_dispatch.get(_get(v, CLASS))
+        if handler is None:
             return v
+        if handler is NullType:
+            return NullType(d, key)
+        return handler(v)
 
     def __setattr__(self, key, value):
         d = _get(self, SLOT)
@@ -256,7 +268,10 @@ class Data:
 
         if not is_data(other):
             return False
-        e = other
+        # UNWRAP: d HOLDS RAW KEYS, AND Data.get WOULD READ A DOT AS A PATH
+        e = from_data(other)
+        if _get(e, CLASS) is not dict:
+            e = other
         # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
         # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
@@ -393,6 +408,38 @@ class Data:
             return "Data(?)"
 
 
+if utils._speedups:
+    # REBUILD OVER THE C BASE: getattr/setattr/delattr/getitem/setitem/delitem/
+    # bool/iter/contains/len/get/items BECOME C SLOTS AND METHODS; THE PURE
+    # METHODS REMAIN AS THE SLOW PATH (DOTTED EDGE CASES, NON-dict SLOTS)
+    _pure_Data = Data
+    Data = utils._rebuild_class(
+        _pure_Data,
+        utils._speedups._DataBase,
+        {
+            "__getattr__",
+            "__setattr__",
+            "__delattr__",
+            "__getitem__",
+            "__setitem__",
+            "__delitem__",
+            "__bool__",
+            "__iter__",
+            "__contains__",
+            "__len__",
+            "get",
+            "items",
+        },
+    )
+    utils._speedups._init_data(
+        Data,
+        _pure_Data.__getattr__,
+        _pure_Data.__getitem__,
+        _pure_Data.__setitem__,
+        _pure_Data.__delitem__,
+        _pure_Data.items,
+    )
+
 MutableMapping.register(Data)
 register_data(Data)
 
@@ -456,7 +503,7 @@ def _iadd(self, other):
         d = _get(self, SLOT)
         if isinstance(d, dict) and not len(d):
             # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
-            # ∀ x, x += {} => x
+            # âˆ€ x, x += {} => x
             d = Data()
         else:
             d = dict_to_data({"$": self})
@@ -520,9 +567,32 @@ def dict_to_data(d):
     :param d: dict
     :return: Data
     """
-    m = _new(Data)
+    m = Data.__new__(Data)
     _set(m, SLOT, d)
     return m
+
+
+def _gen_to_data(v):
+    return FlatList(list(from_data(vv) for vv in v))
+
+
+_getattr_dispatch = {}
+
+
+def _rebuild_getattr_dispatch():
+    # NullType IS A SENTINEL: __getattr__ CONSTRUCTS NullType(d, key) FOR NULL VALUES
+    _getattr_dispatch.clear()
+    for t in utils._null_types:
+        _getattr_dispatch[t] = NullType
+    _getattr_dispatch[dict] = dict_to_data
+    _getattr_dispatch[OrderedDict] = dict_to_data
+    _getattr_dispatch[list] = list_to_data
+    for t in generator_types:
+        _getattr_dispatch[t] = _gen_to_data
+
+
+utils.on_null_type_change(_rebuild_getattr_dispatch)
+_rebuild_getattr_dispatch()
 
 
 def leaves_to_data(value):

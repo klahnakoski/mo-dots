@@ -57,6 +57,8 @@ surprised.
 ## Layout
 
 - `mo_dots/` - the library: `datas.py` (Data), `nones.py` (Null), `lists.py`
-  (FlatList), `fields.py` (the field-path algebra), `objects.py`, `utils.py`.
-- `docs/` - the full feature documentation and changelog.
+  (FlatList), `fields.py` (the field-path algebra), `objects.py`, `utils.py`,
+  `_speedups.c` (optional C accelerator - traps in mo_dots/CLAUDE.md).
+- `TODO.md` - campaign doc: the performance work queue, measured.
+- `docs/` - the full feature documentation, changelog, and session log.
 - `tests/`, `packaging/` - the suite and the release scaffolding.
