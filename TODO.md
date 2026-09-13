@@ -3,21 +3,20 @@
 ## Full suite now runs against each installed wheel, gated per leg
 
 - Gating: every wheel runs the full suite against its installed self —
-  windows and linux x86_64 via packaging/build_wheels.py
-  (CIBW_TEST_SOURCES/REQUIRES/COMMAND in suite_env()), macos arm64+x86_64
-  (Rosetta) in wheels.yml. Only qemu aarch64 keeps the smoke — the suite
-  emulated adds hours. mo-deploy run_tests still runs the suite per python
-  (and now deletes the worktree source so the installed package is what's
-  imported).
-- UNVERIFIED. The first `--only cp313-manylinux_x86_64` run failed: the
-  test requires are managed packages pinning mo-dots==<last release>, pip
-  installs them after the wheel, and the suite tested the old pure release
-  (smoke caught it: accelerator absent). Fix applied to both suite legs -
-  the test command now force-reinstalls "{wheel}" --no-deps first, same
-  reason mo-deploy run_tests installs self again. Rerun
-  `python packaging/build_wheels.py --only cp313-manylinux_x86_64` to
-  verify (expect 318 tests in the container); wheels.yml has not been
-  dispatched since the change.
+  windows and linux x86_64 via packaging/build_wheels.py (suite_env()),
+  macos arm64+x86_64 (Rosetta) in wheels.yml. Only qemu aarch64 keeps the
+  smoke — the suite emulated adds hours. mo-deploy run_tests still runs
+  the suite per python (and now deletes the worktree source so the
+  installed package is what's imported).
+- Test requires install via `pip install -r tests/requirements.txt` inside
+  the test command, never CIBW_TEST_REQUIRES: on windows cibuildwheel runs
+  every command through cmd (util/cmd.py `shell=_IS_WIN`), which parses the
+  `>` in each version floor as a redirect — pip got bare names, backtracked
+  mo-testing to 3.124.20293 (2020, datawrap era) and the suite died on
+  import. Floors in a file never meet the shell.
+- Verified: the reinstall-the-wheel-last fix held — linux x86_64 ran
+  329 tests against each of the 9 wheels, macos arm64+x86_64 ran the suite
+  green in wheels.yml (run 34766761475).
 - The suite needs tests/requirements.txt installable on every wheel python
   (3.9-3.15 incl prereleases); a dep that grows a binary requirement would
   break the qemu-adjacent legs first.

@@ -25,12 +25,6 @@ jobs:
           cp packaging/setup.py setup.py
           python packaging/add_speedups.py setup.py --required
 
-      # THE FULL SUITE RUNS AGAINST EACH INSTALLED WHEEL (SMOKE FIRST); KEEP
-      # THE REQUIREMENTS IN SYNC WITH tests/requirements.txt
-      - name: Compute test requirements
-        shell: bash
-        run: echo "CIBW_TEST_REQUIRES=$(grep -v '^#' tests/requirements.txt | xargs)" >> $GITHUB_ENV
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.1
         env:
@@ -38,10 +32,14 @@ jobs:
           CIBW_ARCHS_MACOS: "arm64 x86_64"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_SOURCES: tests
-          # TEST REQUIRES PIN mo-dots==<LAST RELEASE> AND INSTALL AFTER THE
-          # WHEEL; REINSTALL THE WHEEL LAST OR THE SUITE TESTS THE OLD RELEASE
+          # FULL SUITE AGAINST EACH INSTALLED WHEEL. REQUIRES VIA -r, NOT
+          # CIBW_TEST_REQUIRES (windows cibuildwheel shells the install, so
+          # version floors with > become redirects); THEY PIN
+          # mo-dots==<LAST RELEASE>, SO REINSTALL THE WHEEL LAST OR THE
+          # SUITE TESTS THE OLD RELEASE
           CIBW_TEST_COMMAND: >
-            python -m pip install --quiet --force-reinstall --no-deps "{wheel}"
+            python -m pip install -r tests/requirements.txt
+            && python -m pip install --quiet --force-reinstall --no-deps "{wheel}"
             && python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None; w = mo_dots.Data(a=42); assert w.a == 42; w['.'] = [1]; assert list(w) == [1]"
             && python -m unittest discover -s tests -t .
 

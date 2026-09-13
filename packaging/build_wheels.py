@@ -68,19 +68,18 @@ def suite_env():
     python. ONLY aarch64 UNDER qemu KEEPS THE SMOKE - THE SUITE EMULATED
     ADDS HOURS.
     """
-    requires = " ".join(
-        line.strip()
-        for line in (ROOT / "tests" / "requirements.txt").read_text().splitlines()
-        if line.strip() and not line.strip().startswith("#")
-    )
     return {
         **CIBW_ENV,
         "CIBW_TEST_SOURCES": "tests",
-        "CIBW_TEST_REQUIRES": requires,
-        # THE REQUIRES ARE MANAGED PACKAGES PINNING mo-dots==<LAST RELEASE>,
-        # AND pip INSTALLS THEM AFTER THE WHEEL: REINSTALL THE WHEEL LAST
-        # (SAME REASON mo-deploy run_tests INSTALLS SELF AGAIN)
+        # NO CIBW_TEST_REQUIRES: ON WINDOWS cibuildwheel RUNS pip THROUGH
+        # cmd (shell=True), WHICH EATS THE > IN EVERY VERSION FLOOR AS A
+        # REDIRECT AND INSTALLS UNCONSTRAINED NAMES; -r KEEPS THE FLOORS
+        # IN A FILE THE SHELL NEVER SEES.
+        # THE REQUIRES ARE MANAGED PACKAGES PINNING mo-dots==<LAST RELEASE>:
+        # REINSTALL THE WHEEL LAST (SAME REASON mo-deploy run_tests
+        # INSTALLS SELF AGAIN)
         "CIBW_TEST_COMMAND": (
+            "python -m pip install -r tests/requirements.txt && "
             'python -m pip install --quiet --force-reinstall --no-deps "{wheel}" && '
             + SMOKE
             + " && python -m unittest discover -s tests -t ."
