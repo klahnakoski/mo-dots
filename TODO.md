@@ -1,5 +1,20 @@
 # TODO
 
+## Full suite now runs against each installed wheel, gated per leg
+
+- Gating: windows suite runs per python in mo-deploy run_tests (which now
+  deletes the worktree source so the installed package is what's imported);
+  linux x86_64 suite runs in docker via packaging/build_wheels.py
+  (CIBW_TEST_SOURCES/REQUIRES/COMMAND in suite_env()); macos arm64+x86_64
+  (Rosetta) suite runs in wheels.yml. qemu aarch64 and local windows wheels
+  keep the smoke only.
+- Verified: nothing yet beyond the smoke era. A `--only cp313-manylinux_x86_64`
+  run of the docker suite leg is in flight from the mo-deploy session; the
+  wheels.yml suite legs have not been dispatched since the change.
+- The suite needs tests/requirements.txt installable on every wheel python
+  (3.9-3.15 incl prereleases); a dep that grows a binary requirement would
+  break the qemu-adjacent legs first.
+
 ## FIXED: `object.__setattr__` hackcheck on C-backed `Data` (was: blocks release)
 
 - The hackcheck refusal reproduced on 3.8-3.12 exactly as diagnosed (3.13+

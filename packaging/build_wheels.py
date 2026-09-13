@@ -53,13 +53,31 @@ CIBUILDWHEEL_PLATFORM = {"win32": "windows", "darwin": "macos", "linux": "linux"
 CIBW_ENV = {
     # NO musllinux: ONE IMAGE PER ARCH; ALPINE INSTALLS FALL BACK TO THE SDIST
     "CIBW_SKIP": "pp* *musllinux*",
-    # aarch64 COMPILES AND TESTS UNDER qemu (docker desktop binfmt); SLOW BUT REAL
-    "CIBW_ARCHS_LINUX": "x86_64 aarch64",
     "CIBW_TEST_COMMAND": SMOKE,
     "CIBW_BUILD_VERBOSITY": "1",
     # KEEP OUTPUT LINE-Y: mo-deploy KILLS A COMMAND SILENT FOR TOO LONG
     "PIP_PROGRESS_BAR": "off",
 }
+
+
+def suite_env():
+    """FULL SUITE AGAINST THE INSTALLED WHEEL; THE SMOKE STAYS AS LINE ONE.
+
+    THE SUITE RUNS WHERE EACH os IS NATIVE: windows PER python IN mo-deploy's
+    run_tests, linux x86_64 HERE IN DOCKER, macos arm64 IN wheels.yml.
+    aarch64 UNDER qemu KEEPS THE SMOKE ONLY - THE SUITE EMULATED ADDS HOURS.
+    """
+    requires = " ".join(
+        line.strip()
+        for line in (ROOT / "tests" / "requirements.txt").read_text().splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    )
+    return {
+        **CIBW_ENV,
+        "CIBW_TEST_SOURCES": "tests",
+        "CIBW_TEST_REQUIRES": requires,
+        "CIBW_TEST_COMMAND": SMOKE + " && python -m unittest discover -s tests -t .",
+    }
 
 
 def run(*args, add_env=None):
@@ -211,12 +229,23 @@ def main():
 
         gen_setup("required")
         if args.only:
-            if run(sys.executable, "-m", "cibuildwheel", ".", f"--only={args.only}", "--output-dir", DIST, add_env=CIBW_ENV):
+            env = suite_env() if "manylinux_x86_64" in args.only else CIBW_ENV
+            if run(sys.executable, "-m", "cibuildwheel", ".", f"--only={args.only}", "--output-dir", DIST, add_env=env):
                 sys.exit(f"cibuildwheel {args.only} failed")
         else:
             for platform in buildable_platforms(args.skip_linux):
-                if run(sys.executable, "-m", "cibuildwheel", ".", "--platform", platform, "--output-dir", DIST, add_env=CIBW_ENV):
-                    sys.exit(f"cibuildwheel {platform} failed")
+                if platform == "linux":
+                    runs = [
+                        {**suite_env(), "CIBW_ARCHS_LINUX": "x86_64"},
+                        # aarch64 COMPILES AND SMOKES UNDER qemu (docker desktop binfmt)
+                        {**CIBW_ENV, "CIBW_ARCHS_LINUX": "aarch64"},
+                    ]
+                else:
+                    # windows SUITE RUNS PER python IN mo-deploy run_tests
+                    runs = [CIBW_ENV]
+                for env in runs:
+                    if run(sys.executable, "-m", "cibuildwheel", ".", "--platform", platform, "--output-dir", DIST, add_env=env):
+                        sys.exit(f"cibuildwheel {platform} failed")
     finally:
         SETUP.unlink(missing_ok=True)
         (ROOT / "MANIFEST.in").unlink(missing_ok=True)
