@@ -11,7 +11,14 @@
   C mode and pure (bs4-less interpreters skip one env-dependent test).
 - The shared smoke assertion (wheels.yml + build_wheels.py) now includes
   `Data(a=42)` and the `w['.'] = [1]` class reassignment, so per-version
-  wheel tests catch any hackcheck regression. Deploy retest pending.
+  wheel tests catch any hackcheck regression.
+- Deploy retest: the fix held — 3.11-3.13 ran the full suite clean in the
+  deploy. The remaining failure was mo-deploy's, not this repo's: its 120s
+  inactivity timeout killed the five slower interpreters sitting silent in
+  `test_dot_speed` while eight suites contended for CPU (piped stdout is
+  block-buffered, so Timer prints never counted as heartbeats). mo-deploy
+  now runs discover with timeout=600 and PYTHONUNBUFFERED=1; nothing to do
+  here.
 
 ## Performance (measured: `w.a.b.c` ~1,700ns vs 83ns plain dict; cost is interpreter frames per dunder)
 
