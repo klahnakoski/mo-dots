@@ -106,8 +106,7 @@
   and downloads the artifacts — every wheel smoke-tested with the C
   accelerator asserted active. mo-deploy's pypi() runs it as a repo-owned
   hook (`--github dev`; update_dev has already pushed the version commit),
-  then twines dist/*. `packaging/install_speedups.py` pip-installs the
-  optimized build locally. mo-deploy also runs `packaging/add_speedups.py`
+  then twines dist/*. mo-deploy also runs `packaging/add_speedups.py`
   on every generated setup.py, so per-python wheel tests compile the
   extension.
 - JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
