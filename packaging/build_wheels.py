@@ -36,12 +36,16 @@ DIST = ROOT / "dist"
 SETUP = ROOT / "setup.py"
 PACKAGING = ROOT / "packaging"
 
-# SAME ASSERTION AS .github/workflows/wheels.yml: THE C ACCELERATOR IS ACTIVE
+# SAME ASSERTION AS .github/workflows/wheels.yml: THE C ACCELERATOR IS ACTIVE.
+# Data(a=42) EXERCISES object.__setattr__-VIA-_set, WHICH TRIPPED CPython's
+# hackcheck ON 3.8-3.12; w['.']=[1] EXERCISES THE __class__ REASSIGNMENT
 SMOKE = (
     'python -c "import mo_dots; '
     "assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; "
     "d = mo_dots.to_data({'a': {'b': 1}}); "
-    'assert d.a.b == 1; assert d.x.y == None"'
+    "assert d.a.b == 1; assert d.x.y == None; "
+    "w = mo_dots.Data(a=42); assert w.a == 42; "
+    "w['.'] = [1]; assert list(w) == [1]\""
 )
 
 CIBUILDWHEEL_PLATFORM = {"win32": "windows", "darwin": "macos", "linux": "linux"}

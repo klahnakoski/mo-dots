@@ -46,6 +46,21 @@ _get = object.__getattribute__
 _set = object.__setattr__
 _new = object.__new__
 
+if utils._speedups:
+    # object.__setattr__ ON A C-BACKED Data TRIPS CPython's hackcheck ON
+    # 3.8-3.12 (_DataBase IS A STATIC TYPE WITH ITS OWN tp_setattro); THE
+    # SLOT MEMBER AND __class__ DESCRIPTORS CARRY NO SUCH CHECK
+    _slot_set = utils._speedups._StoreBase._internal_value.__set__
+    _class_set = vars(object)["__class__"].__set__
+
+    def _set(obj, key, value):
+        if key == SLOT:
+            _slot_set(obj, value)
+        elif key == CLASS:
+            _class_set(obj, value)
+        else:
+            object.__setattr__(obj, key, value)
+
 DEBUG = False
 
 

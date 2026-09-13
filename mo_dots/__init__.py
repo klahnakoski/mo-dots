@@ -78,7 +78,7 @@ __all__ = [
 _module_type = type(sys.modules[__name__])
 _builtin_zip = zip
 _get = object.__getattribute__
-_set = object.__setattr__
+from mo_dots.datas import _set  # hackcheck-SAFE FOR C-BACKED Data
 _new = object.__new__
 _dict_zip = zip
 

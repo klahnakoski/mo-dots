@@ -32,7 +32,7 @@ jobs:
           CIBW_ARCHS_MACOS: "arm64 x86_64"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_COMMAND: >
-            python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None"
+            python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None; w = mo_dots.Data(a=42); assert w.a == 42; w['.'] = [1]; assert list(w) == [1]"
 
       - uses: actions/upload-artifact@v4
         with:
