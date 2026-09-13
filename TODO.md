@@ -9,9 +9,11 @@
   the suite per python (and now deletes the worktree source so the
   installed package is what's imported).
 - packaging/setup.py is gone: `python -m mo_deploy.gen_setup .` renders it
-  from setuptools.json (version deploy-stamped there). ORDERING: pypi's
-  mo-deploy must ship the translator before the next mo-dots deploy or
-  wheels.yml dispatch - both pip-install mo-deploy to generate.
+  from setuptools.json (version deploy-stamped there). BROKEN: mo-deploy is
+  not on pypi (404, never published), so the `pip install mo-deploy` in
+  build_wheels.py and wheels.yml can never resolve - a deploy dies at its
+  first pip install. Decide: publish mo-deploy, pip from git, or another
+  route to the translator; fix both call sites, then re-deploy.
 - Test requires install via `pip install -r tests/requirements.txt` inside
   the test command, never CIBW_TEST_REQUIRES: on windows cibuildwheel runs
   every command through cmd (util/cmd.py `shell=_IS_WIN`), which parses the
