@@ -23,6 +23,11 @@
                "mo-times>=5.682.25104", "jx-elasticsearch>=3.99.20292",
               "beautifulsoup4>=4.15.0"
     ]},
+    "ext_modules": [{
+        "name": "mo_dots._speedups",
+        "sources": ["mo_dots/_speedups.c"],
+        "optional": true
+    }],
     "include_package_data": true,
     "install_requires": ["mo-future==7.687.26234", "mo-imports==7.687.26234"],
     "license": "MPL 2.0",

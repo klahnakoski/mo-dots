@@ -165,16 +165,10 @@ def collect_github(run_id, deadline_minutes=30):
 
 
 def gen_setup():
-    """WRITE ROOT setup.py, PURE - NO EXTENSION"""
-    shutil.copyfile(PACKAGING / "setup.py", SETUP)
-
-
-def gen_setup_speedups():
-    """WRITE ROOT setup.py WITH THE OPTIONAL C EXTENSION; THE SMOKE IN EVERY
+    """WRITE ROOT setup.py; THE GENERATED FILE CARRIES THE OPTIONAL C
+    EXTENSION (MO_DOTS_NO_EXTENSIONS DROPS IT); THE SMOKE IN EVERY
     BINARY-WHEEL TEST ASSERTS THE ACCELERATOR, WHICH MAKES IT REQUIRED THERE"""
-    gen_setup()
-    if run(sys.executable, PACKAGING / "add_speedups.py", SETUP):
-        sys.exit("add_speedups failed")
+    shutil.copyfile(PACKAGING / "setup.py", SETUP)
 
 
 def sdist_has_speedups():
@@ -226,10 +220,9 @@ def main():
 
     try:
         gen_setup()
-        if run(sys.executable, "-m", "build", "--wheel"):
+        if run(sys.executable, "-m", "build", "--wheel", add_env={"MO_DOTS_NO_EXTENSIONS": "1"}):
             sys.exit("pure wheel failed")
 
-        gen_setup_speedups()
         if run(sys.executable, "-m", "build", "--sdist"):
             sys.exit("sdist failed")
         if not sdist_has_speedups():
