@@ -1,5 +1,9 @@
 # Major Changes
 
+#### Changes in version 11.x.x
+
+* Ships with binary wheels for Windows, MacOS and Linux.  No C compiler needed.
+
 
 #### Changes in version 10.x.x
 
