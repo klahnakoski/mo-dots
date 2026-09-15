@@ -172,8 +172,6 @@ def gen_setup():
     IT REQUIRED THERE; MO_DOTS_NO_EXTENSIONS DROPS IT FOR THE PURE WHEEL"""
     if SETUP.exists():
         return
-    if run(sys.executable, "-m", "pip", "install", "--quiet", "mo-dots", "mo-files", "mo-future", "mo-json", "mo-logs"):
-        sys.exit("pip install of the translator's requirements failed")
     if run(sys.executable, ROOT / "packaging" / "gen_setup.py", ROOT):
         sys.exit("packaging/gen_setup.py failed")
 
