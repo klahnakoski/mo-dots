@@ -24,7 +24,7 @@ SETUPTOOLS = "packaging/setuptools.json"  # CONFIGURATION USED TO MAKE THE setup
 def gen_setup_py_file(clone_dir):
     print("write setup.py")
     clone_dir = Path(clone_dir)
-    setup = json.loads((clone_dir / SETUPTOOLS).read_text(encoding="utf-8-sig"))
+    setup = apply_functions(json.loads((clone_dir / SETUPTOOLS).read_text(encoding="utf-8-sig")))
     if setup.get("ext_modules"):
         imports = "import os\nfrom setuptools import setup, Extension\n"
     else:
@@ -43,6 +43,17 @@ def gen_setup_py_file(clone_dir):
     (clone_dir / "setup.py").write_text(content, encoding="utf8")
     # FOR SOME REASON tests GET INCLUDED
     (clone_dir / "MANIFEST.in").write_text("global-exclude tests/*\nglobal-exclude MANIFEST.in\n", encoding="utf8")
+
+
+def apply_functions(node):
+    # SAME EXPANSION mo_files.read_json APPLIES: {"$concat": [...], "separator": s}
+    if isinstance(node, dict):
+        if "$concat" in node:
+            return (node.get("separator") or "").join(apply_functions(v) for v in node["$concat"])
+        return {k: apply_functions(v) for k, v in node.items() if v is not None}
+    if isinstance(node, list):
+        return [apply_functions(v) for v in node]
+    return node
 
 
 def setup_py_value(package_name, key, value):
