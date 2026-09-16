@@ -27,7 +27,7 @@ file exists.
     python packaging/build_wheels.py --github           # plus macos, via gh
     python packaging/build_wheels.py --only cp313-win_amd64
     python packaging/build_wheels.py --skip-linux       # no docker
-    python packaging/build_wheels.py --jobs 8           # wider matrix
+    python packaging/build_wheels.py --jobs 2           # narrower matrix
 """
 import argparse
 import json
@@ -321,7 +321,7 @@ def main():
     parse = argparse.ArgumentParser(description=__doc__)
     parse.add_argument("--only", default="", metavar="ID", help="one cibuildwheel identifier, eg cp313-win_amd64")
     parse.add_argument("--skip-linux", action="store_true", help="build no linux wheels; docker not needed")
-    parse.add_argument("--jobs", type=int, default=4, metavar="N", help="how many wheels to build at once")
+    parse.add_argument("--jobs", type=int, default=8, metavar="N", help="how many wheels to build at once")
     parse.add_argument(
         "--github", nargs="?", const="", default=None, metavar="REF",
         help="also build macos on github: dispatch wheels.yml on REF (default: current branch), wait, download",
