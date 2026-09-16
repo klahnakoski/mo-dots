@@ -24,9 +24,8 @@
     "extras_require": {"tests": [
                 "mo-logs>=8.678.25061",         "mo-json>=6.682.25104",
              "mo-threads>=6.682.25104",      "mo-testing>=8.685.25166",
-              "pyLibrary>=3.264.22338",         "mo-math>=7.678.25061",
-               "mo-times>=5.682.25104", "jx-elasticsearch>=3.99.20292",
-              "beautifulsoup4>=4.15.0"
+               "mo-files",                      "mo-math>=7.678.25061",
+               "mo-times>=5.682.25104",      "beautifulsoup4>=4.15.0"
     ]},
     "include_package_data": true,
     "install_requires": ["mo-future==7.688.26259", "mo-imports==7.688.26259"],

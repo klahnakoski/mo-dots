@@ -15,7 +15,8 @@ file exists.
 - binary wheels: cibuildwheel, windows natively, linux via docker; every wheel
   runs the smoke (C accelerator asserted active) then the full suite, except
   aarch64 under qemu which keeps the smoke only. One cibuildwheel call per
-  identifier, --jobs at a time, each in its own copy of the tree
+  identifier, --jobs at a time, each in its own mo-files TempDirectory copy of
+  the tree
 - macos wheels: --github dispatches .github/workflows/wheels.yml (which builds
   on real Macs), waits, and downloads just the macos artifacts into dist/; the
   ref must be pushed and carry the same version as packaging/setup.py. It goes
@@ -26,7 +27,7 @@ file exists.
     python packaging/build_wheels.py --github           # plus macos, via gh
     python packaging/build_wheels.py --only cp313-win_amd64
     python packaging/build_wheels.py --skip-linux       # no docker
-    python packaging/build_wheels.py --jobs 8           # wider matrix
+    python packaging/build_wheels.py --jobs 2           # narrower matrix
 """
 import argparse
 import json
@@ -36,10 +37,15 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import tempfile
 import threading
 import time
+from contextlib import ExitStack
 from pathlib import Path
+
+# NEEDS mo-files IN THE BUILD PYTHON (mo-deploy USES python["latest"]): WINDOWS
+# HOLDS A DIRECTORY FOR A WHILE AFTER THE LAST HANDLE CLOSES, AND TempDirectory
+# DELETES IN A THREAD THAT KEEPS RETRYING INSTEAD OF FAILING THE BUILD
+from mo_files import File, TempDirectory
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
@@ -177,7 +183,7 @@ def collect_github(run_id, deadline_minutes=30):
         sys.exit(f"github run {run_id} finished {state['conclusion']}; no macos wheels")
 
     scratch = ROOT / "build" / "github-wheels"
-    shutil.rmtree(scratch, ignore_errors=True)
+    File(str(scratch)).delete()
     if run("gh", "run", "download", str(run_id), "--pattern", "wheels-macos-*", "--dir", scratch):
         sys.exit("gh run download failed")
     [sdist] = DIST.glob("*.tar.gz")
@@ -191,7 +197,7 @@ def collect_github(run_id, deadline_minutes=30):
         )
     for wheel in wheels:
         shutil.copy2(wheel, DIST)
-    shutil.rmtree(scratch, ignore_errors=True)
+    File(str(scratch)).delete()
 
 
 def gen_setup():
@@ -250,10 +256,14 @@ def wheel_jobs(skip_linux):
     return jobs
 
 
-def source_copy():
+def source_copy(temp):
     """A TREE PER WORKER: cibuildwheel BUILDS IN PLACE, AND build/ AND setup.py
-    ARE SHARED STATE THAT CONCURRENT BUILDS OVERWRITE"""
-    where = Path(tempfile.mkdtemp(prefix="cibw-src-")) / ROOT.name
+    ARE SHARED STATE THAT CONCURRENT BUILDS OVERWRITE.
+
+    shutil FOR THE COPY, NOT File.copy: THE ignore LIST SKIPS .git, WHICH
+    File.copy WOULD WALK BYTE BY BYTE
+    """
+    where = Path(temp.os_path) / ROOT.name
     shutil.copytree(
         ROOT, where,
         ignore=shutil.ignore_patterns(".git", "build", "dist", "*.egg-info", "__pycache__", ".venv", "venv"),
@@ -271,10 +281,13 @@ def build_matrix(jobs, width):
         )
 
     print(f"{len(jobs)} wheels, {width} at a time", flush=True)
-    sources = []
     failed = []
-    try:
-        sources = [source_copy() for _ in range(min(width, len(jobs)))]
+    # EXITING THE TempDirectory HANDS THE TREE TO A PATIENT DELETE THREAD
+    with ExitStack() as temps:
+        sources = [
+            source_copy(temps.enter_context(TempDirectory()))
+            for _ in range(min(width, len(jobs)))
+        ]
         # THE FIRST ALONE: THE cibuildwheel CACHES (nuget pythons, virtualenv
         # pyz) ARE SHARED, AND A COLD DOWNLOAD RACES
         identifier, env = jobs[0]
@@ -301,9 +314,6 @@ def build_matrix(jobs, width):
             thread.start()
         for thread in threads:
             thread.join()
-    finally:
-        for source in sources:
-            shutil.rmtree(source.parent, ignore_errors=True)
     return failed
 
 
@@ -311,7 +321,7 @@ def main():
     parse = argparse.ArgumentParser(description=__doc__)
     parse.add_argument("--only", default="", metavar="ID", help="one cibuildwheel identifier, eg cp313-win_amd64")
     parse.add_argument("--skip-linux", action="store_true", help="build no linux wheels; docker not needed")
-    parse.add_argument("--jobs", type=int, default=4, metavar="N", help="how many wheels to build at once")
+    parse.add_argument("--jobs", type=int, default=8, metavar="N", help="how many wheels to build at once")
     parse.add_argument(
         "--github", nargs="?", const="", default=None, metavar="REF",
         help="also build macos on github: dispatch wheels.yml on REF (default: current branch), wait, download",
@@ -332,10 +342,10 @@ def main():
             if rc or not github_ref:
                 sys.exit("cannot name the current branch for --github")
 
-    shutil.rmtree(DIST, ignore_errors=True)
-    shutil.rmtree(ROOT / "build", ignore_errors=True)
+    File(str(DIST)).delete()
+    File(str(ROOT / "build")).delete()
     for egg in ROOT.glob("*.egg-info"):
-        shutil.rmtree(egg, ignore_errors=True)
+        File(str(egg)).delete()
     # SAME EXCLUSIONS mo-deploy WRITES, SO A REHEARSAL SDIST MATCHES A RELEASE
     (ROOT / "MANIFEST.in").write_text("global-exclude tests/*\nglobal-exclude MANIFEST.in\n")
 
