@@ -85,15 +85,15 @@ def suite_env():
     return {
         **CIBW_ENV,
         "CIBW_TEST_SOURCES": "tests",
-        # NO CIBW_TEST_REQUIRES: ON WINDOWS cibuildwheel RUNS pip THROUGH
-        # cmd (shell=True), WHICH EATS THE > IN EVERY VERSION FLOOR AS A
-        # REDIRECT AND INSTALLS UNCONSTRAINED NAMES; -r KEEPS THE FLOORS
-        # IN A FILE THE SHELL NEVER SEES.
-        # THE REQUIRES ARE MANAGED PACKAGES PINNING mo-dots==<LAST RELEASE>:
-        # REINSTALL THE WHEEL LAST (SAME REASON mo-deploy run_tests
-        # INSTALLS SELF AGAIN)
+        # tests/install_locked.py, NOT CIBW_TEST_REQUIRES OR -r requirements.txt:
+        # THE MANAGED PACKAGES PIN EACH OTHER WITH ==, SO ANY RESOLVE OF THE
+        # FLOORS IS ResolutionImpossible THE MOMENT TWO GENERATIONS MIX. THE
+        # LOCK IS WHAT run_tests PROVED, AND THE HELPER PICKS THE ONE FOR THE
+        # WHEEL'S OWN python - ALSO NOTHING FOR cmd TO EAT.
+        # THE LOCK PINS mo-dots==<LAST RELEASE>: REINSTALL THE WHEEL LAST
+        # (SAME REASON mo-deploy run_tests INSTALLS SELF AGAIN)
         "CIBW_TEST_COMMAND": (
-            "python -m pip install -r tests/requirements.txt && "
+            "python tests/install_locked.py && "
             'python -m pip install --quiet --force-reinstall --no-deps "{wheel}" && '
             + SMOKE
             + " && python -m unittest discover -s tests -t ."
