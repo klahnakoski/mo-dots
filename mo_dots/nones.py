@@ -300,9 +300,7 @@ _NULL_HOT = {
 if _speedups:
     _pure_NullType = NullType
     NullType = _rebuild_class(_pure_NullType, _speedups._NullBase, _NULL_HOT)
-    _speedups._init_null(
-        NullType, _pure_NullType.__getattr__, _pure_NullType.__getitem__
-    )
+    _speedups._init_null(NullType, _pure_NullType.__getattr__, _pure_NullType.__getitem__)
 
 register_null_type(NullType)
 Null = NullType()  # INSTEAD OF None!!!

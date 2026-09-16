@@ -9,12 +9,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-from mo_future import (
-    generator_types,
-    get_function_arguments,
-    get_function_defaults,
-    Mapping,
-)
+from mo_future import generator_types, get_function_arguments, get_function_defaults, Mapping
 from mo_imports import export, expect
 
 from mo_dots.datas import Data, _iadd, dict_to_data, _set as _data_set
@@ -154,8 +149,7 @@ def get_keys(obj):
         k
         for k in dir(_type)
         if k not in ignored_attributes
-        and getattr(_type, k).__class__.__name__
-        in ["member_descriptor", "getset_descriptor"]
+        and getattr(_type, k).__class__.__name__ in ["member_descriptor", "getset_descriptor"]
     )
     return keys
 
@@ -210,9 +204,7 @@ class DataClass:
 
         ordered_params = dict(zip(params, args))
 
-        output = self.class_(
-            **params_pack(params, ordered_params, kwargs, settings, defaults)
-        )
+        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
         return DataObject(output)
 
 
