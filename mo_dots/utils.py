@@ -27,12 +27,7 @@ def get_module(name):
     try:
         return importlib.import_module(name)
     except Exception as e:
-        get_logger().error(
-            "`pip install "
-            + name.split(".")[0].replace("_", "-")
-            + "` to enable this feature",
-            cause=e,
-        )
+        get_logger().error("`pip install " + name.split(".")[0].replace("_", "-") + "` to enable this feature", cause=e)
 
 
 _null_types = (none_type,)
@@ -50,9 +45,7 @@ def register_null_type(_type):
     _null_type_set = frozenset(_null_types)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(
-            _null_types, _missing_types, sequence_types, _data_types, _many_types
-        )
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
     for callback in _null_type_listeners:
         callback()
 
@@ -113,9 +106,7 @@ def register_data(type_):
     global _data_types
     _data_types = tuple(set(_data_types + (type_,)))
     if _speedups:
-        _speedups._sync(
-            _null_types, _missing_types, sequence_types, _data_types, _many_types
-        )
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
 
 
 def is_data(d):
@@ -140,11 +131,7 @@ def is_namedtuple(obj):
 
 def is_data_object(obj):
     # __dataclass_fields__ is the dataclass marker; dataclasses costs 10ms to import
-    return (
-        isinstance(obj, _known_data_types)
-        or is_namedtuple(obj)
-        or hasattr(obj, "__dataclass_fields__")
-    )
+    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or hasattr(obj, "__dataclass_fields__")
 
 
 def is_known_data_type(_class):
@@ -169,9 +156,7 @@ def register_list(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(
-            _null_types, _missing_types, sequence_types, _data_types, _many_types
-        )
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
 
 
 def register_sequence(_type):
@@ -181,9 +166,7 @@ def register_sequence(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(
-            _null_types, _missing_types, sequence_types, _data_types, _many_types
-        )
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -223,9 +206,7 @@ def is_many(value):
     type_ = _get(value, CLASS)
     if issubclass(type_, types.GeneratorType):
         _many_types = _many_types + (type_,)
-        get_logger.warning(
-            "is_many() can not detect generator {type}", type=type_.__name__
-        )
+        get_logger.warning("is_many() can not detect generator {type}", type=type_.__name__)
         return True
     return False
 
@@ -235,9 +216,7 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(
-            _null_types, _missing_types, sequence_types, _data_types, _many_types
-        )
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
 
 
 # OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
@@ -250,9 +229,7 @@ except ImportError:
     _speedups = None
 
 if _speedups:
-    _speedups._sync(
-        _null_types, _missing_types, sequence_types, _data_types, _many_types
-    )
+    _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
     is_null = _speedups.is_null
     is_not_null = _speedups.is_not_null
     is_missing = _speedups.is_missing

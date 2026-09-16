@@ -67,6 +67,16 @@ class NullType:
     def __call__(self, *args, **kwargs):
         return Null
 
+    def __enter__(self):
+        # `with Null:` OTHERWISE RAISES A BARE AttributeError: __enter__, NAMING
+        # NOTHING; THIS NAMES THE MISSING CONTEXT MANAGER INSTEAD
+        from mo_logs import Log
+
+        Log.error("Expecting a context manager, not Null (`with` on a missing value)")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
     def __iadd__(self, other):
         o = _get(self, SLOT)
         if o is None:
@@ -300,9 +310,7 @@ _NULL_HOT = {
 if _speedups:
     _pure_NullType = NullType
     NullType = _rebuild_class(_pure_NullType, _speedups._NullBase, _NULL_HOT)
-    _speedups._init_null(
-        NullType, _pure_NullType.__getattr__, _pure_NullType.__getitem__
-    )
+    _speedups._init_null(NullType, _pure_NullType.__getattr__, _pure_NullType.__getitem__)
 
 register_null_type(NullType)
 Null = NullType()  # INSTEAD OF None!!!
