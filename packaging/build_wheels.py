@@ -266,7 +266,9 @@ def source_copy(temp):
     where = Path(temp.os_path) / ROOT.name
     shutil.copytree(
         ROOT, where,
-        ignore=shutil.ignore_patterns(".git", "build", "dist", "*.egg-info", "__pycache__", ".venv", "venv"),
+        # .svn IS THE BIG ONE: 7.5MB OF PRISTINE STORE IN mo-dots, THOUSANDS OF
+        # TINY FILES, COPIED AGAIN INTO EVERY manylinux CONTAINER
+        ignore=shutil.ignore_patterns(".git", ".svn", "build", "dist", "*.egg-info", "__pycache__", ".venv", "venv"),
     )
     return where
 
