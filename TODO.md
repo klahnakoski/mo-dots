@@ -14,12 +14,15 @@
   build_wheels.py and wheels.yml can never resolve - a deploy dies at its
   first pip install. Decide: publish mo-deploy, pip from git, or another
   route to the translator; fix both call sites, then re-deploy.
-- Test requires install via `pip install -r tests/requirements.txt` inside
-  the test command, never CIBW_TEST_REQUIRES: on windows cibuildwheel runs
-  every command through cmd (util/cmd.py `shell=_IS_WIN`), which parses the
-  `>` in each version floor as a redirect — pip got bare names, backtracked
-  mo-testing to 3.124.20293 (2020, datawrap era) and the suite died on
-  import. Floors in a file never meet the shell.
+- Test requires install via `python tests/install_locked.py` inside the test
+  command, never CIBW_TEST_REQUIRES and never `-r tests/requirements.txt`.
+  CIBW_TEST_REQUIRES loses: on windows cibuildwheel runs every command
+  through cmd (util/cmd.py `shell=_IS_WIN`), which parses the `>` in each
+  version floor as a redirect — pip got bare names, backtracked mo-testing
+  to 3.124.20293 (2020, datawrap era) and the suite died on import. The
+  floors lose too: managed packages pin each other with ==, so resolving
+  them is ResolutionImpossible once two generations mix. The per-python
+  lock, installed --no-deps, is the set run_tests proved.
 - Verified: the reinstall-the-wheel-last fix held — linux x86_64 ran
   329 tests against each of the 9 wheels, macos arm64+x86_64 ran the suite
   green in wheels.yml (run 34766761475).
