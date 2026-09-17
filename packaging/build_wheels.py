@@ -260,14 +260,20 @@ def source_copy(temp):
     """A TREE PER WORKER: cibuildwheel BUILDS IN PLACE, AND build/ AND setup.py
     ARE SHARED STATE THAT CONCURRENT BUILDS OVERWRITE.
 
-    shutil FOR THE COPY, NOT File.copy: THE ignore LIST SKIPS .git, WHICH
-    File.copy WOULD WALK BYTE BY BYTE
+    WHAT git TRACKS, PLUS THE TWO GENERATED FILES THE BUILD READS. THE REPO
+    ALREADY DECLARES WHAT BELONGS TO IT, SO NOTHING HERE GUESSES - .svn,
+    build, dist, egg-info, __pycache__ AND EVERY venv ARE UNTRACKED, SO THEY
+    ARE GONE WITHOUT BEING NAMED.
     """
     where = Path(temp.os_path) / ROOT.name
-    shutil.copytree(
-        ROOT, where,
-        ignore=shutil.ignore_patterns(".git", "build", "dist", "*.egg-info", "__pycache__", ".venv", "venv"),
-    )
+    rc, out = said("git", "ls-files", "-z")
+    if rc or not out:
+        sys.exit("git ls-files answered nothing; cannot make a source copy")
+    # setup.py AND MANIFEST.in ARE GENERATED, AND gitignored
+    for name in [n for n in out.split("\0") if n] + ["setup.py", "MANIFEST.in"]:
+        target = where / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / name, target)
     return where
 
 
