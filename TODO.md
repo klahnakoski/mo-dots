@@ -119,15 +119,3 @@
   then twines dist/*. mo-deploy renders `ext_modules` from setuptools.json
   into every generated setup.py, so per-python wheel tests compile the
   extension.
-- JSON-as-string backend for pipeline workloads (doc arrives as text, read a few
-  fields, patch a few, emit text — NDJSON ETL shape). Measured on an 819-byte line,
-  2 changes + 1 append: naive pure-Python splice 1,175ns vs stdlib
-  loads/mutate/dumps 15,438ns (13x); win is skipping materialization AND
-  re-serialization of untouched bytes. Scanning must be C-based and escape-aware:
-  a search pattern can occur inside a string value, addressing is nesting-aware
-  (`response.status`, not first `"status"` anywhere), appends need comma/brace
-  logic, duplicate-key semantics decided. At ~1K docs no rope/piece-table — output
-  is slices + patches joined once; rescanning after a splice is sub-microsecond.
-  Untouched bytes pass through byte-identical (preserves key order, number
-  formatting; stable diffs). Loses when the doc lives as Python data between
-  operations — for that, materialize.
