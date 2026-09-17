@@ -22,7 +22,6 @@ jobs:
       - name: Generate setup.py
         shell: bash
         run: |
-          python -m pip install --quiet mo-dots mo-files mo-future mo-json mo-logs
           python packaging/gen_setup.py .
 
       - name: Build wheels
@@ -32,13 +31,15 @@ jobs:
           CIBW_ARCHS_MACOS: "arm64 x86_64"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_SOURCES: tests
-          # FULL SUITE AGAINST EACH INSTALLED WHEEL. REQUIRES VIA -r, NOT
-          # CIBW_TEST_REQUIRES (windows cibuildwheel shells the install, so
-          # version floors with > become redirects); THEY PIN
+          # FULL SUITE AGAINST EACH INSTALLED WHEEL. THE REQUIREMENTS COME
+          # FROM tests/install_locked.py, NOT A pypi RESOLVE: THE MANAGED
+          # PACKAGES PIN EACH OTHER WITH ==, SO ANY RESOLVE OF THE FLOORS IS
+          # ResolutionImpossible ONCE TWO GENERATIONS MIX. SAME COMMAND AS
+          # packaging/build_wheels.py - KEEP THE TWO IN STEP. THE LOCK PINS
           # mo-dots==<LAST RELEASE>, SO REINSTALL THE WHEEL LAST OR THE
           # SUITE TESTS THE OLD RELEASE
           CIBW_TEST_COMMAND: >
-            python -m pip install -r tests/requirements.txt
+            python tests/install_locked.py
             && python -m pip install --quiet --force-reinstall --no-deps "{wheel}"
             && python -c "import mo_dots; assert type(mo_dots.to_data).__name__ == 'builtin_function_or_method'; d = mo_dots.to_data({'a': {'b': 1}}); assert d.a.b == 1; assert d.x.y == None; w = mo_dots.Data(a=42); assert w.a == 42; w['.'] = [1]; assert list(w) == [1]"
             && python -m unittest discover -s tests -t .

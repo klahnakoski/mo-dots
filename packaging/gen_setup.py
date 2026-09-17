@@ -10,22 +10,22 @@
 """Render packaging/setuptools.json into a repo-root setup.py:
 
     python -m mo_deploy.gen_setup [DIR]
-"""
-import sys
 
-from mo_dots import exists
-from mo_files import File
-from mo_future import is_binary, is_text, text
-from mo_json import value2json
-from mo_logs import logger
+stdlib only, so the copy synced to each repo's packaging/ runs anywhere
+without installing anything.
+"""
+import json
+import sys
+from pathlib import Path
 
 SETUPTOOLS = "packaging/setuptools.json"  # CONFIGURATION USED TO MAKE THE setup.py FILE
 
 
 def gen_setup_py_file(clone_dir):
-    logger.info("write setup.py")
-    setup = File(clone_dir / SETUPTOOLS).read_json(flexible=False)
-    if exists(setup.ext_modules):
+    print("write setup.py")
+    clone_dir = Path(clone_dir)
+    setup = apply_functions(json.loads((clone_dir / SETUPTOOLS).read_text(encoding="utf-8-sig")))
+    if setup.get("ext_modules"):
         imports = "import os\nfrom setuptools import setup, Extension\n"
     else:
         imports = "from setuptools import setup\n"
@@ -35,14 +35,25 @@ def gen_setup_py_file(clone_dir):
         + imports
         + "setup(\n"
         + ",\n".join(
-            "    " + k + "=" + setup_py_value(setup.name, k, v) for k, v in setup.items() if exists(v)
+            "    " + k + "=" + setup_py_value(setup["name"], k, v) for k, v in setup.items() if v is not None
         )
         + "\n"
         + ")"
     )
-    (clone_dir / "setup.py").write(content)
+    (clone_dir / "setup.py").write_text(content, encoding="utf8")
     # FOR SOME REASON tests GET INCLUDED
-    (clone_dir / "MANIFEST.in").write("global-exclude tests/*\nglobal-exclude MANIFEST.in\n")
+    (clone_dir / "MANIFEST.in").write_text("global-exclude tests/*\nglobal-exclude MANIFEST.in\n", encoding="utf8")
+
+
+def apply_functions(node):
+    # SAME EXPANSION mo_files.read_json APPLIES: {"$concat": [...], "separator": s}
+    if isinstance(node, dict):
+        if "$concat" in node:
+            return (node.get("separator") or "").join(apply_functions(v) for v in node["$concat"])
+        return {k: apply_functions(v) for k, v in node.items() if v is not None}
+    if isinstance(node, list):
+        return [apply_functions(v) for v in node]
+    return node
 
 
 def setup_py_value(package_name, key, value):
@@ -58,15 +69,12 @@ def setup_py_value(package_name, key, value):
 
 
 def value2python(value):
-    if value in (True, False, None):
-        return text(repr(value))
-    elif is_text(value):
-        return text(repr(value))
-    elif is_binary(value):
-        return text(repr(value))
-    else:
-        return value2json(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(value2python(v) for v in value) + "]"
+    if isinstance(value, dict):
+        return "{" + ", ".join(value2python(k) + ": " + value2python(v) for k, v in value.items()) + "}"
+    return repr(value)
 
 
 if __name__ == "__main__":
-    gen_setup_py_file(File(sys.argv[1] if len(sys.argv) > 1 else "."))
+    gen_setup_py_file(sys.argv[1] if len(sys.argv) > 1 else ".")

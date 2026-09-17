@@ -14,15 +14,7 @@ from mo_imports import expect, delay_import, export
 from mo_dots import utils
 from mo_dots.datas import is_missing, hash_value
 from mo_dots.nones import Null, NullType
-from mo_dots.utils import (
-    CLASS,
-    SLOT,
-    is_null,
-    is_many,
-    is_list,
-    is_sequence,
-    register_list,
-)
+from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
 
 Log = delay_import("mo_logs.Log")
 object_to_data, coalesce, to_data, from_data, get_attr = expect(
@@ -45,7 +37,7 @@ class FlatList:
     __slots__ = [SLOT]
 
     def __init__(self, vals=None):
-        """ USE THE vals, NOT A COPY """
+        """USE THE vals, NOT A COPY"""
         # list.__init__(self)
         if is_null(vals):
             _set(self, SLOT, [])
@@ -61,9 +53,7 @@ class FlatList:
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
-                Log.error(
-                    "slice step must be None, do not know how to deal with values"
-                )
+                Log.error("slice step must be None, do not know how to deal with values")
             length = len(_get(self, SLOT))
 
             i = index.start
@@ -134,9 +124,7 @@ class FlatList:
         Log.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
-        return list_to_data([
-            from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))
-        ])
+        return list_to_data([from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))])
 
     def map(self, oper, includeNone=True):
         if includeNone:
@@ -314,9 +302,7 @@ if utils._speedups:
     # NON-dict ELEMENTS)
     _pure_FlatList = FlatList
     FlatList = utils._rebuild_class(
-        _pure_FlatList,
-        utils._speedups._ListBase,
-        {"__getattr__", "__iter__", "__contains__", "__len__", "get"},
+        _pure_FlatList, utils._speedups._ListBase, {"__getattr__", "__iter__", "__contains__", "__len__", "get"}
     )
     utils._speedups._init_list(FlatList, _pure_FlatList.get)
 

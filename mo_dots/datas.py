@@ -17,28 +17,19 @@ from mo_dots.fields import split_field, literal_field, concat_field
 from mo_dots.nones import Null, NullType
 from mo_dots.utils import *
 
-(
-    _getdefault,
-    coalesce,
-    listwrap,
-    from_data,
-    to_data,
-    list_to_data,
-    FlatList,
-    DataObject,
-    get_keys,
-    object_to_data,
-) = expect(
-    "_getdefault",
-    "coalesce",
-    "listwrap",
-    "from_data",
-    "to_data",
-    "list_to_data",
-    "FlatList",
-    "DataObject",
-    "get_keys",
-    "object_to_data",
+_getdefault, coalesce, listwrap, from_data, to_data, list_to_data, FlatList, DataObject, get_keys, object_to_data = (
+    expect(
+        "_getdefault",
+        "coalesce",
+        "listwrap",
+        "from_data",
+        "to_data",
+        "list_to_data",
+        "FlatList",
+        "DataObject",
+        "get_keys",
+        "object_to_data",
+    )
 )
 
 
@@ -61,6 +52,7 @@ if utils._speedups:
         else:
             object.__setattr__(obj, key, value)
 
+
 DEBUG = False
 
 
@@ -76,9 +68,7 @@ class Data:
         CONSTRUCT DATA WITH GIVEN PROPERTY VALUES
         """
         if args:
-            raise Exception(
-                "only keywords are allowed, not " + args[0].__class__.__name__
-            )
+            raise Exception("only keywords are allowed, not " + args[0].__class__.__name__)
         _set(self, SLOT, kwargs)
 
     def __bool__(self):

@@ -22,3 +22,12 @@ answered `Null` and two equal objects compared unequal while their hashes matche
 Fix: `e = from_data(other)`, keeping `other` when the unwrap is not a `dict` — `from_data`
 of a `DataObject` is the wrapped object, which has no `.get`/`.items`.
 Coverage: `tests/test_mo_dots.py` (this repo, not upstream).
+
+## `with Null:` raised a bare `AttributeError: __enter__` (FIXED)
+
+`NullType` had no `__enter__`/`__exit__`, so using a `Null` as a context manager — the usual
+sign that some upstream call failed and answered `Null` instead of raising — surfaced only as
+`AttributeError: __enter__`, naming nothing. The real cause (an ES 400, in the case that found
+this) never appeared in the output. `NullType.__enter__` now raises through `Log.error` with a
+message that names the actual problem: a context manager was expected where a `Null` was found.
+Coverage: `tests/test_mo_dots.py` (this repo, not upstream).
