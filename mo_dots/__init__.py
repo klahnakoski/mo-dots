@@ -10,6 +10,7 @@ from math import isnan
 
 from mo_dots import datas
 from mo_dots import lists
+from mo_dots import utils
 from mo_dots.datas import *
 from mo_dots.fields import *
 from mo_dots.lists import *
@@ -57,6 +58,7 @@ __all__ = [
     "PATH_NOT_FOUND",
     "relative_field",
     "register_data",
+    "register_view",
     "register_many",
     "register_list",
     "register_sequence",
@@ -379,6 +381,8 @@ def to_data(v=None) -> object:
         return list_to_data(v)
     elif type_ in generator_types:
         return list_to_data(list(from_data(vv) for vv in v))
+    elif type_ in utils._wrapped_data_types:
+        return dict_to_data(v)  # A MAPPING mo-dots DID NOT BUILD
     else:
         return v
 

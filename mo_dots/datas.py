@@ -431,7 +431,7 @@ if utils._speedups:
     )
 
 MutableMapping.register(Data)
-register_data(Data)
+register_view(Data)
 
 
 def leaves(value, prefix=None):
@@ -579,9 +579,13 @@ def _rebuild_getattr_dispatch():
     _getattr_dispatch[list] = list_to_data
     for t in generator_types:
         _getattr_dispatch[t] = _gen_to_data
+    for t in utils._wrapped_data_types:
+        # A MAPPING mo-dots DID NOT BUILD NAVIGATES THE WAY A dict DOES
+        _getattr_dispatch.setdefault(t, dict_to_data)
 
 
 utils.on_null_type_change(_rebuild_getattr_dispatch)
+utils.on_data_type_change(_rebuild_getattr_dispatch)
 _rebuild_getattr_dispatch()
 
 

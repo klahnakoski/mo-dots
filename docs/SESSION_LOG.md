@@ -1,5 +1,28 @@
 # Session Log
 
+## 2026-09-19
+- tests/test_register_data.py added: 7 pass in both modes (C extension built in
+  place, and MO_DOTS_PURE=1).  4 of the 7 fail against the pre-change code.
+- suite 29 ran / 11 err on py3.12: the 11 are import errors, unchanged by this
+  work - this venv's installed mo_collections does `from mo_dots.objects import
+  datawrap`, and objects.py has no datawrap any more.  Everything that imports
+  mo_testing is out, which is most of the suite.
+- `register_data` now promises what its callers assumed: `to_data()` puts a Data
+  over a registered mapping, and `Data.__getattr__` wraps a nested one, so an
+  outside mapping navigates like a dict.  Registering used to feed `is_data`
+  alone, so `to_data` handed the object straight back and `w.b.c` raised.
+- the types mo-dots itself registers are views - they answer navigation already -
+  so `Data` and `DataObject` go through the new `register_view`, and wrapping
+  them again is what `test_a_view_is_handed_back` pins.
+- three places learn a registration now: `_data_types` (is_data),
+  `_wrapped_data_types` (to_data), and the `__getattr__` dispatch, through a new
+  `on_data_type_change` hook beside the null-type one.  `_sync` carries the
+  second tuple to C, and `c_to_data` wraps there too - the C `Data.__getattr__`
+  already falls back to python for a non-dict slot, so that half needed nothing.
+- asked for by mo-json, whose `LazyObject` is a mapping over JSON text.  It reads
+  and writes through the `Data` now; mo-json's 261 tests pass against this tree.
+- next: nothing pending here.  A release would let mo-json drop `dict_to_data`.
+
 ## 2026-09-13
 - suite 329 ran / 1 err / 2 skip on py3.13, pure mode (local .pyds removed by
   request; the 1 err is test_leaves_w_bs4 - bs4 absent locally, pre-existing)

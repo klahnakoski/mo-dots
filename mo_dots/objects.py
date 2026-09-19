@@ -18,7 +18,7 @@ from mo_dots.nones import NullType, Null
 from mo_dots.utils import (
     CLASS,
     SLOT,
-    register_data,
+    register_view,
     get_logger,
     is_primitive,
     is_known_data_type,
@@ -116,7 +116,7 @@ class DataObject(Mapping):
         return obj(*args, **kwargs)
 
 
-register_data(DataObject)
+register_view(DataObject)
 
 
 def get_keys(obj):

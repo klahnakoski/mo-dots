@@ -45,7 +45,7 @@ def register_null_type(_type):
     _null_type_set = frozenset(_null_types)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
     for callback in _null_type_listeners:
         callback()
 
@@ -96,17 +96,39 @@ def register_primitive(_type):
 
 
 _data_types = data_types = (dict, OrderedDict)  # TYPES TO HOLD DATA
+_wrapped_data_types = (dict, OrderedDict)  # ... AND THE ONES to_data() PUTS A Data OVER
+_data_type_listeners = []
+
+
+def on_data_type_change(callback):
+    _data_type_listeners.append(callback)
+
+
+def add_data_type(type_):
+    global _data_types
+    _data_types = tuple(set(_data_types + (type_,)))
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    for callback in _data_type_listeners:
+        callback()
 
 
 def register_data(type_):
     """
-    :param type_:  ADD OTHER TYPE THAT HOLDS DATA
+    :param type_:  A MAPPING mo-dots DID NOT BUILD; to_data() WRAPS IT IN A Data
     :return:
     """
-    global _data_types
-    _data_types = tuple(set(_data_types + (type_,)))
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+    global _wrapped_data_types
+    _wrapped_data_types = tuple(set(_wrapped_data_types + (type_,)))
+    add_data_type(type_)
+
+
+def register_view(type_):
+    """
+    :param type_:  A DATA TYPE THAT ANSWERS NAVIGATION ITSELF; to_data() HANDS IT BACK
+    :return:
+    """
+    add_data_type(type_)
 
 
 def is_data(d):
@@ -156,7 +178,7 @@ def register_list(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 
 
 def register_sequence(_type):
@@ -166,7 +188,7 @@ def register_sequence(_type):
     _many_types = tuple(set(_many_types + (_type,)))
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -216,7 +238,7 @@ def register_many(_type):
     _many_types = _many_types + (_type,)
     _missing_types = (str, *_null_types, *_many_types)
     if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 
 
 # OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
@@ -229,7 +251,7 @@ except ImportError:
     _speedups = None
 
 if _speedups:
-    _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _many_types)
+    _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
     is_null = _speedups.is_null
     is_not_null = _speedups.is_not_null
     is_missing = _speedups.is_missing

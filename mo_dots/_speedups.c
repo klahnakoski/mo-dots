@@ -69,6 +69,7 @@ static PyObject *null_types_tuple = NULL;    /* tuple of null classes    */
 static PyObject *missing_types_tuple = NULL; /* (str, *null, *many)      */
 static PyObject *sequence_types_tuple = NULL;
 static PyObject *data_types_tuple = NULL;    /* is_data() classes        */
+static PyObject *wrapped_data_types_tuple = NULL; /* ... to_data() PUTS A Data OVER */
 static PyObject *many_types_tuple = NULL;    /* is_many() classes        */
 
 /* PURE-PYTHON SLOW PATHS (THE ORIGINAL METHODS) */
@@ -277,6 +278,8 @@ c_to_data(PyObject *v)
         Py_DECREF(out);
         return result;
     }
+    if (type_in_tuple(t, wrapped_data_types_tuple))
+        return new_store(DataClass, v); /* A MAPPING mo-dots DID NOT BUILD */
     Py_INCREF(v);
     return v;
 }
@@ -1544,11 +1547,11 @@ static PyTypeObject ListBase_Type = {
 static PyObject *
 speedups_sync(PyObject *self, PyObject *args)
 {
-    PyObject *nulls, *missings, *sequences, *datas, *manys;
+    PyObject *nulls, *missings, *sequences, *datas, *wrapped_datas, *manys;
     if (!PyArg_ParseTuple(
-            args, "O!O!O!O!O!",
+            args, "O!O!O!O!O!O!",
             &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences,
-            &PyTuple_Type, &datas, &PyTuple_Type, &manys))
+            &PyTuple_Type, &datas, &PyTuple_Type, &wrapped_datas, &PyTuple_Type, &manys))
         return NULL;
     Py_INCREF(nulls);
     Py_XSETREF(null_types_tuple, nulls);
@@ -1558,6 +1561,8 @@ speedups_sync(PyObject *self, PyObject *args)
     Py_XSETREF(sequence_types_tuple, sequences);
     Py_INCREF(datas);
     Py_XSETREF(data_types_tuple, datas);
+    Py_INCREF(wrapped_datas);
+    Py_XSETREF(wrapped_data_types_tuple, wrapped_datas);
     Py_INCREF(manys);
     Py_XSETREF(many_types_tuple, manys);
     Py_RETURN_NONE;
@@ -1684,7 +1689,8 @@ static PyMethodDef speedups_methods[] = {
     {"from_data", speedups_from_data, METH_O, "unwrap to the underlying python value"},
     {"dict_to_data", speedups_dict_to_data, METH_O, "wrap dict as Data, no checks"},
     {"list_to_data", speedups_list_to_data, METH_O, "wrap list as FlatList, no checks"},
-    {"_sync", speedups_sync, METH_VARARGS, "(null_types, missing_types, sequence_types) - refresh registries"},
+    {"_sync", speedups_sync, METH_VARARGS,
+     "(null_types, missing_types, sequence_types, data_types, wrapped_data_types, many_types)"},
     {"_init_null", speedups_init_null, METH_VARARGS, "(NullType, getattr_slow, getitem_slow)"},
     {"_set_null", speedups_set_null, METH_O, "store the Null singleton"},
     {"_init_data", speedups_init_data, METH_VARARGS, "(Data, getattr_slow, getitem_slow)"},
@@ -1717,10 +1723,12 @@ PyInit__speedups(void)
     missing_types_tuple = PyTuple_New(0);
     sequence_types_tuple = PyTuple_New(0);
     data_types_tuple = PyTuple_New(0);
+    wrapped_data_types_tuple = PyTuple_New(0);
     many_types_tuple = PyTuple_New(0);
     if (!slot_str || !empty_str || !null_repr_str || !dot_str || !json_str || !call_str
         || !list_contains_meth || !empty_tuple || !null_types_tuple || !missing_types_tuple
-        || !sequence_types_tuple || !data_types_tuple || !many_types_tuple)
+        || !sequence_types_tuple || !data_types_tuple || !wrapped_data_types_tuple
+        || !many_types_tuple)
         return NULL;
     null_hash = PyObject_Hash(Py_None);
 
