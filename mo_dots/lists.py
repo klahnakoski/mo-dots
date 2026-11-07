@@ -208,14 +208,11 @@ class FlatList:
         return not self.__eq__(other)
 
     def __add__(self, other):
-        output = list(_get(self, SLOT))
         if is_null(other):
             return self
         elif is_many(other):
-            output.extend(from_data(other))
-        else:
-            output.append(other)
-        return FlatList(vals=output)
+            return FlatList(list(_get(self, SLOT)) + list(from_data(other)))
+        return FlatList(list(_get(self, SLOT)) + [other])
 
     def __or__(self, other):
         """COALESCE: LEFT WINS, A MISSING LEFT TAKES THE RIGHT"""
@@ -229,14 +226,11 @@ class FlatList:
         return to_data(other)
 
     def __radd__(self, other):
-        output = list(_get(self, SLOT))
         if is_null(other):
             return self
         elif is_many(other):
-            output = list(from_data(other)) + output
-        else:
-            output = [other] + output
-        return FlatList(vals=output)
+            return FlatList(list(from_data(other)) + list(_get(self, SLOT)))
+        return FlatList([other] + list(_get(self, SLOT)))
 
     def __iadd__(self, other):
         if is_null(other):
