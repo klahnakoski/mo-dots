@@ -188,10 +188,10 @@ class Data:
         return self
 
     def __add__(self, other):
-        return to_data(_iadd(_iadd({}, self), {} if is_null(other) else other))
+        return to_data(_iadd(_iadd({}, self), {} if is_missing(other) else other))
 
     def __radd__(self, other):
-        return _iadd(_iadd({}, other), self)
+        return to_data(_iadd(_iadd({}, {} if is_missing(other) else other), self))
 
     def __iadd__(self, other):
         return _iadd(self, other)

@@ -1318,9 +1318,16 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(from_data(to_data({"a": {}}) | {"a": 2}) == {"a": {}})
 
     def test_add_null_is_identity(self):
-        for identity in [Null, None]:
+        for identity in [Null, None, "", [], to_data([])]:
             with self.subTest(identity=identity):
                 result = to_data({"a": 1}) + identity
+                self.assertIsInstance(result, Data)
+                self.assertTrue(from_data(result) == {"a": 1})
+
+    def test_radd_missing_is_identity(self):
+        for identity in [Null, None, ""]:
+            with self.subTest(identity=identity):
+                result = identity + to_data({"a": 1})
                 self.assertIsInstance(result, Data)
                 self.assertTrue(from_data(result) == {"a": 1})
 
