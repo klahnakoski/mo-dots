@@ -202,7 +202,7 @@ class FlatList:
         return not self.__eq__(other)
 
     def __add__(self, other):
-        if is_null(other):
+        if is_missing(other):
             return self
         elif is_many(other):
             return FlatList(list(_get(self, SLOT)) + list(from_data(other)))
@@ -220,14 +220,14 @@ class FlatList:
         return to_data(other)
 
     def __radd__(self, other):
-        if is_null(other):
+        if is_missing(other):
             return self
         elif is_many(other):
             return FlatList(list(from_data(other)) + list(_get(self, SLOT)))
         return FlatList([other] + list(_get(self, SLOT)))
 
     def __iadd__(self, other):
-        if is_null(other):
+        if is_missing(other):
             return self
         elif is_many(other):
             self.extend(from_data(other))
