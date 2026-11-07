@@ -1073,6 +1073,15 @@ class TestDot(FuzzyTestCase):
         with self.assertRaises(Exception):
             to_data({"a": 1}) | 3
 
+    def test_get_default_coalesces(self):
+        d = to_data({"a": "", "b": [], "c": 0, "e": 1})
+        for key, expected in [("a", 5), ("b", 5), ("c", 0), ("e", 1), ("x", 5)]:
+            with self.subTest(key=key):
+                self.assertEqual(d.get(key, 5), expected)
+        self.assertEqual(d.get("a"), "")
+        d.get("x").y += [1]
+        self.assertEqual(from_data(d.x), {"y": [1]})
+
     def test_data_or_missing_is_data(self):
         for missing in ["", [], float("nan")]:
             with self.subTest(missing=repr(missing)):

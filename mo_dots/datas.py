@@ -271,9 +271,7 @@ class Data:
 
     def get(self, key, default=Null):
         v = self[key]
-        if _get(v, CLASS) is NullType and default is not Null:
-            return default
-        return v
+        return v if default is Null else coalesce(v, default)
 
     def items(self):
         d = _get(self, SLOT)
