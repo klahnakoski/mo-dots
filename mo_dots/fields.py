@@ -2,12 +2,9 @@ import re
 import sys
 
 from mo_future import generator_types, flatten
-from mo_imports import expect
 
 from mo_dots.utils import get_logger, CLASS, is_missing, is_null
 
-_module_type = type(sys.modules[__name__])
-_builtin_zip = zip
 _get = object.__getattribute__
 
 
@@ -142,7 +139,7 @@ def relative_field(field, parent):
     field_path = split_field(field)
     parent_path = split_field(parent)
     common = 0
-    for f, p in _builtin_zip(field_path, parent_path):
+    for f, p in zip(field_path, parent_path):
         if f != p:
             break
         common += 1
