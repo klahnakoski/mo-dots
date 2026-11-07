@@ -530,5 +530,11 @@ class TestFlatListEquality(FuzzyTestCase):
     def test_or_reflected(self):
         self.assertEqual(list([2] | to_data([1])), [2])
 
+    def test_or_missing_right(self):
+        for missing in ["", [], float("nan")]:
+            with self.subTest(missing=repr(missing)):
+                self.assertEqual(list(to_data([]) | missing), [])
+                self.assertEqual(list(missing | to_data([1])), [1])
+
     def test_or_null_right(self):
         self.assertEqual(list(to_data([1]) | Null), [1])
