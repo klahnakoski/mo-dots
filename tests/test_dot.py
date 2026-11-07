@@ -608,8 +608,14 @@ class TestDot(FuzzyTestCase):
     def test_null_plus_data_is_identity(self):
         d = to_data({"a": 1})
         self.assertIs(Null + d, d)
-        self.assertIs(d + Null, d)
+        self.assertEqual(d + Null, d)
+        self.assertIsInstance(d + Null, Data)
         self.assertEqual(Null + {"a": 1}, {"a": 1})
+
+    def test_or_missing_left_takes_right(self):
+        self.assertEqual(from_data(to_data({"a": ""}) | {"a": 2}), {"a": 2})
+        self.assertEqual(from_data(to_data({"a": []}) | {"a": 2}), {"a": 2})
+        self.assertEqual(from_data(to_data({"a": 1}) | {"a": ""}), {"a": 1})
 
     def test_none_or_null_is_none(self):
         self.assertIs(None | Null, None)

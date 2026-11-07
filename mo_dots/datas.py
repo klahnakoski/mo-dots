@@ -230,11 +230,11 @@ class Data:
             return self
 
         for ok, ov in other.items():
-            if is_null(ov):
+            if is_missing(ov):
                 continue
 
             sv = to_data(d.get(ok))
-            if is_null(sv):
+            if is_missing(sv):
                 d[ok] = ov
             elif is_data(sv) and is_data(ov):
                 d[ok] = sv | ov
