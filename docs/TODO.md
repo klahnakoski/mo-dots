@@ -107,7 +107,7 @@
 - Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire; `_assign_to_null` wraps its body in a no-op `try/except: raise e`.
 - PoorLogger (the fallback when mo-logs is missing) never fills message templates.
 - A Null chain over a list with a string digit key (`'0'`) now maps over the list instead of indexing it (`_getdefault` checks is_sequence first); untested. Intended?
-- Move the `'.' not in key and 'b' not in key` shortcut into `split_field` itself, so its five call sites in datas.py/nones.py become plain `split_field(key)` (about 60ns of call against 500ns saved in pure mode). Do it?
+- Move the `'.' not in key and '\b' not in key` shortcut into `split_field` itself, so its five call sites in datas.py/nones.py become plain `split_field(key)` (about 60ns of call against 500ns saved in pure mode). Do it?
 - build_wheels.py `main`'s finally deletes setup.py even when gen_setup() skipped writing it because it already existed.
 - `lists.map(oper, includeNone=True)` is a boolean parameter (two functions) on public API; split or keep?
 - mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
