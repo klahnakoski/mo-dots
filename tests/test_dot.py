@@ -211,6 +211,30 @@ class TestDot(FuzzyTestCase):
         with self.assertRaises("Odd number of dots"):
             d.z["a...b"] = 2
 
+    def test_null_keeps_literal_dotted_key(self):
+        # NESTED a.b IS THE DECOY A SECOND SPLIT OF "a.b" WOULD HIT
+        decoy = {"a": {"b": {"c": 1}}}
+
+        d = to_data(deepcopy(decoy))
+        self.assertTrue(is_null(d["a..b"].c), "read")
+        self.assertTrue(is_null(d.get("a..b").c), "read through get")
+
+        raw = deepcopy(decoy)
+        to_data(raw)["a..b"].c = 2
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": 2}}, "setattr")
+
+        raw = deepcopy(decoy)
+        to_data(raw).get("a..b").c = 2
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": 2}}, "setattr through get")
+
+        raw = deepcopy(decoy)
+        slot = to_data(raw)["a..b"].c
+        slot += [3]
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": [3]}}, "iadd")
+
+        nested = to_data({"x": to_data(deepcopy(decoy))})
+        self.assertTrue(is_null(nested["x.a..b.c"]), "read through a nested Data")
+
     def test_dot_self(self):
         a = Data(b=42)
         assert a["."] == a
@@ -532,7 +556,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_set_default2(self):
         a = {"x": {"y": 1}}
@@ -544,7 +568,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_set_default3(self):
         a = {"x": {"y": 1}}
@@ -556,7 +580,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_or(self):
         a = {"x": {"y": 1}}
