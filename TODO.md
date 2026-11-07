@@ -123,3 +123,4 @@
 ## Consumer skill
 
 - Ship a skill in this repo with the rules for restating code simply with mo-dots; first sweep *.md in ~/code and ~/.claude for the scattered usage rules to gather (agent md-sweep).
+- Distill: move the mo-dots rules the sweep finds out of the other *.md files (coding-guidelines skill, other repos' CLAUDE.md, memory) into this repo's skill, leaving a pointer behind; needs the md-sweep report.
