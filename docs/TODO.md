@@ -107,3 +107,4 @@
 - Moving the `"." not in key` shortcut into `split_field` made pure-mode plain keys much slower (`d["x"]` +95%, `d["x"]=2` +147%, missing key 4.4x): the plain path then runs the general loop (`_getdefault`, a list allocation). Uncommitted diff in worktree dec-split. Decide: keep the shortcut at the call sites, or try `split_field` short-circuiting plus a one-step path at the call sites (`len(path) == 1`).
 - `Data.items()` stays a list (user asked for a suggestion: a list keeps `len()` and re-iteration, like dict views; a generator is single-use). Branch `items-generator` is to be deleted unless the user says otherwise.
 - On the next /svn-sync, make sure `mo_dots/_speedups.c` is in SVN (it is new since the last sync).
+- `x += x` on a FlatList loops forever (extend reads the list it grows); owes a test, then a fix.
