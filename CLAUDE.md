@@ -19,6 +19,5 @@ The consumer rules are the `mo-dots` skill:
   `_speedups.c` (optional C accelerator - traps in mo_dots/CLAUDE.md).
 - `plugins/mo-dots/` - the Claude Code plugin carrying the consumer skill;
   `.claude-plugin/marketplace.json` lists it.
-- `TODO.md` - campaign doc: the performance work queue, measured.
-- `docs/` - the full feature documentation, changelog, and session log.
+- `docs/` - the full feature documentation, changelog, and `TODO.md` (the owed list).
 - `tests/`, `packaging/` - the suite and the release scaffolding.

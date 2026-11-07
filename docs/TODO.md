@@ -120,6 +120,6 @@
   into every generated setup.py, so per-python wheel tests compile the
   extension.
 
-## Docs
+## Release
 
-- Delete docs/SESSION_LOG.md after moving its forward-looking items into this file; move TODO.md to docs/TODO.md and fix references; keep docs/CHANGELOG.md (agent docs-tidy).
+- Release the `register_data` change so mo-json can drop `dict_to_data`.
