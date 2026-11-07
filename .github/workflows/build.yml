@@ -68,5 +68,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         coverage run --rcfile=packaging/coverage.ini -m unittest discover -s tests -t .
-        coverage report --rcfile=packaging/coverage.ini
+        coverage report -m --rcfile=packaging/coverage.ini
         coveralls
