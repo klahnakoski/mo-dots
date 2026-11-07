@@ -126,5 +126,4 @@
 
 ## Limits follow-ups
 
-- `Null + 1` is now `1` (was `Null`): Null became the identity for `+` on scalars too, reversing the documented "arithmetic with Null gives Null"; decide, and fix docs/README.md or the code.
-- `coalesce("", 2)` is now `2` (was `""`), following is_missing; docs/README.md and the skill may still say coalesce skips only nulls.
+- Update docs/README.md, README.md, docs/CHANGELOG.md 11.x and plugins/mo-dots/skills/mo-dots/SKILL.md to the new behavior: is_missing is the one rule (Null ==, in, Data ==/hash, |, coalesce("", 2) == 2, NaN missing, b"" missing), Null is the identity for + including scalars (Null + 1 == 1), FlatList | coalesces, tuple-built FlatList is a list, listwrap("") == [] (agent docs-limits).
