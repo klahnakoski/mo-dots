@@ -178,11 +178,8 @@ class FlatList:
             lst.append(from_data(v))
         return self
 
-    def pop(self, index=None):
-        if index is None:
-            return to_data(_get(self, SLOT).pop())
-        else:
-            return to_data(_get(self, SLOT).pop(index))
+    def pop(self, index=-1):
+        return to_data(_get(self, SLOT).pop(index))
 
     def __hash__(self):
         lst = _get(self, SLOT)
