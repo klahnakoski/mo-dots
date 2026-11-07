@@ -17,8 +17,8 @@ from mo_dots.nones import Null, NullType
 from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
 
 logger = delay_import("mo_logs.logger")
-object_to_data, coalesce, to_data, from_data, get_attr = expect(
-    "object_to_data", "coalesce", "to_data", "from_data", "get_attr"
+object_to_data, coalesce, to_data, from_data, get_attr, listwrap = expect(
+    "object_to_data", "coalesce", "to_data", "from_data", "get_attr", "listwrap"
 )
 
 _null_hash = hash(None)
@@ -202,11 +202,7 @@ class FlatList:
         return not self.__eq__(other)
 
     def __add__(self, other):
-        if is_missing(other):
-            return self
-        elif is_many(other):
-            return FlatList(list(_get(self, SLOT)) + list(from_data(other)))
-        return FlatList(list(_get(self, SLOT)) + [other])
+        return FlatList(_get(self, SLOT) + listwrap(other).to_list())
 
     def __or__(self, other):
         """COALESCE: LEFT WINS, A MISSING LEFT TAKES THE RIGHT"""
@@ -220,20 +216,10 @@ class FlatList:
         return to_data(other)
 
     def __radd__(self, other):
-        if is_missing(other):
-            return self
-        elif is_many(other):
-            return FlatList(list(from_data(other)) + list(_get(self, SLOT)))
-        return FlatList([other] + list(_get(self, SLOT)))
+        return FlatList(listwrap(other).to_list() + _get(self, SLOT))
 
     def __iadd__(self, other):
-        if is_missing(other):
-            return self
-        elif is_many(other):
-            self.extend(from_data(other))
-        else:
-            self.append(other)
-        return self
+        return self.extend(listwrap(other).to_list())
 
     def right(self, num):
         """

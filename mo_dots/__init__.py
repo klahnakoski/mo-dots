@@ -533,6 +533,7 @@ export("mo_dots.lists", to_data)
 export("mo_dots.lists", from_data)
 export("mo_dots.lists", coalesce)
 export("mo_dots.lists", get_attr)
+export("mo_dots.lists", listwrap)
 
 export("mo_dots.nones", to_data)
 export("mo_dots.nones", _getdefault)
