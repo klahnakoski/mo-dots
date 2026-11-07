@@ -1,12 +1,9 @@
 import re
 import sys
 
-from mo_future import generator_types, flatten
+from mo_future import flatten
 
-from mo_dots.utils import get_logger, CLASS, is_missing, is_null
-
-_get = object.__getattribute__
-
+from mo_dots.utils import get_logger, is_missing, is_null
 
 ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
 ESCAPE_DOTS2 = re.compile(r"(?<!^)\.(?!$)")  # INTERNAL DOTS
@@ -72,23 +69,18 @@ def join_field(path):
     """
     RETURN field SEQUENCE AS STRING
     """
-    if _get(path, CLASS) in generator_types:
-        path = list(path)
-
-    if not path:
-        return "."
-
     prefix = ""
-    while True:
-        try:
-            i = path.index("..")
-            if i == 0:
-                prefix += "."
-                path = path[1:]
-            else:
-                path = path[: i - 1] + path[i + 1 :]
-        except ValueError:
-            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
+    steps = []
+    for step in path:
+        if step != "..":
+            steps.append(step)
+        elif steps:
+            steps.pop()
+        else:
+            prefix += "."
+    if not (prefix or steps):
+        return "."
+    return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in steps)
 
 
 def concat_field(*fields):
