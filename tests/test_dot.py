@@ -613,6 +613,13 @@ class TestDot(FuzzyTestCase):
         temp[0] = 1
         temp[1] = None
 
+    def test_none_rooted_null_assignment_is_noop(self):
+        temp = NullType()
+        temp.a = 1
+        temp["b"] = 2
+        temp["c.d"] = 3
+        self.assertEqual(temp, None)
+
     def test_deep_null_assignment(self):
         temp = to_data({"a": 0})
         e = temp.e

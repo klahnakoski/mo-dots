@@ -216,8 +216,6 @@ class NullType:
         _assign_to_null(self, [str(key)], value)
 
     def __setitem__(self, key, value):
-        if _get(self, SLOT) is None:
-            return
         if isinstance(key, int) or ("." not in key and "\b" not in key):
             _assign_to_null(self, [key], value)
         else:
@@ -303,6 +301,8 @@ def _assign_to_null(obj, path, value):
         return
     if _get(obj, CLASS) is NullType:
         o = _get(obj, SLOT)
+        if o is None:
+            return
         p = _get(obj, KEY)
         s = [p] + path
         return _assign_to_null(o, s, value)
