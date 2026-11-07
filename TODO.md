@@ -119,3 +119,7 @@
   then twines dist/*. mo-deploy renders `ext_modules` from setuptools.json
   into every generated setup.py, so per-python wheel tests compile the
   extension.
+
+## Docs
+
+- Delete docs/SESSION_LOG.md after moving its forward-looking items into this file; move TODO.md to docs/TODO.md and fix references; keep docs/CHANGELOG.md (agent docs-tidy).
