@@ -100,11 +100,7 @@
 ## Open
 
 - /fix-code loop stopped by the user; `mo_dots/lists.py` is the one file changed since its sweep (docs/CODE_SWEEP.md holds content hashes).
-- Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire.
-- PoorLogger (the fallback when mo-logs is missing) never fills message templates.
 - mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
-- fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; a failed `_iadd` only logs.
-- `Data.items()` stays a list (user asked for a suggestion: a list keeps `len()` and re-iteration, like dict views; a generator is single-use). Branch `items-generator` is to be deleted unless the user says otherwise.
-- On the next /svn-sync, make sure `mo_dots/_speedups.c` is in SVN (it is new since the last sync).
+- `fields.startswith_field` tests `prefix == None` where `endswith_field` uses `is_null`.
 - `5 + data` still says "can not add dict with int" (reflected add names the raw dict); `test_add_number_to_data_names_both_types` pins the dict wording for nested mismatches.
 - `datas.py` still has the Python 2 `__nonzero__ = __bool__`; tests/test_dot.py ~L1150 calls `Null.__div__(0)`, which now only proves Null absorbs a missing attribute — `Null / 0` would test `__truediv__`.
