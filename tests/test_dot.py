@@ -482,6 +482,19 @@ class TestDot(FuzzyTestCase):
         test = d["a.b.c"]
         self.assertEqual(test, [1, 2])
 
+    def test_assign_to_null_without_force_fills_only_missing(self):
+        from mo_dots.nones import _assign_to_null
+
+        for existing, expected in [(None, "new"), (Null, "new"), ("old", "old"), (0, 0)]:
+            with self.subTest(existing=existing):
+                obj = {"k": existing}
+                _assign_to_null(obj, ["k"], "new", force=False)
+                self.assertEqual(obj["k"], expected)
+
+        obj = {}
+        _assign_to_null(obj, ["k"], "new", force=False)
+        self.assertEqual(obj, {"k": "new"})
+
     def test_set_default1(self):
         a = {"x": {"y": 1}}
         b = {"x": {"z": 2, "y": None}}
@@ -1341,6 +1354,7 @@ class TestDot(FuzzyTestCase):
         result = to_data({"a": 1}) + {"b": 2}
         self.assertIsInstance(result, Data)
         self.assertTrue(from_data(result) == {"a": 1, "b": 2})
+
 
 class _TestMapping(object):
     def __init__(self):

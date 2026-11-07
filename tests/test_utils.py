@@ -55,6 +55,19 @@ class TestUtils(FuzzyTestCase):
         v = get_attr(tests, "get_attr.D")
         self.assertEqual(v, {"unique": 1234})
 
+    def test_get_attr_imports_unimported_submodule_file(self):
+        import tests.unimported
+
+        self.assertNotIn("leaf", dir(tests.unimported))
+        leaf = get_attr(tests.unimported, "leaf")
+        self.assertEqual(leaf.VALUE, 42)
+        self.assertEqual(get_attr(tests.unimported, "leaf.VALUE"), 42)
+
+    def test_get_attr_imports_unimported_subpackage(self):
+        import tests.unimported
+
+        self.assertEqual(get_attr(tests.unimported, "subpackage.NAME"), "sub")
+
     def test_tuplewrap(self):
         self.assertEqual(tuplewrap(None), tuple())
         self.assertEqual(tuplewrap("hi"), ("hi",))
