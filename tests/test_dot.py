@@ -639,8 +639,8 @@ class TestDot(FuzzyTestCase):
             return False
 
         nan = float("nan")
-        self.assertFalse(has_nan(from_data([nan])))
-        self.assertFalse(has_nan(from_data({"a": nan})))
+        self.assertEqual(from_data([nan]), [None])
+        self.assertNotIn("a", from_data({"a": nan}))
         self.assertFalse(has_nan(from_data({"a": [{"b": nan}, [nan, 1]]})))
         self.assertFalse(has_nan(from_data(to_data({"a": {"b": [nan]}}))))
 
@@ -1024,8 +1024,8 @@ class TestDot(FuzzyTestCase):
         self.assertEqual([1] + Null, [1])
         self.assertEqual(Null + [1], [1])
 
-        self.assertTrue(1 + Null == None)
-        self.assertTrue(Null + 1 == None)
+        self.assertEqual(1 + Null, 1)
+        self.assertEqual(Null + 1, 1)
         self.assertTrue(Null + Null == None)
         self.assertTrue(Null() == None)
         self.assertTrue(Null - 1 == None)

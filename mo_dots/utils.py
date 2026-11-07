@@ -43,7 +43,7 @@ def register_null_type(_type):
     global _null_types, _null_type_set, _missing_types
     _null_types = tuple(set(_null_types + (_type,)))
     _null_type_set = frozenset(_null_types)
-    _missing_types = (str, *_null_types, *_many_types)
+    _missing_types = (str, bytes, *_null_types, *_many_types)
     if _speedups:
         _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
     for callback in _null_type_listeners:
@@ -61,7 +61,9 @@ def is_not_null(value):
 
 def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
-    return isinstance(t, _missing_types) and not t
+    if isinstance(t, _missing_types):
+        return not t
+    return isinstance(t, float) and t != t
 
 
 def exists(value) -> bool:
@@ -165,7 +167,7 @@ container_types = (list, set)
 finite_types = (list, set, tuple)
 sequence_types = (list, tuple) + generator_types
 _many_types = tuple(set(list_types + container_types + sequence_types))
-_missing_types = (str, *_null_types, *_many_types)
+_missing_types = (str, bytes, *_null_types, *_many_types)
 
 
 def register_list(_type):
@@ -176,7 +178,7 @@ def register_list(_type):
     finite_types = tuple(set(finite_types + (_type,)))
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
-    _missing_types = (str, *_null_types, *_many_types)
+    _missing_types = (str, bytes, *_null_types, *_many_types)
     if _speedups:
         _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 
@@ -186,7 +188,7 @@ def register_sequence(_type):
     global sequence_types, _many_types, _missing_types
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
-    _missing_types = (str, *_null_types, *_many_types)
+    _missing_types = (str, bytes, *_null_types, *_many_types)
     if _speedups:
         _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 
@@ -236,7 +238,7 @@ def is_many(value):
 def register_many(_type):
     global _many_types, _missing_types
     _many_types = _many_types + (_type,)
-    _missing_types = (str, *_null_types, *_many_types)
+    _missing_types = (str, bytes, *_null_types, *_many_types)
     if _speedups:
         _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
 

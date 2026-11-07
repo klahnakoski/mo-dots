@@ -14,7 +14,6 @@ from mo_dots.utils import (
     SLOT,
     is_null,
     is_missing,
-    is_sequence,
     register_null_type,
     is_many,
     _speedups,
@@ -55,14 +54,10 @@ class NullType:
     __nonzero__ = __bool__
 
     def __add__(self, other):
-        if is_sequence(other):
-            return other
-        return Null
+        return other
 
     def __radd__(self, other):
-        if is_sequence(other):
-            return other
-        return Null
+        return other
 
     def __call__(self, *args, **kwargs):
         return Null
@@ -141,13 +136,9 @@ class NullType:
         return Null
 
     def __eq__(self, other):
-        if is_sequence(other) and not other:
+        if is_missing(other):
             return True
-
-        if is_null(other):
-            return True
-        else:
-            return Null
+        return Null
 
     def __ne__(self, other):
         if is_missing(other):

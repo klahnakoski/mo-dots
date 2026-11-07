@@ -191,9 +191,13 @@ class Data:
         return self
 
     def __add__(self, other):
+        if is_null(other):
+            return self
         return _iadd(_iadd({}, self), other)
 
     def __radd__(self, other):
+        if is_null(other):
+            return self
         return _iadd(_iadd({}, other), self)
 
     def __iadd__(self, other):
@@ -571,6 +575,10 @@ def _gen_to_data(v):
 _getattr_dispatch = {}
 
 
+def _nan_to_null(v):
+    return Null if v != v else v
+
+
 def _rebuild_getattr_dispatch():
     # NullType IS A SENTINEL: __getattr__ CONSTRUCTS NullType(d, key) FOR NULL VALUES
     _getattr_dispatch.clear()
@@ -579,6 +587,7 @@ def _rebuild_getattr_dispatch():
     _getattr_dispatch[dict] = dict_to_data
     _getattr_dispatch[OrderedDict] = dict_to_data
     _getattr_dispatch[list] = list_to_data
+    _getattr_dispatch[float] = _nan_to_null
     for t in generator_types:
         _getattr_dispatch[t] = _gen_to_data
     for t in utils._wrapped_data_types:
