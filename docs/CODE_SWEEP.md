@@ -1,11 +1,11 @@
-# Code sweep ledger - path @ sha of last commit when swept
-mo_dots/objects.py @ a7fe482
-mo_dots/utils.py @ 8920654
-mo_dots/__init__.py @ 806e4cb
-mo_dots/datas.py @ d101438
-mo_dots/lists.py @ 8930648
-mo_dots/nones.py @ 853f76f
-mo_dots/fields.py @ 7329183
-packaging/build_wheels.py @ 9fa0900
-packaging/setup_speedups.py @ 0e93f68
-mo_dots/logging.py @ 023f27b
+# Code sweep ledger - path @ content hash (git hash-object, 10 chars) when swept
+mo_dots/objects.py @ 3cf3bd2e89
+mo_dots/utils.py @ c438ef60db
+mo_dots/__init__.py @ f0b4fc44dc
+mo_dots/datas.py @ c252162605
+mo_dots/lists.py @ b4f3aa76e6
+mo_dots/nones.py @ 709574dd17
+mo_dots/fields.py @ 515de3f4e6
+packaging/build_wheels.py @ 1a63926640
+packaging/setup_speedups.py @ 0a0d8b5630
+mo_dots/logging.py @ c4cf11da69

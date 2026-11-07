@@ -16,7 +16,7 @@ def get_logger():
     if _Log:
         return _Log
     try:
-        from mo_logs import Log as _Log
+        from mo_logs import logger as _Log
 
         return _Log
     except Exception as e:

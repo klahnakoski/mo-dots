@@ -68,9 +68,9 @@ class NullType:
     def __enter__(self):
         # `with Null:` OTHERWISE RAISES A BARE AttributeError: __enter__, NAMING
         # NOTHING; THIS NAMES THE MISSING CONTEXT MANAGER INSTEAD
-        from mo_logs import Log
+        from mo_logs import logger
 
-        Log.error("Expecting a context manager, not Null (`with` on a missing value)")
+        logger.error("Expecting a context manager, not Null (`with` on a missing value)")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         return False
@@ -211,9 +211,9 @@ class NullType:
         try:
             return to_data(v).get(key)
         except Exception as e:
-            from mo_logs import Log
+            from mo_logs import logger
 
-            Log.error("not expected", cause=e)
+            logger.error("not expected", cause=e)
 
     def __setattr__(self, key, value):
         key = str(key)

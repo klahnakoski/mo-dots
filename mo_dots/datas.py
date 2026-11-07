@@ -152,9 +152,9 @@ class Data:
                 d[seq[-1]] = value
             return self
         except Exception as e:
-            from mo_logs import Log
+            from mo_logs import logger
 
-            Log.error("can not set key={key}", key=key, cause=e)
+            logger.error("can not set key={key}", key=key, cause=e)
 
     def __getattr__(self, key):
         d = _get(self, SLOT)

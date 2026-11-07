@@ -16,7 +16,7 @@ from mo_dots.datas import is_missing, hash_value
 from mo_dots.nones import Null, NullType
 from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
 
-Log = delay_import("mo_logs.Log")
+logger = delay_import("mo_logs.logger")
 object_to_data, coalesce, to_data, from_data, get_attr = expect(
     "object_to_data", "coalesce", "to_data", "from_data", "get_attr"
 )
@@ -54,7 +54,7 @@ class FlatList:
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
-                Log.error("slice step must be None, do not know how to deal with values")
+                logger.error("slice step must be None, do not know how to deal with values")
             length = len(_get(self, SLOT))
 
             i = index.start
@@ -122,16 +122,13 @@ class FlatList:
         return list_to_data(output)
 
     def select(self, key):
-        Log.error("Not supported.  Use `get()`")
+        logger.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
         return list_to_data([from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))])
 
-    def map(self, oper, includeNone=True):
-        if includeNone:
-            return FlatList([oper(v) for v in _get(self, SLOT)])
-        else:
-            return FlatList([oper(v) for v in _get(self, SLOT) if v != None])
+    def map(self, oper):
+        return FlatList([oper(v) for v in _get(self, SLOT)])
 
     def to_list(self):
         return _get(self, SLOT)
