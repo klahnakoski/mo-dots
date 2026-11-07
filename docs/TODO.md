@@ -124,7 +124,17 @@
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
 
-## Limits survey
+## Limits survey findings (both modes unless noted)
 
-- Survey degenerate cases: where ==, is_missing, bool, len and | jump discontinuously at the limits (empty, zero, single, NaN, nested empty) across Null/Data/FlatList/str/dict (agent limits-probe, read-only).
-- `Null == {}` is True but `is_missing({})` is False; decide which is right.
+- One "missing" test: is_null, is_missing, truthiness and "empty sequence" are all in use; values where they disagree ("", set(), 0, {}, NaN, b"") are where the bugs below live. Decide the one rule, then fix each.
+- `Null == x` should be `is_missing(x)`: `Null == ""` is falsy while `Null != ""` is False and `Null == []` is True (nones.py:143-152, C nullb_richcompare). Also `Null == {}` is True but `is_missing({})` is False. Now disagrees with the empty-FlatList rule.
+- Equal Data hash unequal: hash_value uses first(values()), order-dependent and counts None values, so dict/set lookups miss (datas.py:547-553).
+- `"a" in to_data({"a":0})` is False: Data.__contains__ tests truthiness, not exists (datas.py:85, C data_contains).
+- `to_data({"a":{"b":1}}) | {"a":5}` raises "Expecting Data"; left should win (datas.py:243).
+- `Data + Null`/`+ None` raise AttributeError; `Null + Data` returns Null, dropping the data; `Data + dict` answers a plain dict (datas.py:193-197, 493-495; nones.py:57-65).
+- Data == ignores None-valued keys but not ""- or []-valued ones (datas.py:268-273).
+- FlatList from a tuple keeps the tuple: `in`, append, extend, += fail (lists.py:47, 149).
+- FlatList `|` concatenates (`__or__ = __add__`, lists.py:221) instead of left-wins coalesce; no `__ror__`.
+- `None | Null`: C answers Null, pure answers None (C nullb_or) - the only C/pure split.
+- NaN: from_data and assignment treat it as None, column select drops it, but is_missing(nan) is False and nested from_data keeps it.
+- Low: listwrap("") is [""]; is_missing(b"") is False; to_data([1,2]).get(5) raises a broken TypeError message.
