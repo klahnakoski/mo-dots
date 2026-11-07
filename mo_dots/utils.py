@@ -185,10 +185,6 @@ def register_sequence(_type):
     refresh_types()
 
 
-# ITERATORS THAT ARE CONSIDERED PRIMITIVE
-not_many_names = ("str", "unicode", "binary", "NullType", "NoneType", "dict", "Data")
-
-
 def is_list(l):
     # ORDERED, AND CAN CHANGE CONTENTS
     return isinstance(l, list_types)
