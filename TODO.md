@@ -119,3 +119,7 @@
   then twines dist/*. mo-deploy renders `ext_modules` from setuptools.json
   into every generated setup.py, so per-python wheel tests compile the
   extension.
+
+## Consumer skill
+
+- Ship a skill in this repo with the rules for restating code simply with mo-dots; first sweep *.md in ~/code and ~/.claude for the scattered usage rules to gather (agent md-sweep).
