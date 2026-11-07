@@ -171,6 +171,46 @@ class TestDot(FuzzyTestCase):
         value = a.b * 1000
         assert value == Null
 
+    def test_paths_follow_split_field(self):
+        for key in ["a.b", "a..b", "\ba", ".a", "a.", "a.\bb", "..a"]:
+            with self.subTest(key):
+                path = split_field(key)
+                expected = 1
+                for step in reversed(path):
+                    expected = {step: expected}
+
+                d = {}
+                to_data(d)[key] = 1
+                self.assertEqual(d, expected, "setitem")
+
+                d = {}
+                to_data(d)["z"][key] = 1
+                self.assertEqual(d, {"z": expected}, "setitem through Null")
+
+                self.assertEqual(to_data(deepcopy(expected))[key], 1, "getitem")
+                self.assertEqual(to_data(deepcopy(expected)).get(key), 1, "get")
+                self.assertEqual(to_data(deepcopy(expected)).pop(key), 1, "pop")
+
+                d = deepcopy(expected)
+                del to_data(d)[key]
+                parent = d
+                for step in path[:-1]:
+                    parent = parent[step]
+                self.assertNotIn(path[-1], parent, "delitem")
+
+    def test_odd_dots_refused(self):
+        d = to_data({"a.": {"b": 1}})
+        with self.assertRaises("Odd number of dots"):
+            d["a...b"]
+        with self.assertRaises("Odd number of dots"):
+            d["a...b"] = 2
+        with self.assertRaises("Odd number of dots"):
+            d.pop("a...b")
+        with self.assertRaises("Odd number of dots"):
+            del d["a...b"]
+        with self.assertRaises("Odd number of dots"):
+            d.z["a...b"] = 2
+
     def test_dot_self(self):
         a = Data(b=42)
         assert a["."] == a
