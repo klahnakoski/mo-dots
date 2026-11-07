@@ -55,18 +55,16 @@ jobs:
 
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.14"
 
     - name: Install test requirements
       run: |
         python -m pip install --upgrade pip setuptools coverage coveralls
         python tests/install_locked.py
 
-    - name: Build C accelerator
-      run: python packaging/setup_speedups.py build_ext --inplace
-
-    - name: Coverage
+    - name: Coverage, pure python
       env:
+        MO_DOTS_PURE: 1
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         coverage run --rcfile=packaging/coverage.ini -m unittest discover -s tests -t .
