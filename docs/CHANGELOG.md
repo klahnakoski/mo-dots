@@ -6,6 +6,7 @@
 * `is_missing` is the one rule for missing (`None`, `""`, `b""`, `[]`, `NaN`) across `==`, `in`, equality, hashing and `coalesce`.  `FlatList() == None` works again.
 * `|` is coalesce everywhere, left side wins; `FlatList |` no longer concatenates (use `+`).
 * `Null` is the identity for `+` and `|`, scalars included: `Null + 1 == 1`.
+* Removed `is_data_object`, `is_namedtuple`, `lower_match` and `Data.iteritems` (use `items()`).
 
 
 #### Changes in version 10.x.x
