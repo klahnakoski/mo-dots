@@ -325,8 +325,6 @@ def last(values):
         if isinstance(values, FlatList):
             return values.last()
         elif is_list(values):
-            if not values:
-                return Null
             return values[-1]
         elif is_sequence(values):
             l = Null
