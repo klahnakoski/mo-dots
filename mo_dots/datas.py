@@ -298,21 +298,19 @@ class Data:
     def pop(self, key, default=Null):
         if is_null(key):
             return Null
-        key = str(key)
+        seq = split_field(str(key))
+        if not seq:
+            return Null
         d = _get(self, SLOT)
 
-        if "." in key or "\b" in key:
-            seq = split_field(key)
-            if not seq:
-                get_logger().error("can not pop the root")
-            for n in seq[:-1]:
-                if _get(d, CLASS) is NullType:
-                    d = NullType(d, n)
-                elif is_many(d):
-                    d = [_getdefault(dd, n) for dd in d]
-                else:
-                    d = _getdefault(d, n)
-            key = seq[-1]
+        for n in seq[:-1]:
+            if _get(d, CLASS) is NullType:
+                d = NullType(d, n)
+            elif is_many(d):
+                d = [_getdefault(dd, n) for dd in d]
+            else:
+                d = _getdefault(d, n)
+        key = seq[-1]
 
         o = d.get(key)
         if is_null(o):

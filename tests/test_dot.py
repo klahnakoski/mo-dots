@@ -198,6 +198,19 @@ class TestDot(FuzzyTestCase):
                     parent = parent[step]
                 self.assertNotIn(path[-1], parent, "delitem")
 
+    def test_pop_plain_and_dotted(self):
+        d = to_data({"a": 1, "b": {"c": 2, "d": 3}})
+        self.assertEqual(d.pop("a"), 1)
+        self.assertEqual(d.pop("b.c"), 2)
+        self.assertEqual(d, {"a": None, "b": {"c": None, "d": 3}})
+
+    def test_pop_empty_path_is_null(self):
+        for key in ["", "."]:
+            with self.subTest(key):
+                d = to_data({"a": 1})
+                self.assertIs(d.pop(key), Null)
+                self.assertEqual(d, {"a": 1})
+
     def test_odd_dots_refused(self):
         d = to_data({"a.": {"b": 1}})
         with self.assertRaises("Odd number of dots"):
