@@ -116,3 +116,4 @@
 - `Data.iteritems()` is used only by its own test (no caller in ~/code mo-*/jx-* repos); delete both?
 - `concat_field("a", "..")` now answers `"."` (was `""`) after fix-code made `join_field` one pass; a path that cancels out is the root.
 - fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; a failed `_iadd` only logs.
+- After fc-b merges: drop the `"." in key or "" in key` guard in `Data.pop` (plain keys behave the same through split_field). Open: should `d.pop("")` then raise "can not pop the root", or keep popping the `""` key?
