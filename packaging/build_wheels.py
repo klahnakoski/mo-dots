@@ -214,12 +214,6 @@ def gen_setup():
         sys.exit("packaging/gen_setup.py failed")
 
 
-def sdist_has_speedups():
-    [sdist] = DIST.glob("*.tar.gz")
-    with tarfile.open(sdist) as tar:
-        return any(name.endswith("mo_dots/_speedups.c") for name in tar.getnames())
-
-
 def buildable_platforms(skip_linux):
     """LINUX WHEELS BUILD IN A CONTAINER; macos NEEDS A MAC AND IS NOT HERE"""
     here = CIBUILDWHEEL_PLATFORM[sys.platform]
@@ -363,7 +357,10 @@ def main():
 
         if run(sys.executable, "-m", "build", "--sdist"):
             sys.exit("sdist failed")
-        if not sdist_has_speedups():
+        [sdist] = DIST.glob("*.tar.gz")
+        with tarfile.open(sdist) as tar:
+            names = tar.getnames()
+        if not any(name.endswith("mo_dots/_speedups.c") for name in names):
             sys.exit("sdist is missing mo_dots/_speedups.c; source installs would be pure-only")
 
         if args.only:
