@@ -80,7 +80,8 @@ class TestUtils(FuzzyTestCase):
     def test_poor_logger(self):
         logger = PoorLogger()
         lines = []
-        logging.STDOUT, old = Data(write=lambda t: lines.append(t)), logging.STDOUT
+        self.addCleanup(setattr, logging, "STDOUT", logging.STDOUT)
+        logging.STDOUT = Data(write=lambda t: lines.append(t))
 
         logger.info("test1")
         logger.warning("test2")
