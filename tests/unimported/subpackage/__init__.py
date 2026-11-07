@@ -1,2 +1,1 @@
-﻿NAME = 'sub'
-
+﻿NAME = "sub"

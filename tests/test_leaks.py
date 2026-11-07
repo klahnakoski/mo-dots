@@ -40,7 +40,8 @@ class TestLeaks(unittest.TestCase):
         after = [sys.getrefcount(o) for o in watched]
         deltas = [a - b for a, b in zip(after, before)]
         self.assertEqual(
-            deltas, [0] * len(watched),
+            deltas,
+            [0] * len(watched),
             f"refcount deltas {deltas} for (d, inner, value, rows, Null, w, fl)",
         )
 

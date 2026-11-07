@@ -40,7 +40,15 @@ class TestDictSpecificMethods(FuzzyTestCase):
     def setUp(self):
         self.dot = to_data({
             "flat_key": "flat value",
-            "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, },
+            "deep": {
+                "nested": 12,
+                "deeper": {
+                    "secret": "abcd",
+                    "ridiculous": {
+                        "hell": "is here",
+                    },
+                },
+            },
         })
 
     def test_access_keys(self):
@@ -66,7 +74,18 @@ class TestDictSpecificMethods(FuzzyTestCase):
         result = self.dot.pop("flat_key")
         self.assertEqual(result, "flat value")
         self.assertEqual(
-            self.dot, {"deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, }, },
+            self.dot,
+            {
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
+            },
         )
 
     def test_pop_with_default_value(self):
@@ -76,7 +95,15 @@ class TestDictSpecificMethods(FuzzyTestCase):
             self.dot,
             {
                 "flat_key": "flat value",
-                "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, },
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
             },
         )
 
@@ -85,8 +112,17 @@ class TestDictSpecificMethods(FuzzyTestCase):
         self.assertEqual(result, 12)
         self.assertEqual(
             self.dot,
-            {"flat_key": "flat value",
-             "deep": {"deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, }, },
+            {
+                "flat_key": "flat value",
+                "deep": {
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
+            },
         )
 
     def test_pop_nested_key_with_default_value(self):
@@ -96,7 +132,15 @@ class TestDictSpecificMethods(FuzzyTestCase):
             self.dot,
             {
                 "flat_key": "flat value",
-                "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, },
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
             },
         )
 
@@ -108,7 +152,15 @@ class TestDictSpecificMethods(FuzzyTestCase):
             {
                 "flat_key": "flat value",
                 "next_flat": "new default value",
-                "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, },
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
             },
         )
 
@@ -121,7 +173,15 @@ class TestDictSpecificMethods(FuzzyTestCase):
             {
                 "flat_key": "flat value",
                 "next_flat": "original value",
-                "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here", }, }, },
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
             },
         )
 
@@ -134,8 +194,13 @@ class TestDictSpecificMethods(FuzzyTestCase):
                 "flat_key": "flat value",
                 "deep": {
                     "nested": 12,
-                    "deeper": {"next_key": "new default value", "secret": "abcd",
-                               "ridiculous": {"hell": "is here", }, },
+                    "deeper": {
+                        "next_key": "new default value",
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
                 },
             },
         )
@@ -150,7 +215,13 @@ class TestDictSpecificMethods(FuzzyTestCase):
                 "flat_key": "flat value",
                 "deep": {
                     "nested": 12,
-                    "deeper": {"next_key": "original value", "secret": "abcd", "ridiculous": {"hell": "is here", }, },
+                    "deeper": {
+                        "next_key": "original value",
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
                 },
             },
         )

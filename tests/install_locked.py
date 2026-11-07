@@ -7,6 +7,7 @@ mo-deploy's run_tests proved on this interpreter, so install it verbatim.
 
 Run from the test cwd cibuildwheel builds out of CIBW_TEST_SOURCES.
 """
+
 import subprocess
 import sys
 from pathlib import Path
