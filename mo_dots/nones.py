@@ -76,12 +76,9 @@ class NullType:
         return False
 
     def __iadd__(self, other):
-        o = _get(self, SLOT)
-        if o is None:
+        if _get(self, SLOT) is None:
             return self
-        key = _get(self, KEY)
-
-        _assign_to_null(o, [key], other)
+        _assign_to_null(self, [], other)
         return other
 
     def __sub__(self, other):
@@ -216,21 +213,15 @@ class NullType:
             logger.error("not expected", cause=e)
 
     def __setattr__(self, key, value):
-        key = str(key)
-        o = _get(self, SLOT)
-        k = _get(self, KEY)
-        seq = [k] + [key]
-        _assign_to_null(o, seq, value)
+        _assign_to_null(self, [str(key)], value)
 
     def __setitem__(self, key, value):
-        o = _get(self, SLOT)
-        if o is None:
+        if _get(self, SLOT) is None:
             return
-        k = _get(self, KEY)
         if isinstance(key, int) or ("." not in key and "\b" not in key):
-            _assign_to_null(o, [k, key], value)
+            _assign_to_null(self, [key], value)
         else:
-            _assign_to_null(o, [k] + split_field(key), value)
+            _assign_to_null(self, split_field(key), value)
 
     def keys(self):
         return set()
