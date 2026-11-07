@@ -92,7 +92,18 @@ class TestList(FuzzyTestCase):
 
         level1 = v.a
         self.assertEqual(
-            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 5}, {"b": 6}, {"b": 7}, {"b": 8}, {"b": 9},],
+            level1,
+            [
+                {"b": 1},
+                {"b": 2},
+                {"b": 3},
+                {"b": 4},
+                {"b": 5},
+                {"b": 6},
+                {"b": 7},
+                {"b": 8},
+                {"b": 9},
+            ],
         )
         self.assertEqual(level1.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.assertEqual(v.a.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -119,9 +130,7 @@ class TestList(FuzzyTestCase):
         v = listwrap([[{"b": 1}, {"b": 2}, {"b": 3}], {"b": 4}, [{"b": 7}, {"b": 8}]])
 
         level1 = v.get(".")
-        self.assertEqual(
-            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8}]
-        )
+        self.assertEqual(level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8}])
         self.assertEqual(level1.b, [1, 2, 3, 4, 7, 8])
         self.assertEqual(v.b, [1, 2, 3, 4, 7, 8])
 
@@ -129,7 +138,12 @@ class TestList(FuzzyTestCase):
         self.assertEqual(v.b, [3, 3, 3, 3, 3, 3])
 
         self.assertEqual(
-            v, [[{"b": 3}, {"b": 3}, {"b": 3}], {"b": 3}, [{"b": 3}, {"b": 3}],],
+            v,
+            [
+                [{"b": 3}, {"b": 3}, {"b": 3}],
+                {"b": 3},
+                [{"b": 3}, {"b": 3}],
+            ],
         )
 
         v["b"] = 4
@@ -502,13 +516,9 @@ class TestFlatListEquality(FuzzyTestCase):
         self.assertEqual(list(listwrap("")), [])
         self.assertEqual(list(listwrap("a")), ["a"])
 
-    def test_get_out_of_range_has_real_error(self):
-        try:
-            result = to_data([1, 2]).get(5)
-        except Exception as cause:
-            self.assertNotIn("not iterable", str(cause))
-        else:
-            self.assertTrue(is_missing(result))
+    def test_get_absent_column(self):
+        self.assertTrue(is_missing(to_data([1, 2]).get("5")))
+        self.assertEqual(list(to_data([{"a": 1}, {"5": 2}]).get("5")), [2])
 
     def test_or_left_wins(self):
         self.assertEqual(list(to_data([1]) | [2]), [1])
