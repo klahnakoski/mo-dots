@@ -915,10 +915,6 @@ class TestDot(FuzzyTestCase):
         a = to_data({"a.b": "c"})
         self.assertEqual(a.items(), [("a.b", "c")])
 
-    def test_iteritems(self):
-        a = to_data({"a.b": "c"})
-        self.assertEqual(list(a.iteritems()), [("a.b", "c")])
-
     def test_update_complex(self):
         a = Data(a=1, b={"c": 0})
         b = Data(b={"d": 3})

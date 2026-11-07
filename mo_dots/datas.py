@@ -295,11 +295,6 @@ class Data:
         """
         return leaves(self, prefix)
 
-    def iteritems(self):
-        # LOW LEVEL ITERATION, NO WRAPPING
-        d = _get(self, SLOT)
-        return ((k, to_data(v)) for k, v in d.items())
-
     def pop(self, key, default=Null):
         if is_null(key):
             return Null
