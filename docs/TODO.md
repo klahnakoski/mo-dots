@@ -99,7 +99,7 @@
 
 ## Open
 
-- Run /fix-code in rounds of 5 parallel runs on disjoint files; the ledger (docs/CODE_SWEEP.md) holds content hashes.
+- /fix-code loop stopped by the user; `mo_dots/lists.py` is the one file changed since its sweep (docs/CODE_SWEEP.md holds content hashes).
 - Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire.
 - PoorLogger (the fallback when mo-logs is missing) never fills message templates.
 - mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
