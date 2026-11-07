@@ -82,6 +82,10 @@ class TestFields(FuzzyTestCase):
         self.assertFalse(endswith_field("a..b", "b"))
         self.assertTrue(endswith_field("a\bb", "b"))
 
+    def test_with_field_at_string_edge(self):
+        self.assertTrue(startswith_field("a.", "a"))
+        self.assertTrue(endswith_field(".b", "b"))
+
     def test_illegal(self):
         with self.assertRaises(Exception):
             split_field("\\...a\bb.")
