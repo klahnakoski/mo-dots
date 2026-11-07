@@ -478,3 +478,46 @@ class TestFlatListEquality(FuzzyTestCase):
         self.assertFalse(to_data([1]) == {1: 2})
         self.assertFalse(to_data([1]) == None)
         self.assertTrue(to_data([1]) != None)
+
+    def test_tuple_contains(self):
+        self.assertTrue("a" in to_data((1, "a")))
+        self.assertFalse("b" in to_data((1, "a")))
+
+    def test_tuple_mutators(self):
+        flat = to_data((1, 2))
+        flat.append(3)
+        flat.extend([4])
+        flat += [5]
+        flat[0] = 9
+        flat.remove(2)
+        self.assertEqual(list(flat), [9, 3, 4, 5])
+
+    def test_flatlist_constructor_tuple(self):
+        flat = FlatList((1, "a"))
+        flat.append(2)
+        self.assertTrue("a" in flat)
+        self.assertEqual(list(flat), [1, "a", 2])
+
+    def test_listwrap_empty_string_is_empty(self):
+        self.assertEqual(list(listwrap("")), [])
+        self.assertEqual(list(listwrap("a")), ["a"])
+
+    def test_get_out_of_range_has_real_error(self):
+        try:
+            result = to_data([1, 2]).get(5)
+        except Exception as cause:
+            self.assertNotIn("not iterable", str(cause))
+        else:
+            self.assertTrue(is_missing(result))
+
+    def test_or_left_wins(self):
+        self.assertEqual(list(to_data([1]) | [2]), [1])
+
+    def test_or_empty_left_takes_right(self):
+        self.assertEqual(list(to_data([]) | [2]), [2])
+
+    def test_or_reflected(self):
+        self.assertEqual(list([2] | to_data([1])), [2])
+
+    def test_or_null_right(self):
+        self.assertEqual(list(to_data([1]) | Null), [1])
