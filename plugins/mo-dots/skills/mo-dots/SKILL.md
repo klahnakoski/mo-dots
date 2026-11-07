@@ -49,11 +49,10 @@ miss. These rules restate ordinary Python in the shape mo-dots makes short.
 - Merge with `|`, not `.update()`. When a `Data` or `Null` is an operand, `a | b` is
   *recursive coalesce*: the left side wins and the right only fills its gaps (`config |
   defaults` reads "config, defaulted by") - the opposite of stdlib dict `|`, where the
-  right side wins; two plain dicts keep Python's meaning. `Null | x` is `x` and
-  `dict | Null` is the dict, so a maybe-absent piece merges without a guard:
-  `line = {...} | failure | timing`, with `failure=Null` in the signature, replaces two
-  `.update()` calls and an `if`. `Data | <non-data>` is an error, and that includes
-  `Data | Null` - put a maybe-absent piece before the first `Data` operand, not after.
+  right side wins; two plain dicts keep Python's meaning. `x | Null` and
+  `Null | x` are both `x`, so a maybe-absent piece merges without a guard:
+  `line = {...} | timing | failure`, with `failure=Null` in the signature, replaces two
+  `.update()` calls and an `if`. `Data | <non-data real value>` is an error.
 - Use `|` to avoid copying properties: name only the fields you reshape and let the
   record ride in whole - `{"cmd": payload.tool_input.command[:300]} | payload` - instead
   of hand-copying `"cwd": payload.cwd, "tool_name": payload.tool_name, ...` one per line.

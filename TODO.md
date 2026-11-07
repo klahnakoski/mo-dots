@@ -119,7 +119,3 @@
   then twines dist/*. mo-deploy renders `ext_modules` from setuptools.json
   into every generated setup.py, so per-python wheel tests compile the
   extension.
-
-## Consumer skill
-
-- Fix: `Data | Null` raises "Expecting Data"; it must answer the Data unchanged, like `Null | x` and `dict | Null` (agent or-null); push dev once merged green.
