@@ -8,12 +8,8 @@
   smoke — the suite emulated adds hours. mo-deploy run_tests still runs
   the suite per python (and now deletes the worktree source so the
   installed package is what's imported).
-- packaging/setup.py is gone: `python -m mo_deploy.gen_setup .` renders it
-  from setuptools.json (version deploy-stamped there). BROKEN: mo-deploy is
-  not on pypi (404, never published), so the `pip install mo-deploy` in
-  build_wheels.py and wheels.yml can never resolve - a deploy dies at its
-  first pip install. Decide: publish mo-deploy, pip from git, or another
-  route to the translator; fix both call sites, then re-deploy.
+- packaging/setup.py is gone: packaging/gen_setup.py (synced from mo-deploy
+  by deploy()) renders it from setuptools.json (version deploy-stamped there).
 - Test requires install via `python tests/install_locked.py` inside the test
   command, never CIBW_TEST_REQUIRES and never `-r tests/requirements.txt`.
   CIBW_TEST_REQUIRES loses: on windows cibuildwheel runs every command
