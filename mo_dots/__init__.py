@@ -6,6 +6,8 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+import sys
+
 from mo_dots import datas
 from mo_dots import lists
 from mo_dots import utils
@@ -352,7 +354,7 @@ def _set_attr(obj_, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception as f:
-            get_logger().error(PATH_NOT_FOUND, cause=[f, e])
+            get_logger().error(PATH_NOT_FOUND, cause=f)
 
 
 def lower_match(value, candidates):
