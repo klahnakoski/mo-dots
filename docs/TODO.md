@@ -138,3 +138,4 @@
 - `None | Null`: C answers Null, pure answers None (C nullb_or) - the only C/pure split.
 - NaN: from_data and assignment treat it as None, column select drops it, but is_missing(nan) is False and nested from_data keeps it.
 - Low: listwrap("") is [""]; is_missing(b"") is False; to_data([1,2]).get(5) raises a broken TypeError message.
+- Rewrite tests/test_data_missing.py as unittest (FuzzyTestCase, subTest) and move it beside the Data tests in test_dot.py; hash tests compare hash(a) == hash(b), not literal values.
