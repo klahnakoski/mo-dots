@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_dots import utils, logging, datas
+from mo_dots import utils, logging, datas, lists
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
@@ -110,6 +110,21 @@ class TestUtils(FuzzyTestCase):
         self.assertGreater(len(result), 1)
         result = list(datas._data_types)
         self.assertGreater(len(result), 1)
+
+    def test_old_many_types_warns(self):
+        import mo_dots
+
+        notes = []
+
+        class Logger:
+            def warning(self, note, **kwargs):
+                notes.append(note)
+
+        self.addCleanup(setattr, mo_dots, "get_logger", mo_dots.get_logger)
+        mo_dots.get_logger = Logger
+        result = list(type(lists.many_types)())
+        self.assertGreater(len(result), 1)
+        self.assertEqual(notes, ["DEPRECATED: Use mo_dots.utils._many_types"])
 
     def test_is_many_learns_generator_type(self):
         saved = utils._many_types
