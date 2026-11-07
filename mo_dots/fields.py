@@ -21,7 +21,7 @@ def literal_field(field):
     try:
         return ESCAPE_DOTS2.sub("..", ESCAPE_DOTS1.sub("\b", field))
     except Exception as e:
-        get_logger().error("bad literal", e)
+        get_logger().error("bad literal", cause=e)
 
 
 def unliteral_field(field):
@@ -144,7 +144,7 @@ def relative_field(field, parent):
 
     tail = join_field(field_path[common:])
     if len(parent_path) <= common:
-        return join_field(field_path[common:])
+        return tail
 
     dots = "." * (len(parent_path) - common)
     if tail == ".":
