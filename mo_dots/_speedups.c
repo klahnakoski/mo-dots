@@ -754,12 +754,30 @@ databs_get(PyObject *self, PyObject *args, PyObject *kwds)
     v = PyObject_GetItem(self, key);
     if (v == NULL)
         return NULL;
-    if ((PyObject *)Py_TYPE(v) == NullTypeClass && dflt != NullSingleton) {
+    if (dflt == NullSingleton)
+        return v;
+    /* coalesce(v, dflt) */
+    PyObject *m = speedups_is_missing(NULL, v);
+    if (m == NULL) {
         Py_DECREF(v);
-        Py_INCREF(dflt);
-        return dflt;
+        return NULL;
     }
-    return v;
+    if (m == Py_False) {
+        Py_DECREF(m);
+        return v;
+    }
+    Py_DECREF(m);
+    Py_DECREF(v);
+    m = speedups_is_missing(NULL, dflt);
+    if (m == NULL)
+        return NULL;
+    if (m == Py_True) {
+        Py_DECREF(m);
+        Py_INCREF(NullSingleton);
+        return NullSingleton;
+    }
+    Py_DECREF(m);
+    return c_to_data(dflt);
 }
 
 
