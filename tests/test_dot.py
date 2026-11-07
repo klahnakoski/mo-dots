@@ -1237,6 +1237,12 @@ class TestDot(FuzzyTestCase):
         with self.assertRaises("has no attribute 'append'"):
             x += {"a": "world"}
 
+    def test_add_number_to_data_names_both_types(self):
+        with self.assertRaises("can not add int with dict"):
+            to_data({"a": 1}) + {"a": {"b": 1}}
+        with self.assertRaises("can not add dict with int"):
+            to_data({"a": {"b": 1}}) + {"a": 1}
+
     def test_iadd(self):
         x = Data()
         x["."]["."] += [42]
