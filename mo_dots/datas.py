@@ -81,10 +81,7 @@ class Data:
     __nonzero__ = __bool__
 
     def __contains__(self, item):
-        value = Data.__getitem__(self, item)
-        if is_data(value) or value:
-            return True
-        return False
+        return not is_missing(Data.__getitem__(self, item))
 
     def __iter__(self):
         d = _get(self, SLOT)
@@ -191,14 +188,10 @@ class Data:
         return self
 
     def __add__(self, other):
-        if is_null(other):
-            return self
-        return _iadd(_iadd({}, self), other)
+        return to_data(_iadd(_iadd({}, self), {} if is_missing(other) else other))
 
     def __radd__(self, other):
-        if is_null(other):
-            return self
-        return _iadd(_iadd({}, other), self)
+        return to_data(_iadd(_iadd({}, {} if is_missing(other) else other), self))
 
     def __iadd__(self, other):
         return _iadd(self, other)
@@ -243,13 +236,15 @@ class Data:
             sv = to_data(d.get(ok))
             if is_null(sv):
                 d[ok] = ov
-            elif is_data(sv):
+            elif is_data(sv) and is_data(ov):
                 d[ok] = sv | ov
         return self
 
     def __hash__(self):
         d = _get(self, SLOT)
-        return hash_value(d)
+        if _get(d, CLASS) is not dict:
+            return hash_value(d)
+        return hash(frozenset((k, hash_value(v)) for k, v in d.items() if not is_missing(v)))
 
     def __eq__(self, other):
         if self is other:
@@ -271,10 +266,10 @@ class Data:
         # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
         # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
-            if not (e.get(k) == v):
+            if not is_missing(v) and not (e.get(k) == v):
                 return False
         for k, v in e.items():
-            if not (d.get(k) == v):
+            if not is_missing(v) and not (d.get(k) == v):
                 return False
         return True
 
@@ -552,7 +547,7 @@ def hash_value(v):
     if is_many(v):
         return hash_value(first(v))
     elif is_data(v):
-        return hash_value(first(v.values()))
+        return hash(to_data(v))
     else:
         return hash(v)
 

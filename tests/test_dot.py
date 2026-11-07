@@ -1282,6 +1282,59 @@ class TestDot(FuzzyTestCase):
         data = to_data({"a": OrderedDict(b=2)})
         self.assertEqual(data.a.b, 2)
 
+    def test_contains_is_exists(self):
+        cases = [(0, True), (False, True), (1, True), ({}, True), ("", False), ([], False), (None, False)]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertIs("a" in to_data({"a": value}), expected)
+
+    def test_contains_absent_key(self):
+        self.assertNotIn("a", to_data({"b": 1}))
+
+    def test_eq_ignores_missing_valued_keys(self):
+        for missing in [None, "", [], Null]:
+            with self.subTest(missing=missing):
+                self.assertTrue(to_data({"a": missing, "b": 1}) == {"b": 1})
+                self.assertTrue({"b": 1} == to_data({"a": missing, "b": 1}))
+                self.assertTrue(to_data({"a": missing, "b": 1}) == to_data({"b": 1}))
+                self.assertTrue(to_data({"b": 1}) == to_data({"a": missing, "b": 1}))
+
+    def test_eq_still_tells_values_apart(self):
+        self.assertFalse(to_data({"a": 1}) == to_data({"a": 2}))
+        self.assertFalse(to_data({"a": 0}) == to_data({"b": 0}))
+
+    def test_hash_ignores_key_order(self):
+        self.assertEqual(hash(to_data({"a": 1, "b": 2})), hash(to_data({"b": 2, "a": 1})))
+
+    def test_hash_ignores_missing_valued_keys(self):
+        for missing in [None, "", []]:
+            with self.subTest(missing=missing):
+                self.assertEqual(hash(to_data({"a": missing, "b": 1})), hash(to_data({"b": 1})))
+
+    def test_or_left_wins_over_non_data_right(self):
+        self.assertTrue(from_data(to_data({"a": {"b": 1}}) | {"a": 5}) == {"a": {"b": 1}})
+
+    def test_or_empty_left_dict_wins_over_non_data_right(self):
+        self.assertTrue(from_data(to_data({"a": {}}) | {"a": 2}) == {"a": {}})
+
+    def test_add_null_is_identity(self):
+        for identity in [Null, None, "", [], to_data([])]:
+            with self.subTest(identity=identity):
+                result = to_data({"a": 1}) + identity
+                self.assertIsInstance(result, Data)
+                self.assertTrue(from_data(result) == {"a": 1})
+
+    def test_radd_missing_is_identity(self):
+        for identity in [Null, None, ""]:
+            with self.subTest(identity=identity):
+                result = identity + to_data({"a": 1})
+                self.assertIsInstance(result, Data)
+                self.assertTrue(from_data(result) == {"a": 1})
+
+    def test_add_dict_answers_data(self):
+        result = to_data({"a": 1}) + {"b": 2}
+        self.assertIsInstance(result, Data)
+        self.assertTrue(from_data(result) == {"a": 1, "b": 2})
 
 class _TestMapping(object):
     def __init__(self):

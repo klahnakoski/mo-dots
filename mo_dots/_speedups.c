@@ -959,16 +959,18 @@ data_iter(PyObject *self)
 static int
 data_contains(PyObject *self, PyObject *key)
 {
-    /* is_data(self[key]) or bool(self[key]) */
+    /* exists(self[key]) */
     int r;
     PyObject *v = data_subscript(self, key);
+    PyObject *m;
     if (v == NULL)
         return -1;
-    if (type_in_tuple(Py_TYPE(v), data_types_tuple))
-        r = 1;
-    else
-        r = PyObject_IsTrue(v);
+    m = speedups_is_missing(NULL, v);
     Py_DECREF(v);
+    if (m == NULL)
+        return -1;
+    r = (m == Py_False);
+    Py_DECREF(m);
     return r;
 }
 
