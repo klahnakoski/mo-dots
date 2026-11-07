@@ -18,7 +18,7 @@ from mo_dots.nones import NullType, Null
 from mo_dots.utils import (
     CLASS,
     SLOT,
-    register_data,
+    register_view,
     get_logger,
     is_primitive,
     is_known_data_type,
@@ -54,14 +54,11 @@ class DataObject(Mapping):
         output = get_attr(obj, item)
         return object_to_data(output)
 
+    __getitem__ = get = __getattr__
+
     def __setattr__(self, key, value):
         obj = _get(self, SLOT)
         set_attr(obj, key, value)
-
-    def __getitem__(self, item):
-        obj = _get(self, SLOT)
-        output = get_attr(obj, item)
-        return object_to_data(output)
 
     def __or__(self, other):
         return set_default({}, self, other)
@@ -74,11 +71,6 @@ class DataObject(Mapping):
 
     def __radd__(self, other):
         return to_data(_iadd(_iadd({}, other), self))
-
-    def get(self, item):
-        obj = _get(self, SLOT)
-        output = get_attr(obj, item)
-        return object_to_data(output)
 
     def keys(self):
         return get_keys(self)
@@ -116,7 +108,7 @@ class DataObject(Mapping):
         return obj(*args, **kwargs)
 
 
-register_data(DataObject)
+register_view(DataObject)
 
 
 def get_keys(obj):
@@ -202,23 +194,13 @@ class DataClass:
         else:
             defaults = {k: v for k, v in zip(reversed(params), reversed(func_defaults))}
 
-        ordered_params = dict(zip(params, args))
+        found = {}
+        for source in (dict(zip(params, args)), kwargs, settings, defaults):
+            for k, v in source.items():
+                found.setdefault(str(k), v)
 
-        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
+        output = self.class_(**{str(k): from_data(found[k]) for k in params if k in found})
         return DataObject(output)
-
-
-def params_pack(params, *args):
-    settings = {}
-    for a in args:
-        for k, v in a.items():
-            k = str(k)
-            if k in settings:
-                continue
-            settings[k] = v
-
-    output = {str(k): from_data(settings[k]) for k in params if k in settings}
-    return output
 
 
 export("mo_dots.lists", object_to_data)

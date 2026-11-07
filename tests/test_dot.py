@@ -171,6 +171,83 @@ class TestDot(FuzzyTestCase):
         value = a.b * 1000
         assert value == Null
 
+    def test_paths_follow_split_field(self):
+        for key in ["a.b", "a..b", "\ba", ".a", "a.", "a.\bb", "..a"]:
+            with self.subTest(key):
+                path = split_field(key)
+                expected = 1
+                for step in reversed(path):
+                    expected = {step: expected}
+
+                d = {}
+                to_data(d)[key] = 1
+                self.assertEqual(d, expected, "setitem")
+
+                d = {}
+                to_data(d)["z"][key] = 1
+                self.assertEqual(d, {"z": expected}, "setitem through Null")
+
+                self.assertEqual(to_data(deepcopy(expected))[key], 1, "getitem")
+                self.assertEqual(to_data(deepcopy(expected)).get(key), 1, "get")
+                self.assertEqual(to_data(deepcopy(expected)).pop(key), 1, "pop")
+
+                d = deepcopy(expected)
+                del to_data(d)[key]
+                parent = d
+                for step in path[:-1]:
+                    parent = parent[step]
+                self.assertNotIn(path[-1], parent, "delitem")
+
+    def test_pop_plain_and_dotted(self):
+        d = to_data({"a": 1, "b": {"c": 2, "d": 3}})
+        self.assertEqual(d.pop("a"), 1)
+        self.assertEqual(d.pop("b.c"), 2)
+        self.assertEqual(d, {"a": None, "b": {"c": None, "d": 3}})
+
+    def test_pop_empty_path_is_null(self):
+        for key in ["", "."]:
+            with self.subTest(key):
+                d = to_data({"a": 1})
+                self.assertIs(d.pop(key), Null)
+                self.assertEqual(d, {"a": 1})
+
+    def test_odd_dots_refused(self):
+        d = to_data({"a.": {"b": 1}})
+        with self.assertRaises("Odd number of dots"):
+            d["a...b"]
+        with self.assertRaises("Odd number of dots"):
+            d["a...b"] = 2
+        with self.assertRaises("Odd number of dots"):
+            d.pop("a...b")
+        with self.assertRaises("Odd number of dots"):
+            del d["a...b"]
+        with self.assertRaises("Odd number of dots"):
+            d.z["a...b"] = 2
+
+    def test_null_keeps_literal_dotted_key(self):
+        # NESTED a.b IS THE DECOY A SECOND SPLIT OF "a.b" WOULD HIT
+        decoy = {"a": {"b": {"c": 1}}}
+
+        d = to_data(deepcopy(decoy))
+        self.assertTrue(is_null(d["a..b"].c), "read")
+        self.assertTrue(is_null(d.get("a..b").c), "read through get")
+
+        raw = deepcopy(decoy)
+        to_data(raw)["a..b"].c = 2
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": 2}}, "setattr")
+
+        raw = deepcopy(decoy)
+        to_data(raw).get("a..b").c = 2
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": 2}}, "setattr through get")
+
+        raw = deepcopy(decoy)
+        slot = to_data(raw)["a..b"].c
+        slot += [3]
+        self.assertEqual(raw, {"a": {"b": {"c": 1}}, "a.b": {"c": [3]}}, "iadd")
+
+        nested = to_data({"x": to_data(deepcopy(decoy))})
+        self.assertTrue(is_null(nested["x.a..b.c"]), "read through a nested Data")
+
     def test_dot_self(self):
         a = Data(b=42)
         assert a["."] == a
@@ -378,9 +455,7 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c..a"].d += 1
 
-        self.assertEqual(
-            a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
-        )
+        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
 
         b.c1.d += 2
         b.c2.e += "f"
@@ -494,7 +569,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_set_default2(self):
         a = {"x": {"y": 1}}
@@ -506,7 +581,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_set_default3(self):
         a = {"x": {"y": 1}}
@@ -518,7 +593,7 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(d.x.y, 1, "expecting d to have attributes of a")
         self.assertEqual(d.x.z, 2, "expecting d to have attributes of b")
 
-        self.assertEqual(to_data(a).x.z, None, "a should not have been altered")
+        self.assertTrue(is_null(to_data(a).x.z), "a should not have been altered")
 
     def test_or(self):
         a = {"x": {"y": 1}}
@@ -551,14 +626,19 @@ class TestDot(FuzzyTestCase):
         temp[0] = 1
         temp[1] = None
 
+    def test_none_rooted_null_assignment_is_noop(self):
+        temp = NullType()
+        temp.a = 1
+        temp["b"] = 2
+        temp["c.d"] = 3
+        self.assertEqual(temp, None)
+
     def test_deep_null_assignment(self):
         temp = to_data({"a": 0})
         e = temp.e
         e.s.t = 1
         e.s.s = 2
-        self.assertEqual(
-            temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical"
-        )
+        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
@@ -596,6 +676,56 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(None >= Null, None)
         self.assertEqual(None > Null, None)
 
+    def test_null_eq_is_missing(self):
+        for missing in ("", b"", [], (), None, Null, to_data([])):
+            self.assertTrue(Null == missing, repr(missing))
+            self.assertTrue(missing == Null, repr(missing))
+            self.assertIs(Null != missing, False, repr(missing))
+        for real in (5, "a", [1], {}, to_data({"a": 1})):
+            self.assertFalse(Null == real, repr(real))
+        self.assertFalse(Null != 5)
+
+    def test_is_missing_empty_bytes(self):
+        self.assertTrue(is_missing(b""))
+        self.assertFalse(is_missing(b"a"))
+
+    def test_null_plus_data_is_identity(self):
+        d = to_data({"a": 1})
+        self.assertIs(Null + d, d)
+        self.assertEqual(d + Null, d)
+        self.assertIsInstance(d + Null, Data)
+        self.assertEqual(Null + {"a": 1}, {"a": 1})
+
+    def test_or_missing_left_takes_right(self):
+        self.assertEqual(from_data(to_data({"a": ""}) | {"a": 2}), {"a": 2})
+        self.assertEqual(from_data(to_data({"a": []}) | {"a": 2}), {"a": 2})
+        self.assertEqual(from_data(to_data({"a": 1}) | {"a": ""}), {"a": 1})
+
+    def test_none_or_null_is_none(self):
+        self.assertIs(None | Null, None)
+        self.assertIs(Null | None, None)
+        self.assertEqual(1 | Null, 1)
+
+    def test_nan_is_missing(self):
+        nan = float("nan")
+        self.assertTrue(is_missing(nan))
+        self.assertFalse(exists(nan))
+        self.assertFalse(is_missing(0.0))
+
+    def test_nan_coalesce(self):
+        self.assertEqual(coalesce(float("nan"), 2), 2)
+
+    def test_nan_reads_as_null(self):
+        self.assertTrue(to_data({"a": float("nan")}).a == None)
+
+    def test_from_data_nan_is_none_at_top_level_only(self):
+        nan = float("nan")
+        self.assertEqual(from_data(nan), None)
+        slot = {"a": nan}
+        self.assertIs(from_data(to_data(slot)), slot)
+        items = [nan]
+        self.assertIs(from_data(to_data(items)), items)
+
     def test_escape_dot(self):
         self.assertAlmostEqual(literal_field("."), "\b")
         self.assertAlmostEqual(literal_field(".."), "\b\b")
@@ -615,9 +745,7 @@ class TestDot(FuzzyTestCase):
     def test_unicode_or_list(self):
         a = to_data({"a": "test"})
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(
-            a | b, {"a": "test"}, "expecting string, not list, nor some hybrid"
-        )
+        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
@@ -653,9 +781,7 @@ class TestDot(FuzzyTestCase):
     def test_add_null_to_list(self):
         expected = to_data(["test", "list"])
         test = expected + None
-        self.assertEqual(
-            test, expected, "expecting adding None to list does not change list"
-        )
+        self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
     def test_pop_list(self):
         l = to_data([1, 2, 3, 4])
@@ -703,9 +829,9 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(a == a)
         self.assertTrue(b == b)
         self.assertTrue(b == c)
-        self.assertFalse(b == None)
+        self.assertTrue(b == None)
         self.assertTrue(b == Null)
-        self.assertFalse(None == b)
+        self.assertTrue(None == b)
         self.assertTrue(Null == b)
 
     def test_add_1(self):
@@ -789,7 +915,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue([] == Null)
         self.assertTrue(empty == Null)
-        self.assertFalse(empty == None)
+        self.assertTrue(empty == None)
 
     def test_none_and_magic(self):
         self.assertEqual(list(Null), Null)
@@ -801,10 +927,6 @@ class TestDot(FuzzyTestCase):
     def test_items(self):
         a = to_data({"a.b": "c"})
         self.assertEqual(a.items(), [("a.b", "c")])
-
-    def test_iteritems(self):
-        a = to_data({"a.b": "c"})
-        self.assertEqual(list(a.iteritems()), [("a.b", "c")])
 
     def test_update_complex(self):
         a = Data(a=1, b={"c": 0})
@@ -958,6 +1080,30 @@ class TestDot(FuzzyTestCase):
         b = to_data({"a": 42})
         self.assertEqual(list(iter(b)), [("a", 42)])
 
+    def test_data_or_null_is_data(self):
+        self.assertEqual(from_data(to_data({"a": 1}) | Null), {"a": 1})
+        self.assertEqual(from_data(to_data({"a": 1}) | None), {"a": 1})
+        self.assertEqual(from_data(Null | to_data({"a": 1})), {"a": 1})
+        self.assertEqual(from_data(to_data({"a": 1}) | Null | Null), {"a": 1})
+        self.assertEqual(from_data(to_data([1]) | Null), [1])
+        with self.assertRaises(Exception):
+            to_data({"a": 1}) | 3
+
+    def test_get_default_coalesces(self):
+        d = to_data({"a": "", "b": [], "c": 0, "e": 1})
+        for key, expected in [("a", 5), ("b", 5), ("c", 0), ("e", 1), ("x", 5)]:
+            with self.subTest(key=key):
+                self.assertEqual(d.get(key, 5), expected)
+        self.assertEqual(d.get("a"), "")
+        d.get("x").y += [1]
+        self.assertEqual(from_data(d.x), {"y": [1]})
+
+    def test_data_or_missing_is_data(self):
+        for missing in ["", [], float("nan")]:
+            with self.subTest(missing=repr(missing)):
+                self.assertEqual(from_data(to_data({"a": 1}) | missing), {"a": 1})
+                self.assertEqual(from_data(missing | to_data({"a": 1})), {"a": 1})
+
     def test_null2(self):
         with self.assertRaises(Exception):
             int(Null)
@@ -971,8 +1117,8 @@ class TestDot(FuzzyTestCase):
         self.assertEqual([1] + Null, [1])
         self.assertEqual(Null + [1], [1])
 
-        self.assertTrue(1 + Null == None)
-        self.assertTrue(Null + 1 == None)
+        self.assertEqual(1 + Null, 1)
+        self.assertEqual(Null + 1, 1)
         self.assertTrue(Null + Null == None)
         self.assertTrue(Null() == None)
         self.assertTrue(Null - 1 == None)
@@ -1027,6 +1173,20 @@ class TestDot(FuzzyTestCase):
         new, Log.main_log = Log.main_log, old
         self.assertIn(PATH_NOT_FOUND, new.lines[0])
 
+    def test_get_attr_reports_plain_cause(self):
+        try:
+            get_attr({}, 5)
+            self.fail("expected an error")
+        except Exception as cause:
+            self.assertIn("Problem getting value", str(cause))
+
+    def test_set_attr_reports_plain_cause(self):
+        try:
+            set_attr({}, 5, 1)
+            self.fail("expected an error")
+        except Exception as cause:
+            self.assertIn("Problem setting value", str(cause))
+
     def test_set_attr3(self):
         x = SampleData()
         x.a = SampleData()
@@ -1070,9 +1230,7 @@ class TestDot(FuzzyTestCase):
         d = Data()
         for i in range(3):
             d = Data(a=d)
-        self.assertEqual(
-            repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})"
-        )
+        self.assertEqual(repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})")
 
     def test_add_one_to_dict(self):
         x = to_data({"a": {"b": 42}})
@@ -1103,6 +1261,12 @@ class TestDot(FuzzyTestCase):
         x = to_data({"a": "test"})
         with self.assertRaises("has no attribute 'append'"):
             x += {"a": "world"}
+
+    def test_add_number_to_data_names_both_types(self):
+        with self.assertRaises("can not add int with dict"):
+            to_data({"a": 1}) + {"a": {"b": 1}}
+        with self.assertRaises("can not add dict with int"):
+            to_data({"a": {"b": 1}}) + {"a": 1}
 
     def test_iadd(self):
         x = Data()
@@ -1191,9 +1355,7 @@ class TestDot(FuzzyTestCase):
     def test_leaves_w_bs4(self):
         from bs4 import BeautifulSoup
 
-        for p in BeautifulSoup(
-            "<html><body><p>test</p></body></html>", "html.parser"
-        ).find_all("p"):
+        for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
             result = list(to_data({"p": p}).leaves())
             self.assertEqual(result, [("p", p)])
 
@@ -1232,6 +1394,76 @@ class TestDot(FuzzyTestCase):
     def test_ordered_dict_is_data(self):
         data = to_data({"a": OrderedDict(b=2)})
         self.assertEqual(data.a.b, 2)
+
+    def test_contains_is_exists(self):
+        cases = [(0, True), (False, True), (1, True), ({}, True), ("", False), ([], False), (None, False)]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertIs("a" in to_data({"a": value}), expected)
+
+    def test_contains_absent_key(self):
+        self.assertNotIn("a", to_data({"b": 1}))
+
+    def test_eq_ignores_missing_valued_keys(self):
+        for missing in [None, "", [], Null]:
+            with self.subTest(missing=missing):
+                self.assertTrue(to_data({"a": missing, "b": 1}) == {"b": 1})
+                self.assertTrue({"b": 1} == to_data({"a": missing, "b": 1}))
+                self.assertTrue(to_data({"a": missing, "b": 1}) == to_data({"b": 1}))
+                self.assertTrue(to_data({"b": 1}) == to_data({"a": missing, "b": 1}))
+
+    def test_eq_still_tells_values_apart(self):
+        self.assertFalse(to_data({"a": 1}) == to_data({"a": 2}))
+        self.assertFalse(to_data({"a": 0}) == to_data({"b": 0}))
+
+    def test_hash_ignores_key_order(self):
+        self.assertEqual(hash(to_data({"a": 1, "b": 2})), hash(to_data({"b": 2, "a": 1})))
+
+    def test_hash_ignores_missing_valued_keys(self):
+        for missing in [None, "", []]:
+            with self.subTest(missing=missing):
+                self.assertEqual(hash(to_data({"a": missing, "b": 1})), hash(to_data({"b": 1})))
+
+    def test_or_left_wins_over_non_data_right(self):
+        self.assertTrue(from_data(to_data({"a": {"b": 1}}) | {"a": 5}) == {"a": {"b": 1}})
+
+    def test_or_empty_left_dict_wins_over_non_data_right(self):
+        self.assertTrue(from_data(to_data({"a": {}}) | {"a": 2}) == {"a": {}})
+
+    def test_add_null_is_identity(self):
+        for identity in [Null, None, "", [], to_data([])]:
+            with self.subTest(identity=identity):
+                result = to_data({"a": 1}) + identity
+                self.assertIsInstance(result, Data)
+                self.assertTrue(from_data(result) == {"a": 1})
+
+    def test_radd_missing_is_identity(self):
+        for identity in [Null, None, ""]:
+            with self.subTest(identity=identity):
+                result = identity + to_data({"a": 1})
+                self.assertIsInstance(result, Data)
+                self.assertTrue(from_data(result) == {"a": 1})
+
+    def test_add_dict_answers_data(self):
+        result = to_data({"a": 1}) + {"b": 2}
+        self.assertIsInstance(result, Data)
+        self.assertTrue(from_data(result) == {"a": 1, "b": 2})
+
+    def test_add_non_data_raises(self):
+        data = to_data({"a": 1})
+        for add in [lambda: data + 5, lambda: 5 + data, lambda: data + [1], lambda: [1] + data]:
+            with self.assertRaises("can not add"):
+                add()
+
+    def test_add_non_data_names_data(self):
+        with self.assertRaises("can not add Data with int"):
+            to_data({"a": 1}) + 5
+
+    def test_add_copies_deeply(self):
+        data = to_data({"a": {"b": [1]}})
+        result = data + {"c": 2}
+        result.a.b.append(2)
+        self.assertEqual(from_data(data), {"a": {"b": [1]}})
 
 
 class _TestMapping(object):

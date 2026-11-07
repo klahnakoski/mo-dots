@@ -1,0 +1,15 @@
+{
+  "name": "mo-dots",
+  "description": "Claude Code plugins for the mo-dots null-safe data library.",
+  "owner": {
+    "name": "Kyle Lahnakoski",
+    "email": "kyle@lahnakoski.com"
+  },
+  "plugins": [
+    {
+      "name": "mo-dots",
+      "source": "./plugins/mo-dots",
+      "description": "Teaches an agent to restate Python code simply with mo-dots: navigate instead of guarding, merge with |, and avoid the Null comparison traps."
+    }
+  ]
+}

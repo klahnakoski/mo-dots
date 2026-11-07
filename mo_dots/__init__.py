@@ -6,10 +6,11 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from math import isnan
+import sys
 
 from mo_dots import datas
 from mo_dots import lists
+from mo_dots import utils
 from mo_dots.datas import *
 from mo_dots.fields import *
 from mo_dots.lists import *
@@ -57,6 +58,7 @@ __all__ = [
     "PATH_NOT_FOUND",
     "relative_field",
     "register_data",
+    "register_view",
     "register_many",
     "register_list",
     "register_sequence",
@@ -76,11 +78,9 @@ __all__ = [
 
 
 _module_type = type(sys.modules[__name__])
-_builtin_zip = zip
 _get = object.__getattribute__
 from mo_dots.datas import _set  # hackcheck-SAFE FOR C-BACKED Data
 
-_new = object.__new__
 _dict_zip = zip
 
 
@@ -99,7 +99,7 @@ def coalesce(*args):
     # pick the first not null value
     # http://en.wikipedia.org/wiki/Null_coalescing_operator
     for a in args:
-        if a != None:
+        if not is_missing(a):
             return to_data(a)
     return Null
 
@@ -141,7 +141,7 @@ def set_default(d, *dicts):
     return to_data(agg)
 
 
-def _set_default(d, default, seen=None):
+def _set_default(d, default, seen):
     """
     ANY VALUE NOT SET WILL BE SET BY THE default
     THIS IS RECURSIVE
@@ -192,6 +192,8 @@ def _getdefault(obj, key):
     key IS EXPECTED TO BE LITERAL (NO ESCAPING)
     TRY BOTH ATTRIBUTE AND ITEM ACCESS, OR RETURN Null
     """
+    if _get(obj, CLASS) is Data:
+        obj = _get(obj, SLOT)
     try:
         return obj[key]
     except Exception as f:
@@ -233,7 +235,7 @@ def set_attr(obj, path, value):
         return _set_attr(obj, split_field(path), value)
     except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in cause:
+        if PATH_NOT_FOUND in str(cause):
             Log.warning(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
             Log.error("Problem setting value", cause=cause)
@@ -247,10 +249,10 @@ def get_attr(obj, path):
         return _get_attr(obj, split_field(path))
     except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in cause:
+        if PATH_NOT_FOUND in str(cause):
             Log.error(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", cause=cause)
+            Log.error("Problem getting value", cause=cause)
 
 
 def _get_attr(obj, path):
@@ -291,7 +293,7 @@ def _get_attr(obj, path):
                 possible_error = Except.wrap(e)
 
         # TRY A CASE-INSENSITIVE MATCH
-        matched_attr_name = lower_match(attr_name, dir(obj))
+        matched_attr_name = [v for v in dir(obj) if v.lower() == attr_name.lower()]
         if not matched_attr_name:
             get_logger().warning(
                 PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error
@@ -351,11 +353,7 @@ def _set_attr(obj_, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception as f:
-            get_logger().error(PATH_NOT_FOUND, cause=[f, e])
-
-
-def lower_match(value, candidates):
-    return [v for v in candidates if v.lower() == value.lower()]
+            get_logger().error(PATH_NOT_FOUND, cause=f)
 
 
 def to_data(v=None) -> object:
@@ -374,11 +372,13 @@ def to_data(v=None) -> object:
     elif type_ is none_type:
         return Null
     elif type_ is tuple:
-        return list_to_data(v)
+        return list_to_data(list(v))
     elif type_ is list:
         return list_to_data(v)
     elif type_ in generator_types:
         return list_to_data(list(from_data(vv) for vv in v))
+    elif type_ in utils._wrapped_data_types:
+        return dict_to_data(v)  # A MAPPING mo-dots DID NOT BUILD
     else:
         return v
 
@@ -392,19 +392,14 @@ def from_data(v):
     _type = _get(v, CLASS)
     if _type is NullType:
         return None
-    elif _type is Data:
-        d = _get(v, SLOT)
-        return d
-    elif _type is FlatList:
+    elif _type is Data or _type is FlatList:
         return _get(v, SLOT)
     elif _type is DataObject:
         return _get(v, SLOT)
     elif _type in generator_types:
         return (from_data(vv) for vv in v)
-    elif _type is float:
-        if isnan(v):
-            return None
-        return v
+    if _type is float and v != v:
+        return None
     return v
 
 
@@ -439,7 +434,7 @@ def listwrap(value):
             # do something
 
     """
-    if is_null(value):
+    if is_missing(value):
         return FlatList()
     elif is_list(value):
         if isinstance(value, list):
@@ -486,6 +481,7 @@ class _DeferManyTypes:
         get_logger().warning("DEPRECATED: Use mo_dots.utils._many_types", stack_depth=2)
 
     def __iter__(self):
+        self.warning()
         yield from utils._many_types
 
 
@@ -538,9 +534,11 @@ export("mo_dots.lists", to_data)
 export("mo_dots.lists", from_data)
 export("mo_dots.lists", coalesce)
 export("mo_dots.lists", get_attr)
+export("mo_dots.lists", listwrap)
 
 export("mo_dots.nones", to_data)
-export("mo_dots.nones", get_attr)
+export("mo_dots.nones", _getdefault)
+export("mo_dots.nones", Data)
 
 export("mo_dots.objects", to_data)
 export("mo_dots.objects", from_data)

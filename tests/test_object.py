@@ -172,6 +172,7 @@ class TestObject(FuzzyTestCase):
             parent = None
 
             __slots__ = ["a"]
+
             def __init__(self, a):
                 self.a = a
 
@@ -179,7 +180,7 @@ class TestObject(FuzzyTestCase):
 
         obj = DataObject(Unknown(3))
 
-        self.assertEqual(list(obj.items()), [('a', 3)])
+        self.assertEqual(list(obj.items()), [("a", 3)])
 
     def test_dataclass_properties_are_ignored(self):
         @dataclass
@@ -188,8 +189,8 @@ class TestObject(FuzzyTestCase):
 
         obj = DataObject(Unknown(3))
 
-        self.assertEqual(list(obj.items()), [('a', 3)])
-        self.assertEqual([('a', 3)], list(obj.items()))
+        self.assertEqual(list(obj.items()), [("a", 3)])
+        self.assertEqual([("a", 3)], list(obj.items()))
 
     def test_w_traceback(self):
         try:
@@ -200,6 +201,12 @@ class TestObject(FuzzyTestCase):
         obj = DataObject(exc_traceback)
         self.assertAlmostEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
         self.assertEqual(obj.tb_frame.f_code.co_name, "test_w_traceback")
+
+    def test_add_missing_is_identity(self):
+        obj = DataObject(MyObject(42))
+        for missing in (Null, None):
+            self.assertEqual((obj + missing).my_attr, 42)
+            self.assertEqual((missing + obj).my_attr, 42)
 
     def test_w_boolean(self):
         obj = object_to_data(True)

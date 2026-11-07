@@ -22,6 +22,16 @@ class TestFields(FuzzyTestCase):
 
         self.assertEqual(value, expected, "expecting identical")
 
+    def test_split_edge_dots(self):
+        self.assertEqual(split_field("\ba"), [".a"])
+        self.assertEqual(split_field(".a"), ["a"])
+        self.assertEqual(split_field("a."), ["a"])
+        self.assertEqual(split_field("a.."), ["a."])
+        self.assertEqual(split_field("..a"), ["..", "a"])
+        self.assertEqual(split_field("."), [])
+        with self.assertRaises("Odd number of dots"):
+            split_field("a...b")
+
     def test_split_w_slashes(self):
         self.assertEqual(split_field("a..b"), ["a.b"])
         self.assertEqual(split_field("a\\..b"), ["a\\.b"])
@@ -52,9 +62,13 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(concat_field("a.b.c", ".d"), "a.b.c.d")
         self.assertEqual(concat_field("a.b.c", "..d"), "a.b.d")
         self.assertEqual(concat_field("a.b.c", "...d"), "a.d")
+        self.assertEqual(concat_field("a", ".."), ".")
 
     def test_startswith(self):
-        self.assertFalse(startswith_field('no_exist.VALUE', '...AppData.Local.Programs.PyCharm Community.plugins.python-ce.helpers.pycharm._jb_unittest_runner'))
+        self.assertFalse(startswith_field(
+            "no_exist.VALUE",
+            "...AppData.Local.Programs.PyCharm Community.plugins.python-ce.helpers.pycharm._jb_unittest_runner",
+        ))
 
         self.assertFalse(startswith_field("a.b.c", None))
         self.assertTrue(startswith_field("a.b.c", "."))
@@ -67,6 +81,10 @@ class TestFields(FuzzyTestCase):
 
         self.assertFalse(endswith_field("a..b", "b"))
         self.assertTrue(endswith_field("a\bb", "b"))
+
+    def test_with_field_at_string_edge(self):
+        self.assertTrue(startswith_field("a.", "a"))
+        self.assertTrue(endswith_field(".b", "b"))
 
     def test_illegal(self):
         with self.assertRaises(Exception):

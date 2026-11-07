@@ -6,7 +6,7 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from mo_dots import utils, logging, datas
+from mo_dots import utils, logging, datas, lists
 from mo_testing.fuzzytestcase import FuzzyTestCase
 
 import tests
@@ -55,6 +55,19 @@ class TestUtils(FuzzyTestCase):
         v = get_attr(tests, "get_attr.D")
         self.assertEqual(v, {"unique": 1234})
 
+    def test_get_attr_imports_unimported_submodule_file(self):
+        import tests.unimported
+
+        self.assertNotIn("leaf", dir(tests.unimported))
+        leaf = get_attr(tests.unimported, "leaf")
+        self.assertEqual(leaf.VALUE, 42)
+        self.assertEqual(get_attr(tests.unimported, "leaf.VALUE"), 42)
+
+    def test_get_attr_imports_unimported_subpackage(self):
+        import tests.unimported
+
+        self.assertEqual(get_attr(tests.unimported, "subpackage.NAME"), "sub")
+
     def test_tuplewrap(self):
         self.assertEqual(tuplewrap(None), tuple())
         self.assertEqual(tuplewrap("hi"), ("hi",))
@@ -67,7 +80,8 @@ class TestUtils(FuzzyTestCase):
     def test_poor_logger(self):
         logger = PoorLogger()
         lines = []
-        logging.STDOUT, old = Data(write=lambda t: lines.append(t)), logging.STDOUT
+        self.addCleanup(setattr, logging, "STDOUT", logging.STDOUT)
+        logging.STDOUT = Data(write=lambda t: lines.append(t))
 
         logger.info("test1")
         logger.warning("test2")
@@ -77,9 +91,46 @@ class TestUtils(FuzzyTestCase):
         with self.assertRaises("test4"):
             logger.error("test3", cause=Exception("test4"))
 
+    def test_poor_logger_fills_template(self):
+        logger = PoorLogger()
+        lines = []
+        self.addCleanup(setattr, logging, "STDOUT", logging.STDOUT)
+        logging.STDOUT = Data(write=lambda t: lines.append(t))
+
+        logger.info("new {name}", name="a")
+        logger.warning("old {{name}}", name="b")
+        with self.assertRaises("missing {other} c"):
+            logger.error("missing {other} {name}", name="c")
+
+        self.assertEqual(lines, [b"new a\n", b"WARNING: old b\n"])
+
     def test_old_lists(self):
         # TODO: REMOVE THIS TEST
         result = list(datas._data_types)
         self.assertGreater(len(result), 1)
         result = list(datas._data_types)
         self.assertGreater(len(result), 1)
+
+    def test_old_many_types_warns(self):
+        import mo_dots
+
+        notes = []
+
+        class Logger:
+            def warning(self, note, **kwargs):
+                notes.append(note)
+
+        self.addCleanup(setattr, mo_dots, "get_logger", mo_dots.get_logger)
+        mo_dots.get_logger = Logger
+        result = list(type(lists.many_types)())
+        self.assertGreater(len(result), 1)
+        self.assertEqual(notes, ["DEPRECATED: Use mo_dots.utils._many_types"])
+
+    def test_is_many_learns_generator_type(self):
+        saved = utils._many_types
+        try:
+            utils._many_types = ()
+            self.assertTrue(utils.is_many(x for x in [1]))
+            self.assertTrue(utils.is_many(x for x in [1]))
+        finally:
+            utils._many_types = saved

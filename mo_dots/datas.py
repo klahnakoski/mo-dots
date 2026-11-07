@@ -35,7 +35,6 @@ _getdefault, coalesce, listwrap, from_data, to_data, list_to_data, FlatList, Dat
 
 _get = object.__getattribute__
 _set = object.__setattr__
-_new = object.__new__
 
 if utils._speedups:
     # object.__setattr__ ON A C-BACKED Data TRIPS CPython's hackcheck ON
@@ -81,10 +80,7 @@ class Data:
     __nonzero__ = __bool__
 
     def __contains__(self, item):
-        value = Data.__getitem__(self, item)
-        if is_data(value) or value:
-            return True
-        return False
+        return not is_missing(Data.__getitem__(self, item))
 
     def __iter__(self):
         d = _get(self, SLOT)
@@ -96,58 +92,50 @@ class Data:
     def __getitem__(self, key):
         if is_null(key):
             return Null
-        if key == ".":
-            output = _get(self, SLOT)
-            if is_data(output):
-                return self
-            else:
-                return output
-
         key = str(key)
         d = _get(self, SLOT)
 
-        if key.find(".") >= 0:
-            seq = _split_field(key)
-            for n in seq:
-                if _get(d, CLASS) is NullType:
-                    d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
-                elif is_many(d):
-                    d = [_getdefault(dd, n) for dd in d]
-                else:
-                    d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
-
-            return to_data(d)
-        else:
+        if "." not in key and "\b" not in key:
             o = d.get(key)
+            if is_null(o):
+                return NullType(d, key)
+            return to_data(o)
 
-        if is_null(o):
-            return NullType(d, key)
-        return to_data(o)
+        path = split_field(key)
+        if not path:
+            return self if is_data(d) else d
+        for n in path:
+            if _get(d, CLASS) is NullType:
+                d = NullType(d, n)
+            elif is_many(d):
+                d = [_getdefault(dd, n) for dd in d]
+            else:
+                d = _getdefault(d, n)
+        return to_data(d)
 
     def __setitem__(self, key, value):
         if key == "":
             get_logger().error("key is empty string.  Probably a bad idea")
         if is_null(key):
             return Null
-        if key == ".":
-            # SOMETHING TERRIBLE HAPPENS WHEN value IS NOT A Mapping;
-            # HOPEFULLY THE ONLY OTHER METHOD RUN ON self IS from_data()
-            v = from_data(value)
-            if is_many(v):
-                _set(self, CLASS, FlatList)
-            _set(self, SLOT, v)
-            return self
         try:
             d = _get(self, SLOT)
             value = from_data(value)
-            if "." not in key:
+            if "." not in key and "\b" not in key:
                 if value is None:
                     d.pop(key, None)
                 else:
                     d[key] = value
                 return self
 
-            seq = _split_field(key)
+            seq = split_field(key)
+            if not seq:
+                # SOMETHING TERRIBLE HAPPENS WHEN value IS NOT A Mapping;
+                # HOPEFULLY THE ONLY OTHER METHOD RUN ON self IS from_data()
+                if is_many(value):
+                    _set(self, CLASS, FlatList)
+                _set(self, SLOT, value)
+                return self
             for k in seq[:-1]:
                 d = _getdefault(d, k)
             if is_null(value):
@@ -164,9 +152,9 @@ class Data:
                 d[seq[-1]] = value
             return self
         except Exception as e:
-            from mo_logs import Log
+            from mo_logs import logger
 
-            Log.error("can not set key={key}", key=key, cause=e)
+            logger.error("can not set key={key}", key=key, cause=e)
 
     def __getattr__(self, key):
         d = _get(self, SLOT)
@@ -191,23 +179,37 @@ class Data:
         return self
 
     def __add__(self, other):
-        return _iadd(_iadd({}, self), other)
+        return to_data(_iadd(deepcopy(self), other))
 
     def __radd__(self, other):
-        return _iadd(_iadd({}, other), self)
+        return to_data(_iadd(_iadd({}, other), self))
 
     def __iadd__(self, other):
-        return _iadd(self, other)
+        if is_missing(other) or is_data(other):
+            return _iadd(self, other)
+        # HAPPENS WHEN += WITH ['.'] SELF REFERENCE
+        d = _get(self, SLOT)
+        if isinstance(d, dict) and not len(d):
+            # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
+            # âˆ€ x, x += {} => x
+            d = Data()
+        else:
+            d = dict_to_data({"$": self})
+        d += dict_to_data({"$": other})
+        d["."] = d["$"]
+        return d
 
     def __or__(self, other):
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not is_data(other):
+        if not is_data(other) and not is_missing(other):
             get_logger().error("Expecting Data")
 
         d = _get(self, SLOT)
         output = Data(**d)  # COPY
+        if is_missing(other):
+            return output
         output.__ior__(other)
         return output
 
@@ -215,6 +217,8 @@ class Data:
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
+        if is_missing(other):
+            return self | Null
         if not is_data(other):
             get_logger().error("Expecting Data")
 
@@ -231,19 +235,21 @@ class Data:
             return self
 
         for ok, ov in other.items():
-            if is_null(ov):
+            if is_missing(ov):
                 continue
 
             sv = to_data(d.get(ok))
-            if is_null(sv):
+            if is_missing(sv):
                 d[ok] = ov
-            elif is_data(sv):
+            elif is_data(sv) and is_data(ov):
                 d[ok] = sv | ov
         return self
 
     def __hash__(self):
         d = _get(self, SLOT)
-        return hash_value(d)
+        if _get(d, CLASS) is not dict:
+            return hash_value(d)
+        return hash(frozenset((k, hash_value(v)) for k, v in d.items() if not is_missing(v)))
 
     def __eq__(self, other):
         if self is other:
@@ -265,10 +271,10 @@ class Data:
         # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
         # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
-            if not (e.get(k) == v):
+            if not (e.get(k) == v) and not is_missing(v):
                 return False
         for k, v in e.items():
-            if not (d.get(k) == v):
+            if not (d.get(k) == v) and not is_missing(v):
                 return False
         return True
 
@@ -277,11 +283,7 @@ class Data:
 
     def get(self, key, default=Null):
         v = self[key]
-        if _get(v, CLASS) == NullType:
-            if default is Null:
-                return NullType(self, key)
-            return default
-        return v
+        return v if default is Null else coalesce(v, default)
 
     def items(self):
         d = _get(self, SLOT)
@@ -293,30 +295,22 @@ class Data:
         """
         return leaves(self, prefix)
 
-    def iteritems(self):
-        # LOW LEVEL ITERATION, NO WRAPPING
-        d = _get(self, SLOT)
-        return ((k, to_data(v)) for k, v in d.items())
-
     def pop(self, key, default=Null):
         if is_null(key):
             return Null
-        if key == ".":
-            raise NotImplemented()
-
-        key = str(key)
+        seq = split_field(str(key))
+        if not seq:
+            return Null
         d = _get(self, SLOT)
 
-        if key.find(".") >= 0:
-            seq = _split_field(key)
-            for n in seq[:-1]:
-                if _get(d, CLASS) is NullType:
-                    d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
-                elif is_many(d):
-                    d = [_getdefault(dd, n) for dd in d]
-                else:
-                    d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
-            key = seq[-1]
+        for n in seq[:-1]:
+            if _get(d, CLASS) is NullType:
+                d = NullType(d, n)
+            elif is_many(d):
+                d = [_getdefault(dd, n) for dd in d]
+            else:
+                d = _getdefault(d, n)
+        key = seq[-1]
 
         o = d.get(key)
         if is_null(o):
@@ -361,13 +355,12 @@ class Data:
         return to_data(deepcopy(d, memo))
 
     def __delitem__(self, key):
-        if "." not in key:
-            d = _get(self, SLOT)
+        d = _get(self, SLOT)
+        if "." not in key and "\b" not in key:
             d.pop(key, None)
             return
 
-        d = _get(self, SLOT)
-        seq = _split_field(key)
+        seq = split_field(key)
         for k in seq[:-1]:
             d = d[k]
         d.pop(seq[-1], None)
@@ -431,7 +424,7 @@ if utils._speedups:
     )
 
 MutableMapping.register(Data)
-register_data(Data)
+register_view(Data)
 
 
 def leaves(value, prefix=None):
@@ -473,13 +466,6 @@ def _leaves(parent, value, path):
             get_logger().error("Do not know how to handle", cause=cause)
 
 
-def _split_field(field):
-    """
-    SIMPLE SPLIT, NO CHECKS
-    """
-    return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
-
-
 def _iadd(self, other):
     """
     RECURSIVE ADDITION OF DATA PROPERTIES
@@ -487,58 +473,32 @@ def _iadd(self, other):
     * SETS ARE UNIONED
     * NUMBERS ARE ADDED
     """
-
+    if is_missing(other):
+        return self
     if not is_data(other):
-        # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
-        d = _get(self, SLOT)
-        if isinstance(d, dict) and not len(d):
-            # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
-            # âˆ€ x, x += {} => x
-            d = Data()
-        else:
-            d = dict_to_data({"$": self})
-        d += dict_to_data({"$": other})
-        d["."] = d["$"]
-        return d
+        get_logger().error(
+            "can not add {stype} with {otype}", stype=_get(self, CLASS).__name__, otype=_get(other, CLASS).__name__
+        )
 
     d = from_data(self)
     for ok, ov in other.items():
         sv = d.get(ok)
         if is_null(sv):
             d[ok] = from_data(deepcopy(ov))
-        elif isinstance(ov, (Decimal, float, int)):
-            if is_data(sv):
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
-            elif is_many(sv):
-                d[ok].append(ov)
-            else:
-                d[ok] = sv + ov
         elif is_many(ov):
             d[ok] = from_data(listwrap(sv) + ov)
-        elif is_data(ov):
-            if is_data(sv):
-                _iadd(sv, ov)
-            elif is_many(sv):
-                d[ok].append(ov)
-            else:
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
+        elif is_data(sv) and is_data(ov):
+            _iadd(sv, ov)
+        elif is_many(sv):
+            d[ok].append(ov)
+        elif is_data(sv) or is_data(ov):
+            get_logger().error(
+                "can not add {stype} with {otype}", stype=_get(sv, CLASS).__name__, otype=_get(ov, CLASS).__name__
+            )
+        elif isinstance(ov, (Decimal, float, int)):
+            d[ok] = sv + ov
         else:
-            if is_data(sv):
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
-            else:
-                d[ok].append(ov)
+            d[ok].append(ov)
     return self
 
 
@@ -546,7 +506,7 @@ def hash_value(v):
     if is_many(v):
         return hash_value(first(v))
     elif is_data(v):
-        return hash_value(first(v.values()))
+        return hash(to_data(v))
     else:
         return hash(v)
 
@@ -569,6 +529,10 @@ def _gen_to_data(v):
 _getattr_dispatch = {}
 
 
+def _nan_to_null(v):
+    return Null if v != v else v
+
+
 def _rebuild_getattr_dispatch():
     # NullType IS A SENTINEL: __getattr__ CONSTRUCTS NullType(d, key) FOR NULL VALUES
     _getattr_dispatch.clear()
@@ -577,11 +541,16 @@ def _rebuild_getattr_dispatch():
     _getattr_dispatch[dict] = dict_to_data
     _getattr_dispatch[OrderedDict] = dict_to_data
     _getattr_dispatch[list] = list_to_data
+    _getattr_dispatch[float] = _nan_to_null
     for t in generator_types:
         _getattr_dispatch[t] = _gen_to_data
+    for t in utils._wrapped_data_types:
+        # A MAPPING mo-dots DID NOT BUILD NAVIGATES THE WAY A dict DOES
+        _getattr_dispatch.setdefault(t, dict_to_data)
 
 
 utils.on_null_type_change(_rebuild_getattr_dispatch)
+utils.on_data_type_change(_rebuild_getattr_dispatch)
 _rebuild_getattr_dispatch()
 
 

@@ -13,7 +13,15 @@ class TestDottyValueAccess(FuzzyTestCase):
     def setUp(self):
         self.dot = to_data({
             "flat_key": "flat value",
-            "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here",},},},
+            "deep": {
+                "nested": 12,
+                "deeper": {
+                    "secret": "abcd",
+                    "ridiculous": {
+                        "hell": "is here",
+                    },
+                },
+            },
         })
 
     def test_access_flat_value(self):
@@ -43,8 +51,22 @@ class TestDottyValueAccess(FuzzyTestCase):
             self.dot,
             {
                 "flat_key": "flat value",
-                "deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here",},},},
-                "other": {"chain": {"of": {"keys": True,},},},
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
+                "other": {
+                    "chain": {
+                        "of": {
+                            "keys": True,
+                        },
+                    },
+                },
             },
         )
 
@@ -71,14 +93,35 @@ class TestDottyValueAccess(FuzzyTestCase):
     def test_delete_flat_key(self):
         del self.dot["flat_key"]
         self.assertEqual(
-            self.dot, {"deep": {"nested": 12, "deeper": {"secret": "abcd", "ridiculous": {"hell": "is here",},},},},
+            self.dot,
+            {
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
+            },
         )
 
     def test_delete_nested_key(self):
         del self.dot["deep.deeper.secret"]
         self.assertEqual(
             self.dot,
-            {"flat_key": "flat value", "deep": {"nested": 12, "deeper": {"ridiculous": {"hell": "is here",},},},},
+            {
+                "flat_key": "flat value",
+                "deep": {
+                    "nested": 12,
+                    "deeper": {
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
+                },
+            },
         )
 
     def test_raise_key_error_on_delete_not_existing_key(self):
@@ -92,7 +135,13 @@ class TestDottyValueAccess(FuzzyTestCase):
                 "flat_key": "flat value",
                 "deep": {
                     "nested": 12,
-                    "deeper": {"escaped.dot_key": "it works!", "secret": "abcd", "ridiculous": {"hell": "is here",},},
+                    "deeper": {
+                        "escaped.dot_key": "it works!",
+                        "secret": "abcd",
+                        "ridiculous": {
+                            "hell": "is here",
+                        },
+                    },
                 },
             },
         )
@@ -102,7 +151,13 @@ class TestDottyValueAccess(FuzzyTestCase):
             "flat_key": "flat value",
             "deep": {
                 "nested": 12,
-                "deeper": {"escaped.dot_key": "it works!", "secret": "abcd", "ridiculous": {"hell": "is here",},},
+                "deeper": {
+                    "escaped.dot_key": "it works!",
+                    "secret": "abcd",
+                    "ridiculous": {
+                        "hell": "is here",
+                    },
+                },
             },
         })
         result = dot[r"deep.deeper.escaped..dot_key"]
@@ -114,9 +169,13 @@ class TestDottyValueAccess(FuzzyTestCase):
             "deep": {
                 "nested": 12,
                 "deeper": {
-                    "escaped\\": {"dot_key": "it works!",},
+                    "escaped\\": {
+                        "dot_key": "it works!",
+                    },
                     "secret": "abcd",
-                    "ridiculous": {"hell": "is here",},
+                    "ridiculous": {
+                        "hell": "is here",
+                    },
                 },
             },
         })
@@ -124,7 +183,11 @@ class TestDottyValueAccess(FuzzyTestCase):
         self.assertEqual(result, "it works!")
 
     def test_get_value_with_escaped_escape_separator2(self):
-        dot = to_data({"deep": {"deeper": {"escaped.": {"dot_key": "it works!"}},},})
+        dot = to_data({
+            "deep": {
+                "deeper": {"escaped.": {"dot_key": "it works!"}},
+            },
+        })
         result = dot["deep.deeper.escaped\b.dot_key"]
         self.assertEqual(result, "it works!")
 
@@ -165,7 +228,10 @@ class TestDottyValueAccess(FuzzyTestCase):
 
     @skip("mo-dots only deals with string keys")
     def test_non_standard_key_types(self):
-        dot = Data({3.3: "float", True: "bool", None: "None", "nested": {4.4: "nested_float"}}, separator=",",)
+        dot = Data(
+            {3.3: "float", True: "bool", None: "None", "nested": {4.4: "nested_float"}},
+            separator=",",
+        )
 
         dict_float = dot[3.3]
         dict_bool = dot[True]

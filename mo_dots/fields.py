@@ -1,20 +1,13 @@
 import re
 import sys
 
-from mo_future import generator_types, flatten
-from mo_imports import expect
+from mo_future import flatten
 
-from mo_dots.utils import get_logger, CLASS, is_missing, is_null
-
-_module_type = type(sys.modules[__name__])
-_builtin_zip = zip
-_get = object.__getattribute__
-
+from mo_dots.utils import get_logger, is_missing, is_null
 
 ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
 ESCAPE_DOTS2 = re.compile(r"(?<!^)\.(?!$)")  # INTERNAL DOTS
 ILLEGAL_DOTS = re.compile(r"[^.]\.(?:\.\.)+(?!\.)")  # ODD DOTS ARE NOT ALLOWED
-SPLIT_DOTS = re.compile(r"(?<!\.)\.(?!\.)")  # SINGLE DOTS
 UNESCAPE_DOTS = re.compile(r"\x08|(?:\.\.)")  # ENCODED DOTS
 
 
@@ -25,7 +18,7 @@ def literal_field(field):
     try:
         return ESCAPE_DOTS2.sub("..", ESCAPE_DOTS1.sub("\b", field))
     except Exception as e:
-        get_logger().error("bad literal", e)
+        get_logger().error("bad literal", cause=e)
 
 
 def unliteral_field(field):
@@ -63,37 +56,31 @@ def split_field(field):
     """
     if field == "." or is_missing(field):
         return []
-    if ILLEGAL_DOTS.search(field):
+    if "..." in field and ILLEGAL_DOTS.search(field):
         get_logger().error("Odd number of dots is not allowed")
     if field.startswith(".."):
         remainder = field.lstrip(".")
         back = len(field) - len(remainder) - 1
-        return [".."] * back + [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k]
-    else:
-        return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
+        return [".."] * back + [k.replace("\b", ".") for k in remainder.replace("..", "\b").split(".") if k]
+    return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".") if k]
 
 
 def join_field(path):
     """
     RETURN field SEQUENCE AS STRING
     """
-    if _get(path, CLASS) in generator_types:
-        path = list(path)
-
-    if not path:
-        return "."
-
     prefix = ""
-    while True:
-        try:
-            i = path.index("..")
-            if i == 0:
-                prefix += "."
-                path = path[1:]
-            else:
-                path = path[: i - 1] + path[i + 1 :]
-        except ValueError:
-            return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in path)
+    steps = []
+    for step in path:
+        if step != "..":
+            steps.append(step)
+        elif steps:
+            steps.pop()
+        else:
+            prefix += "."
+    if not (prefix or steps):
+        return "."
+    return ("." if prefix else "") + prefix + ".".join(literal_field(f) for f in steps)
 
 
 def concat_field(*fields):
@@ -111,7 +98,7 @@ def startswith_field(field, prefix):
 
     if field.startswith(prefix):
         lp = len(prefix)
-        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp + 1] not in (".", "\b"):
+        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp + 1 : lp + 2] not in (".", "\b"):
             return True
     return False
 
@@ -127,7 +114,7 @@ def endswith_field(field, suffix):
 
     if field.endswith(suffix):
         ls = len(suffix)
-        if len(field) == ls or field[-ls - 1] in (".", "\b") and field[-ls - 2] not in (".", "\b"):
+        if len(field) == ls or field[-ls - 1] in (".", "\b") and field[-ls - 2 : -ls - 1] not in (".", "\b"):
             return True
     return False
 
@@ -142,14 +129,14 @@ def relative_field(field, parent):
     field_path = split_field(field)
     parent_path = split_field(parent)
     common = 0
-    for f, p in _builtin_zip(field_path, parent_path):
+    for f, p in zip(field_path, parent_path):
         if f != p:
             break
         common += 1
 
     tail = join_field(field_path[common:])
     if len(parent_path) <= common:
-        return join_field(field_path[common:])
+        return tail
 
     dots = "." * (len(parent_path) - common)
     if tail == ".":

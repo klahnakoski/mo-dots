@@ -8,20 +8,22 @@
 #
 from mo_imports import expect, export
 
+from mo_dots.fields import split_field
 from mo_dots.utils import (
     CLASS,
     KEY,
     SLOT,
     is_null,
     is_missing,
-    is_sequence,
     register_null_type,
     is_many,
     _speedups,
     _rebuild_class,
 )
 
-to_data, get_attr = expect("to_data", "get_attr")
+__all__ = ["Null", "NullType"]
+
+to_data, _getdefault, Data = expect("to_data", "_getdefault", "Data")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -44,7 +46,7 @@ class NullType:
     def __init__(self, obj=None, key=None):
         """
         obj - VALUE BEING DEREFERENCED
-        key - THE dict ITEM REFERENCE (DOT(.) IS NOT ESCAPED)
+        key - LITERAL KEY INTO obj (DOT(.) IS NOT ESCAPED)
         """
         _set(self, SLOT, obj)
         _set(self, KEY, key)
@@ -52,17 +54,11 @@ class NullType:
     def __bool__(self):
         return False
 
-    __nonzero__ = __bool__
-
     def __add__(self, other):
-        if is_sequence(other):
-            return other
-        return Null
+        return other
 
     def __radd__(self, other):
-        if is_sequence(other):
-            return other
-        return Null
+        return other
 
     def __call__(self, *args, **kwargs):
         return Null
@@ -70,20 +66,17 @@ class NullType:
     def __enter__(self):
         # `with Null:` OTHERWISE RAISES A BARE AttributeError: __enter__, NAMING
         # NOTHING; THIS NAMES THE MISSING CONTEXT MANAGER INSTEAD
-        from mo_logs import Log
+        from mo_logs import logger
 
-        Log.error("Expecting a context manager, not Null (`with` on a missing value)")
+        logger.error("Expecting a context manager, not Null (`with` on a missing value)")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         return False
 
     def __iadd__(self, other):
-        o = _get(self, SLOT)
-        if o is None:
+        if _get(self, SLOT) is None:
             return self
-        key = _get(self, KEY)
-
-        _assign_to_null(o, [key], other)
+        _assign_to_null(self, [], other)
         return other
 
     def __sub__(self, other):
@@ -107,13 +100,7 @@ class NullType:
     def __float__(self):
         return float("nan")
 
-    def __div__(self, other):
-        return Null
-
     def __itruediv__(self, other):
-        return Null
-
-    def __rdiv__(self, other):
         return Null
 
     def __truediv__(self, other):
@@ -141,13 +128,9 @@ class NullType:
         return Null
 
     def __eq__(self, other):
-        if is_sequence(other) and not other:
+        if is_missing(other):
             return True
-
-        if is_null(other):
-            return True
-        else:
-            return Null
+        return Null
 
     def __ne__(self, other):
         if is_missing(other):
@@ -196,12 +179,11 @@ class NullType:
         if o is None or o is Null:
             # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
             return Null
-        if isinstance(key, int):
+        if isinstance(key, int) or ("." not in key and "\b" not in key):
             return NullType(self, key)
 
-        path = _split_field(key)
         output = self
-        for p in path:
+        for p in split_field(key):
             output = NullType(output, p)
         return output
 
@@ -212,41 +194,24 @@ class NullType:
         if o is None or o is Null:
             # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
             return Null
-        o = to_data(o)
-        k = _get(self, KEY)
-        if is_null(o):
-            return NullType(self, key)
-        v = o.get(k)
+        v = _getdefault(o, _get(self, KEY))
         if is_null(v):
             return NullType(self, key)
         try:
-            return v.get(key)
+            return to_data(v).get(key)
         except Exception as e:
-            from mo_logs import Log
+            from mo_logs import logger
 
-            Log.error("not expected", cause=e)
+            logger.error("not expected", cause=e)
 
     def __setattr__(self, key, value):
-        key = str(key)
-        o = _get(self, SLOT)
-        k = _get(self, KEY)
-        seq = [k] + [key]
-        _assign_to_null(o, seq, value)
+        _assign_to_null(self, [str(key)], value)
 
     def __setitem__(self, key, value):
-        o = _get(self, SLOT)
-        if o is None:
-            return
-        k = _get(self, KEY)
-
-        if o is None:
-            return
-        elif isinstance(key, int):
-            seq = [k] + [key]
-            _assign_to_null(o, seq, value)
+        if isinstance(key, int) or ("." not in key and "\b" not in key):
+            _assign_to_null(self, [key], value)
         else:
-            seq = [k] + _split_field(key)
-            _assign_to_null(o, seq, value)
+            _assign_to_null(self, split_field(key), value)
 
     def keys(self):
         return set()
@@ -319,58 +284,34 @@ if _speedups:
     _speedups._set_null(Null)
 
 
-def _assign_to_null(obj, path, value, force=True):
+def _assign_to_null(obj, path, value):
     """
     value IS ASSIGNED TO obj[self.path][key]
     path IS AN ARRAY OF PROPERTY NAMES
-    force=False IF YOU PREFER TO use setDefault()
     """
-    try:
-        if obj is Null:
+    if obj is Null:
+        return
+    if _get(obj, CLASS) is NullType:
+        o = _get(obj, SLOT)
+        if o is None:
             return
-        if _get(obj, CLASS) is NullType:
-            o = _get(obj, SLOT)
-            p = _get(obj, KEY)
-            s = [p] + path
-            return _assign_to_null(o, s, value)
+        p = _get(obj, KEY)
+        s = [p] + path
+        return _assign_to_null(o, s, value)
 
-        path0 = path[0]
+    if _get(obj, CLASS) is Data:
+        obj = _get(obj, SLOT)
+    path0 = path[0]
 
-        if len(path) == 1:
-            if force:
-                obj[path0] = value
-            else:
-                _setdefault(obj, path0, value)
+    if len(path) == 1:
+        obj[path0] = value
+        return
+
+    old_value = _getdefault(obj, path0)
+    if is_null(old_value):
+        if is_null(value):
             return
+        else:
+            obj[path0] = old_value = {}
 
-        old_value = get_attr(obj, path0)
-        if is_null(old_value):
-            if is_null(value):
-                return
-            else:
-                obj[path0] = old_value = {}
-
-        _assign_to_null(old_value, path[1:], value)
-    except Exception as e:
-        raise e
-
-
-def _split_field(field):
-    """
-    SIMPLE SPLIT, NO CHECKS
-    """
-    if field == ".":
-        return []
-    else:
-        return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
-
-
-def _setdefault(obj, key, value):
-    """
-    DO NOT USE __dict__.setdefault(obj, key, value), IT DOES NOT CHECK FOR obj[key] == None
-    """
-    v = obj.get(key)
-    if is_null(v):
-        obj[key] = value
-        return value
-    return v
+    _assign_to_null(old_value, path[1:], value)

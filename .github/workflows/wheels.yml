@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14] # arm64 HOST; x86_64 CROSS-COMPILED, TESTED VIA ROSETTA
+        os: [macos-15] # arm64 HOST; x86_64 CROSS-COMPILED, TESTED VIA ROSETTA
 
     steps:
       - uses: actions/checkout@v4

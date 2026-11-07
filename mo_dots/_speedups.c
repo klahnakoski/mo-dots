@@ -67,8 +67,8 @@ static Py_hash_t null_hash = 0;
 
 static PyObject *null_types_tuple = NULL;    /* tuple of null classes    */
 static PyObject *missing_types_tuple = NULL; /* (str, *null, *many)      */
-static PyObject *sequence_types_tuple = NULL;
 static PyObject *data_types_tuple = NULL;    /* is_data() classes        */
+static PyObject *wrapped_data_types_tuple = NULL; /* ... to_data() PUTS A Data OVER */
 static PyObject *many_types_tuple = NULL;    /* is_many() classes        */
 
 /* PURE-PYTHON SLOW PATHS (THE ORIGINAL METHODS) */
@@ -219,8 +219,11 @@ speedups_is_missing(PyObject *self, PyObject *v)
     int r = PyObject_IsInstance(v, missing_types_tuple);
     if (r < 0)
         return NULL;
-    if (!r)
+    if (!r) {
+        if (PyFloat_Check(v) && isnan(PyFloat_AS_DOUBLE(v)))
+            Py_RETURN_TRUE;
         Py_RETURN_FALSE;
+    }
     r = PyObject_IsTrue(v);
     if (r < 0)
         return NULL;
@@ -244,8 +247,16 @@ c_to_data(PyObject *v)
         Py_INCREF(NullSingleton);
         return NullSingleton;
     }
-    if (t == &PyList_Type || t == &PyTuple_Type)
+    if (t == &PyList_Type)
         return new_store(FlatListClass, v);
+    if (t == &PyTuple_Type) {
+        PyObject *lst = PySequence_List(v), *result;
+        if (lst == NULL)
+            return NULL;
+        result = new_store(FlatListClass, lst);
+        Py_DECREF(lst);
+        return result;
+    }
     if (type_in_tuple(t, generator_types)) {
         /* list_to_data(list(from_data(vv) for vv in v)) */
         PyObject *item, *converted, *out, *result;
@@ -277,6 +288,8 @@ c_to_data(PyObject *v)
         Py_DECREF(out);
         return result;
     }
+    if (type_in_tuple(t, wrapped_data_types_tuple))
+        return new_store(DataClass, v); /* A MAPPING mo-dots DID NOT BUILD */
     Py_INCREF(v);
     return v;
 }
@@ -413,6 +426,8 @@ wrap_attr_value(PyObject *v, PyObject *d, PyObject *name)
         }
         return new_store(FlatListClass, v);
     }
+    if (t == &PyFloat_Type && NullTypeClass != NULL && isnan(PyFloat_AS_DOUBLE(v)))
+        return new_null(d, name);
     if (type_in_tuple(t, generator_types) && from_data_gen != NULL) {
         PyObject *out, *lst = PySequence_List(v);
         if (lst == NULL)
@@ -625,7 +640,8 @@ data_subscript(PyObject *self, PyObject *key)
         Py_ssize_t len = PyUnicode_GET_LENGTH(key);
         PyObject *d = STORE(self);
         if (d != NULL) {
-            if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+            int dotted = PyUnicode_FindChar(key, '.', 0, len, 1) >= 0;
+            if (!dotted && PyUnicode_FindChar(key, '\b', 0, len, 1) < 0) {
                 if (PyDict_CheckExact(d)) {
                     PyObject *v = PyDict_GetItemWithError(d, key); /* borrowed */
                     if (v == NULL) {
@@ -638,7 +654,7 @@ data_subscript(PyObject *self, PyObject *key)
                     return c_to_data(v);
                 }
             }
-            else if (len > 1) {
+            else if (dotted && len > 1) {
                 PyObject *r = dotted_walk(d, key);
                 if (r != NULL)
                     return r;
@@ -648,7 +664,7 @@ data_subscript(PyObject *self, PyObject *key)
             }
         }
     }
-    /* DOTTED EDGE CASES, ".", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    /* DOTTED EDGE CASES, ESCAPED (\b) KEYS, ".", NON-str KEYS, NON-dict SLOTS: PURE */
     return PyObject_CallFunctionObjArgs(data_getitem_slow, self, key, NULL);
 }
 
@@ -680,7 +696,8 @@ data_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
     PyObject *r;
     if (PyUnicode_CheckExact(key)) {
         Py_ssize_t len = PyUnicode_GET_LENGTH(key);
-        if (len > 0 && PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+        if (len > 0 && PyUnicode_FindChar(key, '.', 0, len, 1) < 0
+            && PyUnicode_FindChar(key, '\b', 0, len, 1) < 0) {
             PyObject *d = STORE(self);
             if (d != NULL && PyDict_CheckExact(d)) {
                 if (value == NULL) {
@@ -713,7 +730,7 @@ data_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
             }
         }
     }
-    /* DOTTED KEYS, ".", "", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    /* DOTTED OR ESCAPED (\b) KEYS, ".", "", NON-str KEYS, NON-dict SLOTS: PURE */
     if (value == NULL)
         r = PyObject_CallFunctionObjArgs(data_delitem_slow, self, key, NULL);
     else
@@ -737,14 +754,30 @@ databs_get(PyObject *self, PyObject *args, PyObject *kwds)
     v = PyObject_GetItem(self, key);
     if (v == NULL)
         return NULL;
-    if ((PyObject *)Py_TYPE(v) == NullTypeClass) {
+    if (dflt == NullSingleton)
+        return v;
+    /* coalesce(v, dflt) */
+    PyObject *m = speedups_is_missing(NULL, v);
+    if (m == NULL) {
         Py_DECREF(v);
-        if (dflt == NullSingleton)
-            return new_null(self, key);
-        Py_INCREF(dflt);
-        return dflt;
+        return NULL;
     }
-    return v;
+    if (m == Py_False) {
+        Py_DECREF(m);
+        return v;
+    }
+    Py_DECREF(m);
+    Py_DECREF(v);
+    m = speedups_is_missing(NULL, dflt);
+    if (m == NULL)
+        return NULL;
+    if (m == Py_True) {
+        Py_DECREF(m);
+        Py_INCREF(NullSingleton);
+        return NullSingleton;
+    }
+    Py_DECREF(m);
+    return c_to_data(dflt);
 }
 
 
@@ -831,16 +864,18 @@ data_iter(PyObject *self)
 static int
 data_contains(PyObject *self, PyObject *key)
 {
-    /* is_data(self[key]) or bool(self[key]) */
+    /* exists(self[key]) */
     int r;
     PyObject *v = data_subscript(self, key);
+    PyObject *m;
     if (v == NULL)
         return -1;
-    if (type_in_tuple(Py_TYPE(v), data_types_tuple))
-        r = 1;
-    else
-        r = PyObject_IsTrue(v);
+    m = speedups_is_missing(NULL, v);
     Py_DECREF(v);
+    if (m == NULL)
+        return -1;
+    r = (m == Py_False);
+    Py_DECREF(m);
     return r;
 }
 
@@ -1036,20 +1071,16 @@ nullb_richcompare(PyObject *self, PyObject *other, int op)
 {
     int r;
     switch (op) {
-    case Py_EQ:
-        r = PyObject_IsInstance(other, sequence_types_tuple);
-        if (r < 0)
+    case Py_EQ: {
+        PyObject *m = speedups_is_missing(NULL, other);
+        if (m == NULL)
             return NULL;
-        if (r) {
-            r = PyObject_IsTrue(other);
-            if (r < 0)
-                return NULL;
-            if (!r)
-                Py_RETURN_TRUE;
-        }
-        if (type_in_tuple(Py_TYPE(other), null_types_tuple))
+        r = (m == Py_True);
+        Py_DECREF(m);
+        if (r)
             Py_RETURN_TRUE;
         return return_null();
+    }
     case Py_NE: {
         PyObject *m = speedups_is_missing(NULL, other);
         if (m == NULL)
@@ -1070,7 +1101,7 @@ nullb_richcompare(PyObject *self, PyObject *other, int op)
 static inline PyObject *
 other_operand(PyObject *a, PyObject *b)
 {
-    return type_in_tuple(Py_TYPE(a), null_types_tuple) ? b : a;
+    return PyType_IsSubtype(Py_TYPE(a), &NullBase_Type) ? b : a;
 }
 
 
@@ -1078,14 +1109,8 @@ static PyObject *
 nullb_add(PyObject *a, PyObject *b)
 {
     PyObject *other = other_operand(a, b);
-    int r = PyObject_IsInstance(other, sequence_types_tuple);
-    if (r < 0)
-        return NULL;
-    if (r) {
-        Py_INCREF(other);
-        return other;
-    }
-    return return_null();
+    Py_INCREF(other);
+    return other;
 }
 
 
@@ -1544,20 +1569,20 @@ static PyTypeObject ListBase_Type = {
 static PyObject *
 speedups_sync(PyObject *self, PyObject *args)
 {
-    PyObject *nulls, *missings, *sequences, *datas, *manys;
+    PyObject *nulls, *missings, *datas, *wrapped_datas, *manys;
     if (!PyArg_ParseTuple(
             args, "O!O!O!O!O!",
-            &PyTuple_Type, &nulls, &PyTuple_Type, &missings, &PyTuple_Type, &sequences,
-            &PyTuple_Type, &datas, &PyTuple_Type, &manys))
+            &PyTuple_Type, &nulls, &PyTuple_Type, &missings,
+            &PyTuple_Type, &datas, &PyTuple_Type, &wrapped_datas, &PyTuple_Type, &manys))
         return NULL;
     Py_INCREF(nulls);
     Py_XSETREF(null_types_tuple, nulls);
     Py_INCREF(missings);
     Py_XSETREF(missing_types_tuple, missings);
-    Py_INCREF(sequences);
-    Py_XSETREF(sequence_types_tuple, sequences);
     Py_INCREF(datas);
     Py_XSETREF(data_types_tuple, datas);
+    Py_INCREF(wrapped_datas);
+    Py_XSETREF(wrapped_data_types_tuple, wrapped_datas);
     Py_INCREF(manys);
     Py_XSETREF(many_types_tuple, manys);
     Py_RETURN_NONE;
@@ -1684,7 +1709,8 @@ static PyMethodDef speedups_methods[] = {
     {"from_data", speedups_from_data, METH_O, "unwrap to the underlying python value"},
     {"dict_to_data", speedups_dict_to_data, METH_O, "wrap dict as Data, no checks"},
     {"list_to_data", speedups_list_to_data, METH_O, "wrap list as FlatList, no checks"},
-    {"_sync", speedups_sync, METH_VARARGS, "(null_types, missing_types, sequence_types) - refresh registries"},
+    {"_sync", speedups_sync, METH_VARARGS,
+     "(null_types, missing_types, data_types, wrapped_data_types, many_types)"},
     {"_init_null", speedups_init_null, METH_VARARGS, "(NullType, getattr_slow, getitem_slow)"},
     {"_set_null", speedups_set_null, METH_O, "store the Null singleton"},
     {"_init_data", speedups_init_data, METH_VARARGS, "(Data, getattr_slow, getitem_slow)"},
@@ -1715,12 +1741,13 @@ PyInit__speedups(void)
     empty_tuple = PyTuple_New(0);
     null_types_tuple = PyTuple_New(0);
     missing_types_tuple = PyTuple_New(0);
-    sequence_types_tuple = PyTuple_New(0);
     data_types_tuple = PyTuple_New(0);
+    wrapped_data_types_tuple = PyTuple_New(0);
     many_types_tuple = PyTuple_New(0);
     if (!slot_str || !empty_str || !null_repr_str || !dot_str || !json_str || !call_str
         || !list_contains_meth || !empty_tuple || !null_types_tuple || !missing_types_tuple
-        || !sequence_types_tuple || !data_types_tuple || !many_types_tuple)
+        || !data_types_tuple || !wrapped_data_types_tuple
+        || !many_types_tuple)
         return NULL;
     null_hash = PyObject_Hash(Py_None);
 

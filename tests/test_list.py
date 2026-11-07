@@ -7,6 +7,7 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 from copy import copy, deepcopy
+from threading import Thread
 
 from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
@@ -92,7 +93,18 @@ class TestList(FuzzyTestCase):
 
         level1 = v.a
         self.assertEqual(
-            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 5}, {"b": 6}, {"b": 7}, {"b": 8}, {"b": 9},],
+            level1,
+            [
+                {"b": 1},
+                {"b": 2},
+                {"b": 3},
+                {"b": 4},
+                {"b": 5},
+                {"b": 6},
+                {"b": 7},
+                {"b": 8},
+                {"b": 9},
+            ],
         )
         self.assertEqual(level1.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.assertEqual(v.a.b, [1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -119,9 +131,7 @@ class TestList(FuzzyTestCase):
         v = listwrap([[{"b": 1}, {"b": 2}, {"b": 3}], {"b": 4}, [{"b": 7}, {"b": 8}]])
 
         level1 = v.get(".")
-        self.assertEqual(
-            level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8}]
-        )
+        self.assertEqual(level1, [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 7}, {"b": 8}])
         self.assertEqual(level1.b, [1, 2, 3, 4, 7, 8])
         self.assertEqual(v.b, [1, 2, 3, 4, 7, 8])
 
@@ -129,7 +139,12 @@ class TestList(FuzzyTestCase):
         self.assertEqual(v.b, [3, 3, 3, 3, 3, 3])
 
         self.assertEqual(
-            v, [[{"b": 3}, {"b": 3}, {"b": 3}], {"b": 3}, [{"b": 3}, {"b": 3}],],
+            v,
+            [
+                [{"b": 3}, {"b": 3}, {"b": 3}],
+                {"b": 3},
+                [{"b": 3}, {"b": 3}],
+            ],
         )
 
         v["b"] = 4
@@ -405,8 +420,9 @@ class TestList(FuzzyTestCase):
     def test_append(self):
         x = to_data(["a", "b"])
 
-        xx = x | x
+        xx = x + x
         self.assertEqual(xx, ["a", "b", "a", "b"])
+        self.assertEqual(x | ["q"], ["a", "b"])
 
         zx = "z" + x
         self.assertEqual(zx, ["z", "a", "b"])
@@ -423,7 +439,6 @@ class TestList(FuzzyTestCase):
 
     def test_map(self):
         x = to_data(["a", None, "c"])
-        self.assertEqual(x.map(lambda c: "::" + c, includeNone=False), ["::a", "::c"])
         self.assertEqual(x.map(lambda c: "::" + c if c is not None else None), ["::a", None, "::c"])
 
     def test_bad_null(self):
@@ -456,3 +471,92 @@ class Bad:
 def gen():
     yield "a"
     yield "b"
+
+
+class TestFlatListEquality(FuzzyTestCase):
+    def test_empty_equals_what_is_missing(self):
+        for other in [None, Null, "", [], (), to_data([])]:
+            self.assertTrue(to_data([]) == other, repr(other))
+            self.assertFalse(to_data([]) != other, repr(other))
+
+    def test_empty_differs_from_real_values(self):
+        for other in ["a", 0, [1], {}, {1: 2}]:
+            self.assertFalse(to_data([]) == other, repr(other))
+
+    def test_non_empty_equals_only_sequences(self):
+        self.assertTrue(to_data([1, 2]) == [1, 2])
+        self.assertTrue(to_data([1, 2]) == (1, 2))
+        self.assertTrue(to_data([1, 2]) == to_data([1, 2]))
+        self.assertFalse(to_data([1, 2]) == [1, 3])
+        self.assertFalse(to_data([1, 2]) == [1])
+        self.assertFalse(to_data(["a", "b"]) == "ab")
+        self.assertFalse(to_data([1]) == {1: 2})
+        self.assertFalse(to_data([1]) == None)
+        self.assertTrue(to_data([1]) != None)
+
+    def test_tuple_contains(self):
+        self.assertTrue("a" in to_data((1, "a")))
+        self.assertFalse("b" in to_data((1, "a")))
+
+    def test_tuple_mutators(self):
+        flat = to_data((1, 2))
+        flat.append(3)
+        flat.extend([4])
+        flat += [5]
+        flat[0] = 9
+        flat.remove(2)
+        self.assertEqual(list(flat), [9, 3, 4, 5])
+
+    def test_flatlist_constructor_tuple(self):
+        flat = FlatList((1, "a"))
+        flat.append(2)
+        self.assertTrue("a" in flat)
+        self.assertEqual(list(flat), [1, "a", 2])
+
+    def test_listwrap_empty_string_is_empty(self):
+        self.assertEqual(list(listwrap("")), [])
+        self.assertEqual(list(listwrap("a")), ["a"])
+
+    def test_get_absent_column(self):
+        self.assertTrue(is_missing(to_data([1, 2]).get("5")))
+        self.assertEqual(list(to_data([{"a": 1}, {"5": 2}]).get("5")), [2])
+
+    def test_or_left_wins(self):
+        self.assertEqual(list(to_data([1]) | [2]), [1])
+
+    def test_or_empty_left_takes_right(self):
+        self.assertEqual(list(to_data([]) | [2]), [2])
+
+    def test_or_reflected(self):
+        self.assertEqual(list([2] | to_data([1])), [2])
+
+    def test_or_missing_right(self):
+        for missing in ["", [], float("nan")]:
+            with self.subTest(missing=repr(missing)):
+                self.assertEqual(list(to_data([]) | missing), [])
+                self.assertEqual(list(missing | to_data([1])), [1])
+
+    def test_or_null_right(self):
+        self.assertEqual(list(to_data([1]) | Null), [1])
+
+    def test_add_missing_is_identity(self):
+        for missing in ["", [], Null, None]:
+            with self.subTest(missing=repr(missing)):
+                self.assertEqual(list(to_data([1]) + missing), [1])
+                self.assertEqual(list(missing + to_data([1])), [1])
+                x = to_data([1])
+                x += missing
+                self.assertEqual(list(x), [1])
+
+    def test_add_real_value(self):
+        self.assertEqual(list(to_data([1]) + 2), [1, 2])
+        self.assertEqual(list(to_data([1]) + [2, 3]), [1, 2, 3])
+        self.assertEqual(list(2 + to_data([1])), [2, 1])
+
+    def test_iadd_self_doubles(self):
+        x = to_data([1, 2])
+        worker = Thread(target=x.__iadd__, args=(x,), daemon=True)
+        worker.start()
+        worker.join(5)
+        self.assertFalse(worker.is_alive(), "x += x does not finish")
+        self.assertEqual(list(x), [1, 2, 1, 2])

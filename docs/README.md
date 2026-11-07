@@ -31,7 +31,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
    ```
    missing property names are common when dealing with JSON, which is often almost anything.
     Unfortunately, you do loose the ability to perform `a is None`
-    checks: **You must always use <code>a == Null</code> instead**.
+    checks: **Test absence with <code>a == None</code> instead** (`Null == None` is `True`).
  3. Accessing missing properties does not change the data; unlike `defaultdict`
  4. Remove an attribute by assigning `None` (eg `a.b = None`)
  5. Dot-separated path access: `a["b.c"] == a.b.c`.
@@ -208,9 +208,16 @@ more generic when dealing with sets and lists containing members of non-uniform 
 We define `Null` to represent *Out of Context* ([a null object](https://en.wikipedia.org/wiki/Null_Object_pattern)). It is an equivalence class encompassing a few "missing" values:
 
 * Python `None`
-* Empty lists, `[]`, and other empty collections
-* Empty strings (`""`)
+* Empty lists, `[]`, and empty `FlatList`
+* Empty strings and bytes (`""`, `b""`)
+* `NaN`
 * Other `NullType` instances
+
+`is_missing(x)` is the one rule for this class. `{}`, `0` and `False` are real values.
+`Null == x` exactly when `is_missing(x)`, and an empty `FlatList` follows the same rule:
+`Null == ""` is true, `Null == {}` is not, `to_data([]) == None` is true.
+Against a real value, `Null == x` and `Null != x` are both falsy, so write
+`not (a.b == "x")` rather than `a.b != "x"`.
 
 `Null` is closed under the dot(`.`), item access (`[]`), and slice (`[::]`) operators. `Null` acts as both an impotent list and an impotent dict:
 
@@ -257,19 +264,42 @@ incomplete tree.
 
 ### Null Arithmetic
 
-When `Null` is part of arithmetic operation (boolean or otherwise) it results
-in `Null`:
+`Null` is the identity for `+` and `|`, scalars included:
 
- * `a ∘ Null == Null`
- * `Null ∘ a == Null`
+ * `Null + 1 == 1`, `1 + Null == 1`
+ * `Null + data` is `data`, and `data + Null`, `data + ""`, `data + []` answer an equal `Data`
+ * `data | Null` and `Null | data` are `data`
 
-where `∘` is standing in for most binary operators. Operators `and` and `or`
-are exceptions, and behave as expected with [three-valued logic](https://en.wikipedia.org/wiki/Three-valued_logic):
+Other binary operators (`*`, `<`, ...) with `Null` result in `Null`. Operators `and` and `or`
+behave as expected with [three-valued logic](https://en.wikipedia.org/wiki/Three-valued_logic):
 
  * `True or Null == True`
  * `False or Null == Null`
  * `False and Null == False`
  * `True and Null == Null`
+
+### Missing Values in Data
+
+ * `"a" in data` is `exists(data.a)`: true for `0` and `False`, false for `""` and `[]`
+ * `Data` equality and hash ignore keys whose value is missing; the hash does not depend on key order
+ * `coalesce(a, b, c)` answers the first value that is not missing: `coalesce("", 2) == 2`
+ * `data.a` reads `Null` for a `NaN`; a top-level `NaN` passed to `from_data` becomes `None`
+
+### Merging with `|`
+
+`a | b` is recursive coalesce: the left side wins and the right fills its gaps. A missing
+value on either side, at any depth, is a gap.
+
+```python
+>>> to_data({"a": ""}) | {"a": 2}
+{'a': 2}
+>>> to_data({"a": {"x": 1}}) | {"a": 5}    # nested data meeting a scalar keeps the left
+{'a': {'x': 1}}
+>>> to_data([]) | to_data([2])             # FlatList: non-empty left wins, empty left takes the right
+[2]
+```
+
+`+` is the leaf-adding operator; on a `FlatList` it concatenates: `to_data([1]) + to_data([2])` is `[1, 2]`.
 
 ## `FlatList` is "Flat"
 
@@ -329,6 +359,8 @@ The dot operator on a `FlatList` performs a simple projection; it will return a 
 ```python
     myList.name == [x["name"] for x in myList]
 ```
+
+Rows where the property is missing are skipped: `to_data([{"a": 1}, {"5": 2}]).get("5")` is `[2]`.
 
 ## DataObject for data
 

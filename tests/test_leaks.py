@@ -40,7 +40,8 @@ class TestLeaks(unittest.TestCase):
         after = [sys.getrefcount(o) for o in watched]
         deltas = [a - b for a, b in zip(after, before)]
         self.assertEqual(
-            deltas, [0] * len(watched),
+            deltas,
+            [0] * len(watched),
             f"refcount deltas {deltas} for (d, inner, value, rows, Null, w, fl)",
         )
 
@@ -153,19 +154,13 @@ class TestLeaks(unittest.TestCase):
         self.assertNoLeak(lambda: len(self.tup))
 
     def test_error_paths(self):
-        def tuple_contains():  # list.__contains__ ON A tuple SLOT RAISES
-            try:
-                1 in self.tup
-            except TypeError:
-                pass
-
         def missing_attr():  # FlatList SHADOWED NAME RAISES
             try:
                 self.fl.__json__
             except AttributeError:
                 pass
 
-        self.assertNoLeak(tuple_contains)
+        self.assertNoLeak(lambda: 1 in self.tup)
         self.assertNoLeak(missing_attr)
 
 

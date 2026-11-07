@@ -16,15 +16,14 @@ from mo_dots.datas import is_missing, hash_value
 from mo_dots.nones import Null, NullType
 from mo_dots.utils import CLASS, SLOT, is_null, is_many, is_list, is_sequence, register_list
 
-Log = delay_import("mo_logs.Log")
-object_to_data, coalesce, to_data, from_data, get_attr = expect(
-    "object_to_data", "coalesce", "to_data", "from_data", "get_attr"
+logger = delay_import("mo_logs.logger")
+object_to_data, coalesce, to_data, from_data, get_attr, listwrap = expect(
+    "object_to_data", "coalesce", "to_data", "from_data", "get_attr", "listwrap"
 )
 
 _null_hash = hash(None)
 _get = object.__getattribute__
 _set = object.__setattr__
-_new = object.__new__
 
 
 class FlatList:
@@ -43,6 +42,8 @@ class FlatList:
             _set(self, SLOT, [])
         elif _get(vals, CLASS) is FlatList:
             _set(self, SLOT, vals.list)
+        elif _get(vals, CLASS) is tuple:
+            _set(self, SLOT, list(vals))
         else:
             _set(self, SLOT, vals)
 
@@ -53,7 +54,7 @@ class FlatList:
         if _get(index, CLASS) is slice:
             # IMPLEMENT FLAT SLICES (for i not in range(0, len(self)): assert self[i]==None)
             if index.step is not None:
-                Log.error("slice step must be None, do not know how to deal with values")
+                logger.error("slice step must be None, do not know how to deal with values")
             length = len(_get(self, SLOT))
 
             i = index.start
@@ -121,16 +122,13 @@ class FlatList:
         return list_to_data(output)
 
     def select(self, key):
-        Log.error("Not supported.  Use `get()`")
+        logger.error("Not supported.  Use `get()`")
 
     def filter(self, _filter):
         return list_to_data([from_data(u) for u in _get(self, SLOT) if _filter(to_data(u))])
 
-    def map(self, oper, includeNone=True):
-        if includeNone:
-            return FlatList([oper(v) for v in _get(self, SLOT)])
-        else:
-            return FlatList([oper(v) for v in _get(self, SLOT) if v != None])
+    def map(self, oper):
+        return FlatList([oper(v) for v in _get(self, SLOT)])
 
     def to_list(self):
         return _get(self, SLOT)
@@ -164,8 +162,7 @@ class FlatList:
     def copy(self):
         return FlatList(list(_get(self, SLOT)))
 
-    def __copy__(self):
-        return FlatList(list(_get(self, SLOT)))
+    __copy__ = copy
 
     def __deepcopy__(self, memo):
         d = _get(self, SLOT)
@@ -181,11 +178,8 @@ class FlatList:
             lst.append(from_data(v))
         return self
 
-    def pop(self, index=None):
-        if index is None:
-            return to_data(_get(self, SLOT).pop())
-        else:
-            return to_data(_get(self, SLOT).pop(index))
+    def pop(self, index=-1):
+        return to_data(_get(self, SLOT).pop(index))
 
     def __hash__(self):
         lst = _get(self, SLOT)
@@ -195,13 +189,12 @@ class FlatList:
 
     def __eq__(self, other):
         lst = _get(self, SLOT)
-        if other is None:
+        if not lst:
+            return is_missing(other)
+        if not isinstance(other, (list, tuple, FlatList)):
             return False
-
         try:
-            if len(lst) != len(other):
-                return False
-            return all([s == o for s, o in zip(lst, other)])
+            return len(lst) == len(other) and all([s == o for s, o in zip(lst, other)])
         except Exception:
             return False
 
@@ -209,35 +202,24 @@ class FlatList:
         return not self.__eq__(other)
 
     def __add__(self, other):
-        output = list(_get(self, SLOT))
-        if is_null(other):
-            return self
-        elif is_many(other):
-            output.extend(from_data(other))
-        else:
-            output.append(other)
-        return FlatList(vals=output)
+        return FlatList(_get(self, SLOT) + listwrap(other).to_list())
 
-    __or__ = __add__
+    def __or__(self, other):
+        """COALESCE: LEFT WINS, A MISSING LEFT TAKES THE RIGHT"""
+        if len(_get(self, SLOT)) or is_missing(other):
+            return self
+        return to_data(other)
+
+    def __ror__(self, other):
+        if is_missing(other):
+            return self
+        return to_data(other)
 
     def __radd__(self, other):
-        output = list(_get(self, SLOT))
-        if is_null(other):
-            return self
-        elif is_many(other):
-            output = list(from_data(other)) + output
-        else:
-            output = [other] + output
-        return FlatList(vals=output)
+        return FlatList(listwrap(other).to_list() + _get(self, SLOT))
 
     def __iadd__(self, other):
-        if is_null(other):
-            return self
-        elif is_many(other):
-            self.extend(from_data(other))
-        else:
-            self.append(other)
-        return self
+        return self.extend(list(listwrap(other).to_list()))
 
     def right(self, num):
         """
@@ -267,9 +249,7 @@ class FlatList:
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE LEFT [:-num:]
         """
-        if not num:
-            return self
-        if num < 0:
+        if not num or num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[:-num:])
@@ -278,9 +258,7 @@ class FlatList:
         """
         NOT REQUIRED, EXISTS AS OPPOSITE OF not_right()
         """
-        if not num:
-            return self
-        if num < 0:
+        if not num or num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[num::])
@@ -316,8 +294,6 @@ def last(values):
         if isinstance(values, FlatList):
             return values.last()
         elif is_list(values):
-            if not values:
-                return Null
             return values[-1]
         elif is_sequence(values):
             l = Null

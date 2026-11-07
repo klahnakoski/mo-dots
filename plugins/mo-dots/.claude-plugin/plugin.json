@@ -1,0 +1,13 @@
+{
+  "name": "mo-dots",
+  "description": "Rules for writing Python with mo-dots (Data, Null, FlatList): navigate instead of guarding, merge with |, and avoid the Null comparison traps.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Kyle Lahnakoski",
+    "email": "kyle@lahnakoski.com"
+  },
+  "homepage": "https://github.com/klahnakoski/mo-dots",
+  "repository": "https://github.com/klahnakoski/mo-dots",
+  "license": "MPL-2.0",
+  "keywords": ["python", "mo-dots", "null-safe", "json"]
+}

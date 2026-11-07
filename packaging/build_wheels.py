@@ -109,13 +109,16 @@ def run(*args, add_env=None):
     return done.returncode
 
 
-def said(*args, add_env=None):
-    """RUN CAPTURED; ANSWER (returncode, stdout)"""
+def said(*args, failed, add_env=None):
+    """RUN CAPTURED; ANSWER stdout, OR EXIT WITH failed ON ERROR OR SILENCE"""
     done = subprocess.run(
         [str(a) for a in args], cwd=ROOT, capture_output=True, text=True,
         env={**os.environ, **(add_env or {})},
     )
-    return done.returncode, done.stdout.strip()
+    out = done.stdout.strip()
+    if done.returncode or not out:
+        sys.exit(failed)
+    return out
 
 
 SAY = threading.Lock()
@@ -140,13 +143,12 @@ def run_tagged(tag, *args, add_env=None, cwd=None):
 
 
 def newest_github_run(ref):
-    rc, out = said(
+    out = said(
         "gh", "run", "list", "--workflow", "wheels.yml", "--branch", ref,
         "--limit", "1", "--json", "databaseId,status,conclusion",
+        failed="gh run list failed; is gh authenticated?",
     )
-    if rc:
-        sys.exit("gh run list failed; is gh authenticated?")
-    runs = json.loads(out or "[]")
+    runs = json.loads(out)
     return runs[0] if runs else None
 
 
@@ -169,9 +171,10 @@ def collect_github(run_id, deadline_minutes=30):
     """WAIT FOR THE RUN; COPY ITS macos WHEELS INTO dist/"""
     deadline = time.monotonic() + deadline_minutes * 60
     while True:
-        rc, out = said("gh", "run", "view", str(run_id), "--json", "status,conclusion")
-        if rc:
-            sys.exit(f"gh run view {run_id} failed")
+        out = said(
+            "gh", "run", "view", run_id, "--json", "status,conclusion",
+            failed=f"gh run view {run_id} failed",
+        )
         state = json.loads(out)
         if state["status"] == "completed":
             break
@@ -211,12 +214,6 @@ def gen_setup():
         sys.exit("packaging/gen_setup.py failed")
 
 
-def sdist_has_speedups():
-    [sdist] = DIST.glob("*.tar.gz")
-    with tarfile.open(sdist) as tar:
-        return any(name.endswith("mo_dots/_speedups.c") for name in tar.getnames())
-
-
 def buildable_platforms(skip_linux):
     """LINUX WHEELS BUILD IN A CONTAINER; macos NEEDS A MAC AND IS NOT HERE"""
     here = CIBUILDWHEEL_PLATFORM[sys.platform]
@@ -230,12 +227,11 @@ def buildable_platforms(skip_linux):
 
 def build_identifiers(platform, env):
     """CIBUILDWHEEL'S OWN ANSWER TO WHAT IT WOULD BUILD HERE"""
-    rc, out = said(
+    out = said(
         sys.executable, "-m", "cibuildwheel", ".", "--platform", platform,
         "--print-build-identifiers", add_env=env,
+        failed=f"cibuildwheel has no build identifiers for {platform}",
     )
-    if rc or not out:
-        sys.exit(f"cibuildwheel has no build identifiers for {platform}")
     return out.split()
 
 
@@ -266,9 +262,7 @@ def source_copy(temp):
     ARE GONE WITHOUT BEING NAMED.
     """
     where = Path(temp.os_path) / ROOT.name
-    rc, out = said("git", "ls-files", "-z")
-    if rc or not out:
-        sys.exit("git ls-files answered nothing; cannot make a source copy")
+    out = said("git", "ls-files", "-z", failed="git ls-files answered nothing; cannot make a source copy")
     # setup.py AND MANIFEST.in ARE GENERATED, AND gitignored
     for name in [n for n in out.split("\0") if n] + ["setup.py", "MANIFEST.in"]:
         target = where / name
@@ -344,9 +338,10 @@ def main():
     if args.github is not None:
         github_ref = args.github
         if not github_ref:
-            rc, github_ref = said("git", "rev-parse", "--abbrev-ref", "HEAD")
-            if rc or not github_ref:
-                sys.exit("cannot name the current branch for --github")
+            github_ref = said(
+                "git", "rev-parse", "--abbrev-ref", "HEAD",
+                failed="cannot name the current branch for --github",
+            )
 
     File(str(DIST)).delete()
     File(str(ROOT / "build")).delete()
@@ -362,7 +357,10 @@ def main():
 
         if run(sys.executable, "-m", "build", "--sdist"):
             sys.exit("sdist failed")
-        if not sdist_has_speedups():
+        [sdist] = DIST.glob("*.tar.gz")
+        with tarfile.open(sdist) as tar:
+            names = tar.getnames()
+        if not any(name.endswith("mo_dots/_speedups.c") for name in names):
             sys.exit("sdist is missing mo_dots/_speedups.c; source installs would be pure-only")
 
         if args.only:

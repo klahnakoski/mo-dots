@@ -22,11 +22,12 @@
         "sources": ["mo_dots/_speedups.c"]
     }],
     "extras_require": {"tests": [
-               "mo-logs",        "mo-json",     "mo-threads",     "mo-testing",
-              "mo-files",        "mo-math",       "mo-times", "beautifulsoup4"
+           "mo-logs>=8.703.26061",    "mo-json>=6.703.26061", "mo-threads>=6.704.26062",
+        "mo-testing>=8.685.25166",   "mo-files>=7.709.26123",    "mo-math>=7.685.25166",
+          "mo-times>=5.703.26061",  "beautifulsoup4>=4.15.0"
     ]},
     "include_package_data": true,
-    "install_requires": ["mo-future==7.688.26259", "mo-imports==7.688.26259"],
+    "install_requires": ["mo-future==7.689.26311", "mo-imports==7.689.26311"],
     "license": "MPL 2.0",
     "long_description": {
         "$concat": [
@@ -114,14 +115,28 @@
             "",
             "## Serializing to JSON",
             "",
-            "The standard Python JSON library does not recognize `Data` as serializable.  You may overcome this by providing `default=from_data`; which converts the data structures in this module into Python primitives of the same. ",
+            "Use [mo-json](https://pypi.org/project/mo-json/): `value2json` converts `Data`, `FlatList` and many more structures to JSON, and `json2value` answers `Data`.",
             "",
-            "    from mo_dots import from_data, to_data",
+            "    from mo_dots import to_data",
+            "    from mo_json import value2json",
             "    ",
-            "    s = to_data({\"a\": [\"b\", 1]})",
-            "    result = json.dumps(s, default=from_data)  ",
+            "    result = value2json(to_data({\"a\": [\"b\", 1]}))",
             "",
-            "Alternatively, you may consider [mo-json](https://pypi.org/project/mo-json/) which has a function `value2json` that converts a larger number of data structures into JSON.",
+            "Where mo-json is not a dependency, the standard library works with `default=from_data`, which converts the data structures in this module into Python primitives of the same:",
+            "",
+            "    result = json.dumps(s, default=from_data)",
+            "",
+            "",
+            "## Using with Claude Code",
+            "",
+            "This repo is a Claude Code plugin marketplace. Its `mo-dots` skill teaches an agent to write code with this library:",
+            "",
+            "    /plugin marketplace add klahnakoski/mo-dots",
+            "    /plugin install mo-dots@mo-dots",
+            "",
+            "Without the plugin, add this line to your project's `CLAUDE.md`:",
+            "",
+            "    Code using mo-dots follows https://github.com/klahnakoski/mo-dots/blob/dev/plugins/mo-dots/skills/mo-dots/SKILL.md",
             "",
             "",
             "## Summary",
@@ -137,6 +152,6 @@
     "name": "mo-dots",
     "packages": ["mo_dots"],
     "url": "https://github.com/klahnakoski/mo-dots",
-    "version": "11.4.26260",
+    "version": "11.5.26311",
     "zip_safe": false
 }
