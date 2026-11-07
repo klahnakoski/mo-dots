@@ -36,10 +36,10 @@ miss. These rules restate ordinary Python in the shape mo-dots makes short.
 - Against a real value, `Null == x` and `Null != x` are *both* falsy. `if a.b != "x"`
   silently takes the false branch when `b` is missing; write the positive form,
   `not (a.b == "x")`.
-- Empty containers compare loosely: `to_data([]) == ""` is True, yet
-  `to_data([]) == None` is False. When the value may be `Null`, `Data` or `FlatList`, ask
-  the question by name: `is_missing(x)` / `exists(x)` (empty string counts as missing),
-  `is_data(x)`, `is_many(x)`, and `is_text(x)` from mo-future.
+- An empty `FlatList` equals exactly what `is_missing` calls missing: `to_data([]) == None`,
+  `== Null`, `== ""`, `== []` are True, `== {}` is False. A non-empty one equals only a
+  list, tuple or `FlatList` of equal elements. For other absence questions ask by name:
+  `is_missing(x)` / `exists(x)`, `is_data(x)`, `is_many(x)`, and `is_text(x)` from mo-future.
 - Tuple membership answers a real bool: `x not in ("default", None)` is False for `Null`,
   where `x != "default"` would be `Null`.
 - `coalesce(a, b, c)` for the first non-null of several.

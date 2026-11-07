@@ -195,13 +195,12 @@ class FlatList:
 
     def __eq__(self, other):
         lst = _get(self, SLOT)
-        if other is None:
+        if not lst:
+            return is_missing(other)
+        if not isinstance(other, (list, tuple, FlatList)):
             return False
-
         try:
-            if len(lst) != len(other):
-                return False
-            return all([s == o for s, o in zip(lst, other)])
+            return len(lst) == len(other) and all([s == o for s, o in zip(lst, other)])
         except Exception:
             return False
 

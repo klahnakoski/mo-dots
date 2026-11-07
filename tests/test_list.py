@@ -456,3 +456,25 @@ class Bad:
 def gen():
     yield "a"
     yield "b"
+
+
+class TestFlatListEquality(FuzzyTestCase):
+    def test_empty_equals_what_is_missing(self):
+        for other in [None, Null, "", [], (), to_data([])]:
+            self.assertTrue(to_data([]) == other, repr(other))
+            self.assertFalse(to_data([]) != other, repr(other))
+
+    def test_empty_differs_from_real_values(self):
+        for other in ["a", 0, [1], {}, {1: 2}]:
+            self.assertFalse(to_data([]) == other, repr(other))
+
+    def test_non_empty_equals_only_sequences(self):
+        self.assertTrue(to_data([1, 2]) == [1, 2])
+        self.assertTrue(to_data([1, 2]) == (1, 2))
+        self.assertTrue(to_data([1, 2]) == to_data([1, 2]))
+        self.assertFalse(to_data([1, 2]) == [1, 3])
+        self.assertFalse(to_data([1, 2]) == [1])
+        self.assertFalse(to_data(["a", "b"]) == "ab")
+        self.assertFalse(to_data([1]) == {1: 2})
+        self.assertFalse(to_data([1]) == None)
+        self.assertTrue(to_data([1]) != None)
