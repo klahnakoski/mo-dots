@@ -7,12 +7,12 @@ Foundation for everything above it. Two things matter when working in this repo:
 - `Null` (NullType) is a null-safe None: attribute/index access on it returns `Null`, so
   chained access never raises. `Null == None` is **True** — code all over this repo tests
   `x == None` deliberately (do NOT "fix" it to `is None`; that breaks NullType/Data slots).
-- Against any other value, `Null == x` and `Null != x` are both falsy; the consumer
+- Against a real (non-missing) value, `Null == x` and `Null != x` are both falsy; the consumer
   rules, this trap among them, are the skill in
   [plugins/mo-dots/skills/mo-dots/SKILL.md](../plugins/mo-dots/skills/mo-dots/SKILL.md).
 - `Data` is a dict with dot-path access; missing paths yield `Null`, and assigning to a deep
   path auto-creates intermediates. `to_data`/`from_data` convert at API boundaries.
-- Empty containers and `Null` are falsey; `is_missing(x)` is the sanctioned test.
+- `is_missing(x)` is the one test for missing (`None`, `Null`, `""`, `b""`, `[]`, NaN); an empty `Data` is a real value.
 - **List assembly via `+= [x]`:** `slot += [x]` builds a list without pre-allocating.
   When the slot is `Null`, `NullType.__iadd__` (nones.py) writes the list back through
   its deferred parent/key; on a `FlatList` it extends in place (lists.py). So
