@@ -641,6 +641,7 @@ class TestDot(FuzzyTestCase):
         self.assertIs(from_data(to_data(slot)), slot)
         items = [nan]
         self.assertIs(from_data(to_data(items)), items)
+
     def test_escape_dot(self):
         self.assertAlmostEqual(literal_field("."), "\b")
         self.assertAlmostEqual(literal_field(".."), "\b\b")
@@ -1082,6 +1083,20 @@ class TestDot(FuzzyTestCase):
         set_attr(None, "a", 2)
         new, Log.main_log = Log.main_log, old
         self.assertIn(PATH_NOT_FOUND, new.lines[0])
+
+    def test_get_attr_reports_plain_cause(self):
+        try:
+            get_attr({}, 5)
+            self.fail("expected an error")
+        except Exception as cause:
+            self.assertIn("Problem getting value", str(cause))
+
+    def test_set_attr_reports_plain_cause(self):
+        try:
+            set_attr({}, 5, 1)
+            self.fail("expected an error")
+        except Exception as cause:
+            self.assertIn("Problem setting value", str(cause))
 
     def test_set_attr3(self):
         x = SampleData()
