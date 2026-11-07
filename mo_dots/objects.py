@@ -54,14 +54,11 @@ class DataObject(Mapping):
         output = get_attr(obj, item)
         return object_to_data(output)
 
+    __getitem__ = get = __getattr__
+
     def __setattr__(self, key, value):
         obj = _get(self, SLOT)
         set_attr(obj, key, value)
-
-    def __getitem__(self, item):
-        obj = _get(self, SLOT)
-        output = get_attr(obj, item)
-        return object_to_data(output)
 
     def __or__(self, other):
         return set_default({}, self, other)
@@ -74,11 +71,6 @@ class DataObject(Mapping):
 
     def __radd__(self, other):
         return to_data(_iadd(_iadd({}, other), self))
-
-    def get(self, item):
-        obj = _get(self, SLOT)
-        output = get_attr(obj, item)
-        return object_to_data(output)
 
     def keys(self):
         return get_keys(self)
