@@ -154,15 +154,6 @@ def register_type(*_classes):
     _known_data_types = tuple(set(_known_data_types + _classes))
 
 
-def is_namedtuple(obj):
-    return isinstance(obj, tuple) and hasattr(obj, "_fields")
-
-
-def is_data_object(obj):
-    # __dataclass_fields__ is the dataclass marker; dataclasses costs 10ms to import
-    return isinstance(obj, _known_data_types) or is_namedtuple(obj) or hasattr(obj, "__dataclass_fields__")
-
-
 def is_known_data_type(_class):
     return _class in _known_data_types
 
