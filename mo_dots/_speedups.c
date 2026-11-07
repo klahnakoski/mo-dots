@@ -245,8 +245,16 @@ c_to_data(PyObject *v)
         Py_INCREF(NullSingleton);
         return NullSingleton;
     }
-    if (t == &PyList_Type || t == &PyTuple_Type)
+    if (t == &PyList_Type)
         return new_store(FlatListClass, v);
+    if (t == &PyTuple_Type) {
+        PyObject *lst = PySequence_List(v), *result;
+        if (lst == NULL)
+            return NULL;
+        result = new_store(FlatListClass, lst);
+        Py_DECREF(lst);
+        return result;
+    }
     if (type_in_tuple(t, generator_types)) {
         /* list_to_data(list(from_data(vv) for vv in v)) */
         PyObject *item, *converted, *out, *result;
