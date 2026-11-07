@@ -119,3 +119,4 @@
 ## Release
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
+- Fix or remove the failing GitHub Actions workflows (https://github.com/klahnakoski/mo-dots/actions) before the next deploy.
