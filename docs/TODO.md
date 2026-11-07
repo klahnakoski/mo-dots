@@ -126,7 +126,7 @@
 
 ## Limits survey findings (both modes unless noted)
 
-- One "missing" test: is_null, is_missing, truthiness and "empty sequence" are all in use; values where they disagree ("", set(), 0, {}, NaN, b"") are where the bugs below live. Decide the one rule, then fix each.
+- One "missing" test: is_null, is_missing, truthiness and "empty sequence" are all in use; values where they disagree ("", set(), 0, {}, NaN, b"") are where the bugs below live. Decided: is_missing is the one rule, `Null == {}` is False. Open: FlatList `|` semantics and NaN policy (bullets below). Agents: lim-null (nones.py, utils.py is_missing, their C twins), lim-data (datas.py + C twins), lim-list (lists.py, listwrap).
 - `Null == x` should be `is_missing(x)`: `Null == ""` is falsy while `Null != ""` is False and `Null == []` is True (nones.py:143-152, C nullb_richcompare). Also `Null == {}` is True but `is_missing({})` is False. Now disagrees with the empty-FlatList rule.
 - Equal Data hash unequal: hash_value uses first(values()), order-dependent and counts None values, so dict/set lookups miss (datas.py:547-553).
 - `"a" in to_data({"a":0})` is False: Data.__contains__ tests truthiness, not exists (datas.py:85, C data_contains).
