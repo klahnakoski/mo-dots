@@ -481,6 +481,7 @@ class _DeferManyTypes:
         get_logger().warning("DEPRECATED: Use mo_dots.utils._many_types", stack_depth=2)
 
     def __iter__(self):
+        self.warning()
         yield from utils._many_types
 
 
