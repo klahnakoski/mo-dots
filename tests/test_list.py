@@ -539,7 +539,6 @@ class TestFlatListEquality(FuzzyTestCase):
     def test_or_null_right(self):
         self.assertEqual(list(to_data([1]) | Null), [1])
 
-
     def test_add_missing_is_identity(self):
         for missing in ["", [], Null, None]:
             with self.subTest(missing=repr(missing)):
