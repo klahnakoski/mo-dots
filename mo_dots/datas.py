@@ -14,7 +14,7 @@ from mo_imports import expect, export
 
 from mo_dots import utils
 from mo_dots.fields import split_field, literal_field, concat_field
-from mo_dots.nones import Null, NullType, _split_field
+from mo_dots.nones import Null, NullType
 from mo_dots.utils import *
 
 _getdefault, coalesce, listwrap, from_data, to_data, list_to_data, FlatList, DataObject, get_keys, object_to_data = (
@@ -92,58 +92,50 @@ class Data:
     def __getitem__(self, key):
         if is_null(key):
             return Null
-        if key == ".":
-            output = _get(self, SLOT)
-            if is_data(output):
-                return self
-            else:
-                return output
-
         key = str(key)
         d = _get(self, SLOT)
 
-        if key.find(".") >= 0:
-            seq = _split_field(key)
-            for n in seq:
-                if _get(d, CLASS) is NullType:
-                    d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
-                elif is_many(d):
-                    d = [_getdefault(dd, n) for dd in d]
-                else:
-                    d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
-
-            return to_data(d)
-        else:
+        if "." not in key and "\b" not in key:
             o = d.get(key)
+            if is_null(o):
+                return NullType(d, key)
+            return to_data(o)
 
-        if is_null(o):
-            return NullType(d, key)
-        return to_data(o)
+        path = split_field(key)
+        if not path:
+            return self if is_data(d) else d
+        for n in path:
+            if _get(d, CLASS) is NullType:
+                d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
+            elif is_many(d):
+                d = [_getdefault(dd, n) for dd in d]
+            else:
+                d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
+        return to_data(d)
 
     def __setitem__(self, key, value):
         if key == "":
             get_logger().error("key is empty string.  Probably a bad idea")
         if is_null(key):
             return Null
-        if key == ".":
-            # SOMETHING TERRIBLE HAPPENS WHEN value IS NOT A Mapping;
-            # HOPEFULLY THE ONLY OTHER METHOD RUN ON self IS from_data()
-            v = from_data(value)
-            if is_many(v):
-                _set(self, CLASS, FlatList)
-            _set(self, SLOT, v)
-            return self
         try:
             d = _get(self, SLOT)
             value = from_data(value)
-            if "." not in key:
+            if "." not in key and "\b" not in key:
                 if value is None:
                     d.pop(key, None)
                 else:
                     d[key] = value
                 return self
 
-            seq = _split_field(key)
+            seq = split_field(key)
+            if not seq:
+                # SOMETHING TERRIBLE HAPPENS WHEN value IS NOT A Mapping;
+                # HOPEFULLY THE ONLY OTHER METHOD RUN ON self IS from_data()
+                if is_many(value):
+                    _set(self, CLASS, FlatList)
+                _set(self, SLOT, value)
+                return self
             for k in seq[:-1]:
                 d = _getdefault(d, k)
             if is_null(value):
@@ -303,14 +295,13 @@ class Data:
     def pop(self, key, default=Null):
         if is_null(key):
             return Null
-        if key == ".":
-            raise NotImplemented()
-
         key = str(key)
         d = _get(self, SLOT)
 
-        if key.find(".") >= 0:
-            seq = _split_field(key)
+        if "." in key or "\b" in key:
+            seq = split_field(key)
+            if not seq:
+                get_logger().error("can not pop the root")
             for n in seq[:-1]:
                 if _get(d, CLASS) is NullType:
                     d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
@@ -363,13 +354,12 @@ class Data:
         return to_data(deepcopy(d, memo))
 
     def __delitem__(self, key):
-        if "." not in key:
-            d = _get(self, SLOT)
+        d = _get(self, SLOT)
+        if "." not in key and "\b" not in key:
             d.pop(key, None)
             return
 
-        d = _get(self, SLOT)
-        seq = _split_field(key)
+        seq = split_field(key)
         for k in seq[:-1]:
             d = d[k]
         d.pop(seq[-1], None)

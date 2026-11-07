@@ -640,7 +640,8 @@ data_subscript(PyObject *self, PyObject *key)
         Py_ssize_t len = PyUnicode_GET_LENGTH(key);
         PyObject *d = STORE(self);
         if (d != NULL) {
-            if (PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+            int dotted = PyUnicode_FindChar(key, '.', 0, len, 1) >= 0;
+            if (!dotted && PyUnicode_FindChar(key, '\b', 0, len, 1) < 0) {
                 if (PyDict_CheckExact(d)) {
                     PyObject *v = PyDict_GetItemWithError(d, key); /* borrowed */
                     if (v == NULL) {
@@ -653,7 +654,7 @@ data_subscript(PyObject *self, PyObject *key)
                     return c_to_data(v);
                 }
             }
-            else if (len > 1) {
+            else if (dotted && len > 1) {
                 PyObject *r = dotted_walk(d, key);
                 if (r != NULL)
                     return r;
@@ -663,7 +664,7 @@ data_subscript(PyObject *self, PyObject *key)
             }
         }
     }
-    /* DOTTED EDGE CASES, ".", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    /* DOTTED EDGE CASES, ESCAPED (\b) KEYS, ".", NON-str KEYS, NON-dict SLOTS: PURE */
     return PyObject_CallFunctionObjArgs(data_getitem_slow, self, key, NULL);
 }
 
@@ -695,7 +696,8 @@ data_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
     PyObject *r;
     if (PyUnicode_CheckExact(key)) {
         Py_ssize_t len = PyUnicode_GET_LENGTH(key);
-        if (len > 0 && PyUnicode_FindChar(key, '.', 0, len, 1) < 0) {
+        if (len > 0 && PyUnicode_FindChar(key, '.', 0, len, 1) < 0
+            && PyUnicode_FindChar(key, '\b', 0, len, 1) < 0) {
             PyObject *d = STORE(self);
             if (d != NULL && PyDict_CheckExact(d)) {
                 if (value == NULL) {
@@ -728,7 +730,7 @@ data_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
             }
         }
     }
-    /* DOTTED KEYS, ".", "", NON-str KEYS, NON-dict SLOTS: ORIGINAL PYTHON */
+    /* DOTTED OR ESCAPED (\b) KEYS, ".", "", NON-str KEYS, NON-dict SLOTS: PURE */
     if (value == NULL)
         r = PyObject_CallFunctionObjArgs(data_delitem_slow, self, key, NULL);
     else

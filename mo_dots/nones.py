@@ -8,6 +8,7 @@
 #
 from mo_imports import expect, export
 
+from mo_dots.fields import split_field
 from mo_dots.utils import (
     CLASS,
     KEY,
@@ -187,12 +188,11 @@ class NullType:
         if o is None or o is Null:
             # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
             return Null
-        if isinstance(key, int):
+        if isinstance(key, int) or ("." not in key and "\b" not in key):
             return NullType(self, key)
 
-        path = _split_field(key)
         output = self
-        for p in path:
+        for p in split_field(key):
             output = NullType(output, p)
         return output
 
@@ -229,15 +229,10 @@ class NullType:
         if o is None:
             return
         k = _get(self, KEY)
-
-        if o is None:
-            return
-        elif isinstance(key, int):
-            seq = [k] + [key]
-            _assign_to_null(o, seq, value)
+        if isinstance(key, int) or ("." not in key and "\b" not in key):
+            _assign_to_null(o, [k, key], value)
         else:
-            seq = [k] + _split_field(key)
-            _assign_to_null(o, seq, value)
+            _assign_to_null(o, [k] + split_field(key), value)
 
     def keys(self):
         return set()
@@ -340,13 +335,3 @@ def _assign_to_null(obj, path, value):
         _assign_to_null(old_value, path[1:], value)
     except Exception as e:
         raise e
-
-
-def _split_field(field):
-    """
-    SIMPLE SPLIT, NO CHECKS
-    """
-    if field == ".":
-        return []
-    else:
-        return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
