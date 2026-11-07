@@ -104,7 +104,7 @@
 - Run /fix-code continuously, 5 at a time on disjoint files, until the user stops it (now: fix-code-10 __init__.py, -11 datas.py, -12 nones.py, -13 lists.py, -14 fields.py).
 - Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`; also `wrap_leaves` and `DEBUG`, exported from datas.py by `import *` (no `__all__`). Delete, or keep as public API?
 - `del d["."]` now raises IndexError (was KeyError) since datas.py shares nones._split_field; fine, or should `"."` be a KeyError?
-- Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire; `_assign_to_null` wraps its body in a no-op `try/except: raise e`.
+- Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire.
 - PoorLogger (the fallback when mo-logs is missing) never fills message templates.
 - A Null chain over a list with a string digit key (`'0'`) now maps over the list instead of indexing it (`_getdefault` checks is_sequence first); untested. Intended?
 - Move the `'.' not in key and '\b' not in key` shortcut into `split_field` itself, so its five call sites in datas.py/nones.py become plain `split_field(key)` (about 60ns of call against 500ns saved in pure mode). Do it?

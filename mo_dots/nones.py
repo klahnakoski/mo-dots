@@ -308,30 +308,27 @@ def _assign_to_null(obj, path, value):
     value IS ASSIGNED TO obj[self.path][key]
     path IS AN ARRAY OF PROPERTY NAMES
     """
-    try:
-        if obj is Null:
+    if obj is Null:
+        return
+    if _get(obj, CLASS) is NullType:
+        o = _get(obj, SLOT)
+        p = _get(obj, KEY)
+        s = [p] + path
+        return _assign_to_null(o, s, value)
+
+    if _get(obj, CLASS) is Data:
+        obj = _get(obj, SLOT)
+    path0 = path[0]
+
+    if len(path) == 1:
+        obj[path0] = value
+        return
+
+    old_value = _getdefault(obj, path0)
+    if is_null(old_value):
+        if is_null(value):
             return
-        if _get(obj, CLASS) is NullType:
-            o = _get(obj, SLOT)
-            p = _get(obj, KEY)
-            s = [p] + path
-            return _assign_to_null(o, s, value)
+        else:
+            obj[path0] = old_value = {}
 
-        if _get(obj, CLASS) is Data:
-            obj = _get(obj, SLOT)
-        path0 = path[0]
-
-        if len(path) == 1:
-            obj[path0] = value
-            return
-
-        old_value = _getdefault(obj, path0)
-        if is_null(old_value):
-            if is_null(value):
-                return
-            else:
-                obj[path0] = old_value = {}
-
-        _assign_to_null(old_value, path[1:], value)
-    except Exception as e:
-        raise e
+    _assign_to_null(old_value, path[1:], value)
