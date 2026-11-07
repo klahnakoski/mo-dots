@@ -54,8 +54,6 @@ class NullType:
     def __bool__(self):
         return False
 
-    __nonzero__ = __bool__
-
     def __add__(self, other):
         return other
 
@@ -102,13 +100,7 @@ class NullType:
     def __float__(self):
         return float("nan")
 
-    def __div__(self, other):
-        return Null
-
     def __itruediv__(self, other):
-        return Null
-
-    def __rdiv__(self, other):
         return Null
 
     def __truediv__(self, other):
