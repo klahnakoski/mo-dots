@@ -1,8 +1,6 @@
 # Code sweep ledger - path @ content hash (git hash-object, 10 chars) when swept
 mo_dots/__init__.py @ b44bcb4c2d
-mo_dots/datas.py @ 990a2df008
-mo_dots/nones.py @ cae8b1cfa8
-mo_dots/lists.py @ 01d7bb0262
+mo_dots/datas.py @ 882638419d
 mo_dots/fields.py @ b732e7b31f
 mo_dots/utils.py @ 75740df687
 mo_dots/objects.py @ f86fedce50
