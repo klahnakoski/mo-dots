@@ -7,6 +7,7 @@
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 from copy import copy, deepcopy
+from threading import Thread
 
 from mo_testing.fuzzytestcase import FuzzyTestCase, add_error_reporting
 
@@ -552,3 +553,11 @@ class TestFlatListEquality(FuzzyTestCase):
         self.assertEqual(list(to_data([1]) + 2), [1, 2])
         self.assertEqual(list(to_data([1]) + [2, 3]), [1, 2, 3])
         self.assertEqual(list(2 + to_data([1])), [2, 1])
+
+    def test_iadd_self_doubles(self):
+        x = to_data([1, 2])
+        worker = Thread(target=x.__iadd__, args=(x,), daemon=True)
+        worker.start()
+        worker.join(5)
+        self.assertFalse(worker.is_alive(), "x += x does not finish")
+        self.assertEqual(list(x), [1, 2, 1, 2])

@@ -219,7 +219,7 @@ class FlatList:
         return FlatList(listwrap(other).to_list() + _get(self, SLOT))
 
     def __iadd__(self, other):
-        return self.extend(listwrap(other).to_list())
+        return self.extend(list(listwrap(other).to_list()))
 
     def right(self, num):
         """

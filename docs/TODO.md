@@ -106,4 +106,3 @@
 - fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; a failed `_iadd` only logs.
 - `Data.items()` stays a list (user asked for a suggestion: a list keeps `len()` and re-iteration, like dict views; a generator is single-use). Branch `items-generator` is to be deleted unless the user says otherwise.
 - On the next /svn-sync, make sure `mo_dots/_speedups.c` is in SVN (it is new since the last sync).
-- `x += x` on a FlatList loops forever (extend reads the list it grows); owes a test, then a fix.
