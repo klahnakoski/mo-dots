@@ -68,7 +68,6 @@ class SpeedTestDot(FuzzyTestCase):
         self.assertGreater(i_time.duration, s_time.duration)
         self.assertGreater(m_time.duration * 1.2, s_time.duration)
 
-
     def test_compare_isinstance_to_text(self):
         num = 1 * 1000 * 1000
         options = {

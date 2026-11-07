@@ -172,6 +172,7 @@ class TestObject(FuzzyTestCase):
             parent = None
 
             __slots__ = ["a"]
+
             def __init__(self, a):
                 self.a = a
 
@@ -179,7 +180,7 @@ class TestObject(FuzzyTestCase):
 
         obj = DataObject(Unknown(3))
 
-        self.assertEqual(list(obj.items()), [('a', 3)])
+        self.assertEqual(list(obj.items()), [("a", 3)])
 
     def test_dataclass_properties_are_ignored(self):
         @dataclass
@@ -188,8 +189,8 @@ class TestObject(FuzzyTestCase):
 
         obj = DataObject(Unknown(3))
 
-        self.assertEqual(list(obj.items()), [('a', 3)])
-        self.assertEqual([('a', 3)], list(obj.items()))
+        self.assertEqual(list(obj.items()), [("a", 3)])
+        self.assertEqual([("a", 3)], list(obj.items()))
 
     def test_w_traceback(self):
         try:
