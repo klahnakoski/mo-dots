@@ -24,7 +24,6 @@ object_to_data, coalesce, to_data, from_data, get_attr = expect(
 _null_hash = hash(None)
 _get = object.__getattribute__
 _set = object.__setattr__
-_new = object.__new__
 
 
 class FlatList:

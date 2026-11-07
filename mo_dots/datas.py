@@ -35,7 +35,6 @@ _getdefault, coalesce, listwrap, from_data, to_data, list_to_data, FlatList, Dat
 
 _get = object.__getattribute__
 _set = object.__setattr__
-_new = object.__new__
 
 if utils._speedups:
     # object.__setattr__ ON A C-BACKED Data TRIPS CPython's hackcheck ON

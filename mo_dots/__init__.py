@@ -80,7 +80,6 @@ _builtin_zip = zip
 _get = object.__getattribute__
 from mo_dots.datas import _set  # hackcheck-SAFE FOR C-BACKED Data
 
-_new = object.__new__
 _dict_zip = zip
 
 
