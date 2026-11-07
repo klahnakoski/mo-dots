@@ -201,6 +201,12 @@ class TestObject(FuzzyTestCase):
         self.assertAlmostEqual(obj.keys(), {"tb_frame", "tb_lasti", "tb_lineno", "tb_next"})
         self.assertEqual(obj.tb_frame.f_code.co_name, "test_w_traceback")
 
+    def test_add_missing_is_identity(self):
+        obj = DataObject(MyObject(42))
+        for missing in (Null, None):
+            self.assertEqual((obj + missing).my_attr, 42)
+            self.assertEqual((missing + obj).my_attr, 42)
+
     def test_w_boolean(self):
         obj = object_to_data(True)
         self.assertIs(obj, True)

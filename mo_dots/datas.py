@@ -179,10 +179,10 @@ class Data:
         return self
 
     def __add__(self, other):
-        return to_data(_iadd(_iadd({}, self), {} if is_missing(other) else other))
+        return to_data(_iadd(_iadd({}, self), other))
 
     def __radd__(self, other):
-        return to_data(_iadd(_iadd({}, {} if is_missing(other) else other), self))
+        return to_data(_iadd(_iadd({}, other), self))
 
     def __iadd__(self, other):
         return _iadd(self, other)
@@ -468,7 +468,8 @@ def _iadd(self, other):
     * SETS ARE UNIONED
     * NUMBERS ARE ADDED
     """
-
+    if is_missing(other):
+        return self
     if not is_data(other):
         # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
         d = _get(self, SLOT)
