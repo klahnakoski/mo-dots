@@ -101,8 +101,12 @@
 
 - Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
 - FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code continuously, 5 at a time on disjoint files, until the user stops it (now: fix-code-5 fields.py, fix-code-6 lists.py, fix-code-7 __init__.py+utils.py, fix-code-8 packaging/ minus gen_setup.py, fix-code-9 logging.py).
+- /fix-code: every eligible file is at its ledger sha (docs/CODE_SWEEP.md); runs resume as files change.
 - Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`; also `wrap_leaves` and `DEBUG`, exported from datas.py by `import *` (no `__all__`). Delete, or keep as public API?
 - `del d["."]` now raises IndexError (was KeyError) since datas.py shares nones._split_field; fine, or should `"."` be a KeyError?
-- Should nones._split_field fold into fields.split_field? Changes behavior on odd-dot keys and costs hot-path speed.
+- Fold nones._split_field into fields.split_field and replace the inline path checks in Data/Null/FlatList methods with the one split_field, for simplicity and correctness (user decision; agent split-field).
 - Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire; `_assign_to_null` wraps its body in a no-op `try/except: raise e`.
+- fix-code leftovers in swept files: fields.relative_field computes join_field(field_path[common:]) twice instead of returning tail; __init__.py uses `sys` only via `from mo_dots.fields import *` (import it directly); lists `__copy__` duplicates `copy`; `not_right`/`not_left` have two guards that both return self; PoorLogger: `__init__.py:353` passes `cause=[f, e]` (a list cannot be raised), `fields.py:28` passes the cause positionally, templates are never filled; test_poor_logger leaves logging.STDOUT replaced.
+- build_wheels.py `main`'s finally deletes setup.py even when gen_setup() skipped writing it because it already existed.
+- `lists.map(oper, includeNone=True)` is a boolean parameter (two functions) on public API; split or keep?
+- mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
