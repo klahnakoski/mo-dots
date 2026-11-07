@@ -126,4 +126,5 @@
 
 ## FlatList equality
 
-- Fix: `FlatList.__eq__` answers True for any equal-length sized object (`to_data(["a","b"]) == "ab"`, `to_data([1]) == {1:2}`) yet False for `to_data([]) == None`; compare only lists and Null, and empty == None is True (agent flist-eq).
+- Fix: `FlatList.__eq__` answers True for any equal-length sized object (`to_data(["a","b"]) == "ab"`, `to_data([1]) == {1:2}`) yet False for `to_data([]) == None`; compare only lists and Null, and empty == None is True (agent flist-eq); push dev once merged green.
+- Survey degenerate cases: where ==, is_missing, bool, len and | jump discontinuously at the limits (empty, zero, single, NaN, nested empty) across Null/Data/FlatList/str/dict (agent limits-probe, read-only).
