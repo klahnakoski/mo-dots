@@ -6,6 +6,8 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+import re
+
 from mo_future import STDOUT, STDERR
 
 _Log = None
@@ -25,16 +27,22 @@ def get_logger():
         return _Log
 
 
+def fill(template, params):
+    """{name} and {{name}} take params[name]; unknown names stay raw"""
+    return re.sub(r"{{?(\w+)}?}", lambda m: str(params[m[1]]) if m[1] in params else m[0], template)
+
+
 class PoorLogger:
     @classmethod
     def info(cls, note, **kwargs):
-        STDOUT.write(note.encode("utf8") + b"\n")
+        STDOUT.write(fill(note, kwargs).encode("utf8") + b"\n")
 
     @classmethod
     def warning(cls, note, **kwargs):
-        STDOUT.write(b"WARNING: " + note.encode("utf8") + b"\n")
+        STDOUT.write(b"WARNING: " + fill(note, kwargs).encode("utf8") + b"\n")
 
     @classmethod
     def error(cls, note, *, cause=None, **kwargs):
+        note = fill(note, kwargs)
         STDERR.write(note.encode("utf8"))
         raise cause or Exception(note)
