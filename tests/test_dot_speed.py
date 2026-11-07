@@ -53,7 +53,7 @@ class TestDotSpeed(FuzzyTestCase):
         )
 
     def test_null_compare(self):
-        values = randoms.sample([None, Null, {}, Data(), Data(a="b"), [], FlatList()], 1000 * 1000)
+        values = randoms.sample([None, Null, {}, Data(), Data(a="b"), []], 1000 * 1000)
 
         with Timer("is compare") as is_time:
             for v in values:

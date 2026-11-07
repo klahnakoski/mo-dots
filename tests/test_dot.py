@@ -703,9 +703,9 @@ class TestDot(FuzzyTestCase):
         self.assertTrue(a == a)
         self.assertTrue(b == b)
         self.assertTrue(b == c)
-        self.assertFalse(b == None)
+        self.assertTrue(b == None)
         self.assertTrue(b == Null)
-        self.assertFalse(None == b)
+        self.assertTrue(None == b)
         self.assertTrue(Null == b)
 
     def test_add_1(self):
@@ -789,7 +789,7 @@ class TestDot(FuzzyTestCase):
 
         self.assertTrue([] == Null)
         self.assertTrue(empty == Null)
-        self.assertFalse(empty == None)
+        self.assertTrue(empty == None)
 
     def test_none_and_magic(self):
         self.assertEqual(list(Null), Null)

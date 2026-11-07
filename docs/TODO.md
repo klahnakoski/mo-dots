@@ -124,7 +124,7 @@
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
 
-## FlatList equality
+## Limits survey
 
-- Fix: `FlatList.__eq__` answers True for any equal-length sized object (`to_data(["a","b"]) == "ab"`, `to_data([1]) == {1:2}`) yet False for `to_data([]) == None`; compare only lists and Null, and empty == None is True (agent flist-eq); push dev once merged green.
 - Survey degenerate cases: where ==, is_missing, bool, len and | jump discontinuously at the limits (empty, zero, single, NaN, nested empty) across Null/Data/FlatList/str/dict (agent limits-probe, read-only).
+- `Null == {}` is True but `is_missing({})` is False; decide which is right.
