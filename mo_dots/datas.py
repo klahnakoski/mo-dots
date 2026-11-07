@@ -179,7 +179,7 @@ class Data:
         return self
 
     def __add__(self, other):
-        return to_data(_iadd(deepcopy(from_data(self)), other))
+        return to_data(_iadd(deepcopy(self), other))
 
     def __radd__(self, other):
         return to_data(_iadd(_iadd({}, other), self))

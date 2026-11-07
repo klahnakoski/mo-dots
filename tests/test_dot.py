@@ -1455,6 +1455,10 @@ class TestDot(FuzzyTestCase):
             with self.assertRaises("can not add"):
                 add()
 
+    def test_add_non_data_names_data(self):
+        with self.assertRaises("can not add Data with int"):
+            to_data({"a": 1}) + 5
+
     def test_add_copies_deeply(self):
         data = to_data({"a": {"b": [1]}})
         result = data + {"c": 2}
