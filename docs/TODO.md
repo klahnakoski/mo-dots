@@ -101,7 +101,7 @@
 
 - Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
 - FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code continuously, 5 at a time on disjoint files, until the user stops it; a file is eligible once it changed since its docs/CODE_SWEEP.md line.
+- /fix-code: every eligible file is at its docs/CODE_SWEEP.md line; runs resume when code changes.
 - Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`; also `wrap_leaves` and `DEBUG`, exported from datas.py by `import *` (no `__all__`). Delete, or keep as public API?
 - `del d["."]` now raises IndexError (was KeyError) since datas.py shares nones._split_field; fine, or should `"."` be a KeyError?
 - Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire.
@@ -115,4 +115,4 @@
 - Branch `items-generator` (not merged): `Data.items()` as a generator over `exists(v)` (pure and C). The whole suite passes except `test_items`, which asserts `a.items()` equals a list. Keep a list, or change the test?
 - `Data.iteritems()` is used only by its own test (no caller in ~/code mo-*/jx-* repos); delete both?
 - `concat_field("a", "..")` now answers `"."` (was `""`) after fix-code made `join_field` one pass; a path that cancels out is the root.
-- fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; DataObject `+` has no missing guard (move Data's into `_iadd`); a failed `_iadd` only logs.
+- fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; a failed `_iadd` only logs.
