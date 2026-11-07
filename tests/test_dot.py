@@ -378,9 +378,7 @@ class TestDot(FuzzyTestCase):
         b.c3.f += ["f"]
         b["c..a"].d += 1
 
-        self.assertEqual(
-            a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}}
-        )
+        self.assertEqual(a, {"c1": {"d": 1}, "c2": {"e": "e"}, "c3": {"f": ["f"]}, "c.a": {"d": 1}})
 
         b.c1.d += 2
         b.c2.e += "f"
@@ -556,9 +554,7 @@ class TestDot(FuzzyTestCase):
         e = temp.e
         e.s.t = 1
         e.s.s = 2
-        self.assertEqual(
-            temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical"
-        )
+        self.assertEqual(temp, {"a": 0, "e": {"s": {"s": 2, "t": 1}}}, "expecting identical")
 
     def test_null_inequalities(self):
         self.assertEqual(Null < 1, None)
@@ -596,6 +592,58 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(None >= Null, None)
         self.assertEqual(None > Null, None)
 
+    def test_null_eq_is_missing(self):
+        for missing in ("", b"", [], (), None, Null, to_data([])):
+            self.assertTrue(Null == missing, repr(missing))
+            self.assertTrue(missing == Null, repr(missing))
+            self.assertIs(Null != missing, False, repr(missing))
+        for real in (5, "a", [1], {}, to_data({"a": 1})):
+            self.assertFalse(Null == real, repr(real))
+        self.assertFalse(Null != 5)
+
+    def test_is_missing_empty_bytes(self):
+        self.assertTrue(is_missing(b""))
+        self.assertFalse(is_missing(b"a"))
+
+    def test_null_plus_data_is_identity(self):
+        d = to_data({"a": 1})
+        self.assertIs(Null + d, d)
+        self.assertIs(d + Null, d)
+        self.assertEqual(Null + {"a": 1}, {"a": 1})
+
+    def test_none_or_null_is_none(self):
+        self.assertIs(None | Null, None)
+        self.assertIs(Null | None, None)
+        self.assertEqual(1 | Null, 1)
+
+    def test_nan_is_missing(self):
+        nan = float("nan")
+        self.assertTrue(is_missing(nan))
+        self.assertFalse(exists(nan))
+        self.assertFalse(is_missing(0.0))
+
+    def test_nan_coalesce(self):
+        self.assertEqual(coalesce(float("nan"), 2), 2)
+
+    def test_nan_reads_as_null(self):
+        self.assertTrue(to_data({"a": float("nan")}).a == None)
+
+    def test_nan_dropped_by_from_data(self):
+        def has_nan(v):
+            if isinstance(v, float):
+                return v != v
+            if isinstance(v, dict):
+                return any(has_nan(x) for x in v.values())
+            if isinstance(v, list):
+                return any(has_nan(x) for x in v)
+            return False
+
+        nan = float("nan")
+        self.assertFalse(has_nan(from_data([nan])))
+        self.assertFalse(has_nan(from_data({"a": nan})))
+        self.assertFalse(has_nan(from_data({"a": [{"b": nan}, [nan, 1]]})))
+        self.assertFalse(has_nan(from_data(to_data({"a": {"b": [nan]}}))))
+
     def test_escape_dot(self):
         self.assertAlmostEqual(literal_field("."), "\b")
         self.assertAlmostEqual(literal_field(".."), "\b\b")
@@ -615,9 +663,7 @@ class TestDot(FuzzyTestCase):
     def test_unicode_or_list(self):
         a = to_data({"a": "test"})
         b = {"a": [1, 2]}
-        self.assertAlmostEqual(
-            a | b, {"a": "test"}, "expecting string, not list, nor some hybrid"
-        )
+        self.assertAlmostEqual(a | b, {"a": "test"}, "expecting string, not list, nor some hybrid")
         self.assertAlmostEqual(b | a, {"a": [1, 2]}, "expecting list")
 
     def test_deepcopy(self):
@@ -653,9 +699,7 @@ class TestDot(FuzzyTestCase):
     def test_add_null_to_list(self):
         expected = to_data(["test", "list"])
         test = expected + None
-        self.assertEqual(
-            test, expected, "expecting adding None to list does not change list"
-        )
+        self.assertEqual(test, expected, "expecting adding None to list does not change list")
 
     def test_pop_list(self):
         l = to_data([1, 2, 3, 4])
@@ -1079,9 +1123,7 @@ class TestDot(FuzzyTestCase):
         d = Data()
         for i in range(3):
             d = Data(a=d)
-        self.assertEqual(
-            repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})"
-        )
+        self.assertEqual(repr(d), "to_data({'a': to_data({'a': to_data({'a': to_data({})})})})")
 
     def test_add_one_to_dict(self):
         x = to_data({"a": {"b": 42}})
@@ -1200,9 +1242,7 @@ class TestDot(FuzzyTestCase):
     def test_leaves_w_bs4(self):
         from bs4 import BeautifulSoup
 
-        for p in BeautifulSoup(
-            "<html><body><p>test</p></body></html>", "html.parser"
-        ).find_all("p"):
+        for p in BeautifulSoup("<html><body><p>test</p></body></html>", "html.parser").find_all("p"):
             result = list(to_data({"p": p}).leaves())
             self.assertEqual(result, [("p", p)])
 
