@@ -123,7 +123,3 @@
 ## Release
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
-
-## Limits follow-ups
-
-- Update docs/README.md, README.md, docs/CHANGELOG.md 11.x and plugins/mo-dots/skills/mo-dots/SKILL.md to the new behavior: is_missing is the one rule (Null ==, in, Data ==/hash, |, coalesce("", 2) == 2, NaN missing, b"" missing), Null is the identity for + including scalars (Null + 1 == 1), FlatList | coalesces, tuple-built FlatList is a list, listwrap("") == [] (agent docs-limits).

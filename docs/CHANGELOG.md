@@ -3,9 +3,9 @@
 #### Changes in version 11.x.x
 
 * Ships with binary wheels for Windows, MacOS and Linux.  No C compiler needed.
-* `is_missing` is the one rule for missing (`None`, `""`, `b""`, `[]`, `NaN`) across `==`, `in`, equality and hashing.  `FlatList() == None` works again.
+* `is_missing` is the one rule for missing (`None`, `""`, `b""`, `[]`, `NaN`) across `==`, `in`, equality, hashing and `coalesce`.  `FlatList() == None` works again.
 * `|` is coalesce everywhere, left side wins; `FlatList |` no longer concatenates (use `+`).
-* `Null` is the identity for `+` and `|`.
+* `Null` is the identity for `+` and `|`, scalars included: `Null + 1 == 1`.
 
 
 #### Changes in version 10.x.x

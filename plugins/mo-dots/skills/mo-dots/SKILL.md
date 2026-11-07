@@ -36,21 +36,28 @@ miss. These rules restate ordinary Python in the shape mo-dots makes short.
 - Against a real value, `Null == x` and `Null != x` are *both* falsy. `if a.b != "x"`
   silently takes the false branch when `b` is missing; write the positive form,
   `not (a.b == "x")`.
-- An empty `FlatList` equals exactly what `is_missing` calls missing: `to_data([]) == None`,
-  `== Null`, `== ""`, `== []` are True, `== {}` is False. A non-empty one equals only a
-  list, tuple or `FlatList` of equal elements. For other absence questions ask by name:
+- `is_missing` is the one rule: `None`, `Null`, `""`, `b""`, `[]`, empty `FlatList` and
+  `NaN` are missing; `{}`, `0` and `False` are real. `Null == x` and an empty `FlatList`
+  `== x` hold exactly when `is_missing(x)`: `to_data([]) == None` and `Null == ""` are
+  True, `Null == {}` is False. A non-empty `FlatList` equals only a list, tuple or
+  `FlatList` of equal elements. For other absence questions ask by name:
   `is_missing(x)` / `exists(x)`, `is_data(x)`, `is_many(x)`, and `is_text(x)` from mo-future.
 - Tuple membership answers a real bool: `x not in ("default", None)` is False for `Null`,
   where `x != "default"` would be `Null`.
-- `coalesce(a, b, c)` for the first non-null of several.
+- `"a" in data` is `exists(data.a)`: True for `0` and `False`, False for `""` and `[]`.
+  `Data` equality and hash ignore missing-valued keys.
+- `coalesce(a, b, c)` for the first non-missing of several: `coalesce("", 2)` is `2`.
+- `NaN` is missing: `data.a` reads `Null`, and `from_data` drops it from dicts and makes it
+  `None` in lists.
 
 ## Merge
 
 - Merge with `|`, not `.update()`. When a `Data` or `Null` is an operand, `a | b` is
   *recursive coalesce*: the left side wins and the right only fills its gaps (`config |
   defaults` reads "config, defaulted by") - the opposite of stdlib dict `|`, where the
-  right side wins; two plain dicts keep Python's meaning. `x | Null` and
-  `Null | x` are both `x`, so a maybe-absent piece merges without a guard:
+  right side wins; two plain dicts keep Python's meaning. A missing value on either side,
+  at any depth, is a gap (`{"a": ""} | {"a": 2}` is `{"a": 2}`); nested data meeting a
+  scalar keeps the left. `x | Null` and `Null | x` are both `x`, so a maybe-absent piece merges without a guard:
   `line = {...} | timing | failure`, with `failure=Null` in the signature, replaces two
   `.update()` calls and an `if`. `Data | <non-data real value>` is an error.
 - Use `|` to avoid copying properties: name only the fields you reshape and let the
@@ -59,10 +66,13 @@ miss. These rules restate ordinary Python in the shape mo-dots makes short.
   What rides through keeps its born name.
 - A conditional merge needs no `if`. Coalesce the maybe-absent record itself over the
   base - `{"prompt": answer.prompt[:4000]} | answer | base` - with a small dict up front
-  for any field reshaped on the way in. Coalesce skips `Null` values and `answer=Null`
+  for any field reshaped on the way in. Coalesce skips missing values and `answer=Null`
   contributes nothing, so `if answer: line |= {...}` disappears. The record should carry
   only fields the merge may take whole: a field that collides with the base's under
   another meaning is a field to rename or drop at its producer.
+- `FlatList |` coalesces (non-empty left wins, empty left takes the right) and `+`
+  concatenates. `Null` is the identity for `+` too: `Null + 1` is `1`, and `data + Null`,
+  `data + ""`, `data + []` answer an equal `Data`.
 - `Data + Data` is a different operator: it adds the leaves -
   `to_data({"a": 1, "l": [1]}) + to_data({"a": 2, "l": [2]})` gives `{"a": 3, "l": [1, 2]}`.
 
