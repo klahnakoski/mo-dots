@@ -9,11 +9,10 @@ on:
     branches: [ "master", "dev" ]
     tags:
       - '[0-9]+'
-  workflow_dispatch:
 
 jobs:
   test:
-    if: github.ref != 'refs/heads/dev' || github.event_name == 'workflow_dispatch'
+    if: github.ref != 'refs/heads/dev'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -48,7 +47,7 @@ jobs:
       run: python -m unittest discover -s tests -t .
 
   coverage:
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-22.04
 
     steps:
