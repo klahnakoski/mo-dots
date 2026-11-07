@@ -91,6 +91,19 @@ class TestUtils(FuzzyTestCase):
         with self.assertRaises("test4"):
             logger.error("test3", cause=Exception("test4"))
 
+    def test_poor_logger_fills_template(self):
+        logger = PoorLogger()
+        lines = []
+        self.addCleanup(setattr, logging, "STDOUT", logging.STDOUT)
+        logging.STDOUT = Data(write=lambda t: lines.append(t))
+
+        logger.info("new {name}", name="a")
+        logger.warning("old {{name}}", name="b")
+        with self.assertRaises("missing {other} c"):
+            logger.error("missing {other} {name}", name="c")
+
+        self.assertEqual(lines, [b"new a\n", b"WARNING: old b\n"])
+
     def test_old_lists(self):
         # TODO: REMOVE THIS TEST
         result = list(datas._data_types)

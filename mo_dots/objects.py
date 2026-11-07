@@ -194,23 +194,13 @@ class DataClass:
         else:
             defaults = {k: v for k, v in zip(reversed(params), reversed(func_defaults))}
 
-        ordered_params = dict(zip(params, args))
+        found = {}
+        for source in (dict(zip(params, args)), kwargs, settings, defaults):
+            for k, v in source.items():
+                found.setdefault(str(k), v)
 
-        output = self.class_(**params_pack(params, ordered_params, kwargs, settings, defaults))
+        output = self.class_(**{str(k): from_data(found[k]) for k in params if k in found})
         return DataObject(output)
-
-
-def params_pack(params, *args):
-    settings = {}
-    for a in args:
-        for k, v in a.items():
-            k = str(k)
-            if k in settings:
-                continue
-            settings[k] = v
-
-    output = {str(k): from_data(settings[k]) for k in params if k in settings}
-    return output
 
 
 export("mo_dots.lists", object_to_data)
