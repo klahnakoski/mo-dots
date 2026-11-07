@@ -6,6 +6,8 @@
 #
 # Contact: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
+import sys
+
 from mo_dots import datas
 from mo_dots import lists
 from mo_dots import utils
@@ -191,6 +193,8 @@ def _getdefault(obj, key):
     key IS EXPECTED TO BE LITERAL (NO ESCAPING)
     TRY BOTH ATTRIBUTE AND ITEM ACCESS, OR RETURN Null
     """
+    if _get(obj, CLASS) is Data:
+        obj = _get(obj, SLOT)
     try:
         return obj[key]
     except Exception as f:
@@ -350,7 +354,7 @@ def _set_attr(obj_, path, value):
             obj[attr_name] = new_value
             return old_value
         except Exception as f:
-            get_logger().error(PATH_NOT_FOUND, cause=[f, e])
+            get_logger().error(PATH_NOT_FOUND, cause=f)
 
 
 def lower_match(value, candidates):
@@ -536,7 +540,8 @@ export("mo_dots.lists", coalesce)
 export("mo_dots.lists", get_attr)
 
 export("mo_dots.nones", to_data)
-export("mo_dots.nones", get_attr)
+export("mo_dots.nones", _getdefault)
+export("mo_dots.nones", Data)
 
 export("mo_dots.objects", to_data)
 export("mo_dots.objects", from_data)

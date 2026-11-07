@@ -106,11 +106,11 @@ class Data:
             return self if is_data(d) else d
         for n in path:
             if _get(d, CLASS) is NullType:
-                d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
+                d = NullType(d, n)
             elif is_many(d):
                 d = [_getdefault(dd, n) for dd in d]
             else:
-                d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
+                d = _getdefault(d, n)
         return to_data(d)
 
     def __setitem__(self, key, value):
@@ -271,9 +271,7 @@ class Data:
 
     def get(self, key, default=Null):
         v = self[key]
-        if _get(v, CLASS) == NullType:
-            if default is Null:
-                return NullType(self, key)
+        if _get(v, CLASS) is NullType and default is not Null:
             return default
         return v
 
@@ -304,11 +302,11 @@ class Data:
                 get_logger().error("can not pop the root")
             for n in seq[:-1]:
                 if _get(d, CLASS) is NullType:
-                    d = NullType(d, n)  # OH DEAR, Null TREATS n AS PATH, NOT LITERAL
+                    d = NullType(d, n)
                 elif is_many(d):
                     d = [_getdefault(dd, n) for dd in d]
                 else:
-                    d = _getdefault(d, n)  # EVERYTHING ELSE TREATS n AS LITERAL
+                    d = _getdefault(d, n)
             key = seq[-1]
 
         o = d.get(key)
