@@ -112,3 +112,4 @@
 - `lists.map(oper, includeNone=True)` is a boolean parameter (two functions) on public API; split or keep?
 - mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
 - `d["..a"]` now builds `{"..": {"a": 1}}` (split_field gives `["..", "a"]`, as get_attr already did); before it was the literal key ".a". Should Data refuse relative paths instead?
+- `Data.get(key, default)` coalesces: `return v if default is Null else coalesce(v, default)` (branch data-get-coalesce; merge after fix-code-11).
