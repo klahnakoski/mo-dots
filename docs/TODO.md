@@ -101,4 +101,4 @@
 
 - Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
 - FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code once (agent fix-code-1).
+- Run /fix-code up to 5 times, one after another, each from merged dev (run 1 of 5: agent fix-code-1).
