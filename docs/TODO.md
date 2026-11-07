@@ -96,3 +96,7 @@
 ## Release
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
+
+## Coverage
+
+- Test the three uncovered behaviors: get_attr on a module importing an unimported submodule (__init__.py ~274-288), is_many on a generator type (utils.py ~232-234), the nones.py setdefault helper treating None as missing (~363-367) (agent cov-gaps).
