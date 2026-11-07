@@ -62,6 +62,7 @@ class TestFields(FuzzyTestCase):
         self.assertEqual(concat_field("a.b.c", ".d"), "a.b.c.d")
         self.assertEqual(concat_field("a.b.c", "..d"), "a.b.d")
         self.assertEqual(concat_field("a.b.c", "...d"), "a.d")
+        self.assertEqual(concat_field("a", ".."), ".")
 
     def test_startswith(self):
         self.assertFalse(startswith_field(
