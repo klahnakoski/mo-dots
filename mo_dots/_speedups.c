@@ -754,10 +754,8 @@ databs_get(PyObject *self, PyObject *args, PyObject *kwds)
     v = PyObject_GetItem(self, key);
     if (v == NULL)
         return NULL;
-    if ((PyObject *)Py_TYPE(v) == NullTypeClass) {
+    if ((PyObject *)Py_TYPE(v) == NullTypeClass && dflt != NullSingleton) {
         Py_DECREF(v);
-        if (dflt == NullSingleton)
-            return new_null(self, key);
         Py_INCREF(dflt);
         return dflt;
     }

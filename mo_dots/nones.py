@@ -21,7 +21,9 @@ from mo_dots.utils import (
     _rebuild_class,
 )
 
-to_data, get_attr = expect("to_data", "get_attr")
+__all__ = ["Null", "NullType"]
+
+to_data, _getdefault, Data = expect("to_data", "_getdefault", "Data")
 
 _get = object.__getattribute__
 _set = object.__setattr__
@@ -44,7 +46,7 @@ class NullType:
     def __init__(self, obj=None, key=None):
         """
         obj - VALUE BEING DEREFERENCED
-        key - THE dict ITEM REFERENCE (DOT(.) IS NOT ESCAPED)
+        key - LITERAL KEY INTO obj (DOT(.) IS NOT ESCAPED)
         """
         _set(self, SLOT, obj)
         _set(self, KEY, key)
@@ -203,15 +205,11 @@ class NullType:
         if o is None or o is Null:
             # DEAD CHAIN: ASSIGNMENT THROUGH self IS ALREADY A NO-OP
             return Null
-        o = to_data(o)
-        k = _get(self, KEY)
-        if is_null(o):
-            return NullType(self, key)
-        v = o.get(k)
+        v = _getdefault(o, _get(self, KEY))
         if is_null(v):
             return NullType(self, key)
         try:
-            return v.get(key)
+            return to_data(v).get(key)
         except Exception as e:
             from mo_logs import Log
 
@@ -319,13 +317,15 @@ def _assign_to_null(obj, path, value):
             s = [p] + path
             return _assign_to_null(o, s, value)
 
+        if _get(obj, CLASS) is Data:
+            obj = _get(obj, SLOT)
         path0 = path[0]
 
         if len(path) == 1:
             obj[path0] = value
             return
 
-        old_value = get_attr(obj, path0)
+        old_value = _getdefault(obj, path0)
         if is_null(old_value):
             if is_null(value):
                 return
