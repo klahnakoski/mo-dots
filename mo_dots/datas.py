@@ -489,39 +489,20 @@ def _iadd(self, other):
         sv = d.get(ok)
         if is_null(sv):
             d[ok] = from_data(deepcopy(ov))
-        elif isinstance(ov, (Decimal, float, int)):
-            if is_data(sv):
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
-            elif is_many(sv):
-                d[ok].append(ov)
-            else:
-                d[ok] = sv + ov
         elif is_many(ov):
             d[ok] = from_data(listwrap(sv) + ov)
-        elif is_data(ov):
-            if is_data(sv):
-                _iadd(sv, ov)
-            elif is_many(sv):
-                d[ok].append(ov)
-            else:
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
+        elif is_data(sv) and is_data(ov):
+            _iadd(sv, ov)
+        elif is_many(sv):
+            d[ok].append(ov)
+        elif is_data(sv) or is_data(ov):
+            get_logger().error(
+                "can not add {stype} with {otype}", stype=_get(sv, CLASS).__name__, otype=_get(ov, CLASS).__name__
+            )
+        elif isinstance(ov, (Decimal, float, int)):
+            d[ok] = sv + ov
         else:
-            if is_data(sv):
-                get_logger().error(
-                    "can not add {{stype}} with {{otype}",
-                    stype=_get(sv, CLASS).__name__,
-                    otype=_get(ov, CLASS).__name__,
-                )
-            else:
-                d[ok].append(ov)
+            d[ok].append(ov)
     return self
 
 
