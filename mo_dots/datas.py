@@ -14,7 +14,7 @@ from mo_imports import expect, export
 
 from mo_dots import utils
 from mo_dots.fields import split_field, literal_field, concat_field
-from mo_dots.nones import Null, NullType
+from mo_dots.nones import Null, NullType, _split_field
 from mo_dots.utils import *
 
 _getdefault, coalesce, listwrap, from_data, to_data, list_to_data, FlatList, DataObject, get_keys, object_to_data = (
@@ -473,13 +473,6 @@ def _leaves(parent, value, path):
             yield from _leaves(kk, vv, path + (_id,))
         except Exception as cause:
             get_logger().error("Do not know how to handle", cause=cause)
-
-
-def _split_field(field):
-    """
-    SIMPLE SPLIT, NO CHECKS
-    """
-    return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
 
 
 def _iadd(self, other):
