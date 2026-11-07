@@ -230,7 +230,7 @@ def is_many(value):
     type_ = _get(value, CLASS)
     if issubclass(type_, types.GeneratorType):
         _many_types = _many_types + (type_,)
-        get_logger.warning("is_many() can not detect generator {type}", type=type_.__name__)
+        get_logger().warning("is_many() can not detect generator {type}", type=type_.__name__)
         return True
     return False
 

@@ -96,3 +96,12 @@ class TestUtils(FuzzyTestCase):
         self.assertGreater(len(result), 1)
         result = list(datas._data_types)
         self.assertGreater(len(result), 1)
+
+    def test_is_many_learns_generator_type(self):
+        saved = utils._many_types
+        try:
+            utils._many_types = ()
+            self.assertTrue(utils.is_many(x for x in [1]))
+            self.assertTrue(utils.is_many(x for x in [1]))
+        finally:
+            utils._many_types = saved

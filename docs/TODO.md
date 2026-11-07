@@ -99,4 +99,4 @@
 
 ## Coverage
 
-- Test the three uncovered behaviors: get_attr on a module importing an unimported submodule (__init__.py ~274-288), is_many on a generator type (utils.py ~232-234), the nones.py setdefault helper treating None as missing (~363-367) (agent cov-gaps).
+- `nones._setdefault` (via `_assign_to_null(force=False)`) has no caller in the library and tests `is_null`, not `is_missing`; delete it or switch it to the one rule.
