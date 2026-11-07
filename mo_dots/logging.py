@@ -35,9 +35,6 @@ class PoorLogger:
         STDOUT.write(b"WARNING: " + note.encode("utf8") + b"\n")
 
     @classmethod
-    def error(cls, note, **kwargs):
+    def error(cls, note, *, cause=None, **kwargs):
         STDERR.write(note.encode("utf8"))
-        if str("cause") in kwargs:
-            raise kwargs[str("cause")]
-        else:
-            raise Exception(note)
+        raise cause or Exception(note)
