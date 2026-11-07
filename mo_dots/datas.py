@@ -179,13 +179,25 @@ class Data:
         return self
 
     def __add__(self, other):
-        return to_data(_iadd(_iadd({}, self), other))
+        return to_data(_iadd(deepcopy(from_data(self)), other))
 
     def __radd__(self, other):
         return to_data(_iadd(_iadd({}, other), self))
 
     def __iadd__(self, other):
-        return _iadd(self, other)
+        if is_missing(other) or is_data(other):
+            return _iadd(self, other)
+        # HAPPENS WHEN += WITH ['.'] SELF REFERENCE
+        d = _get(self, SLOT)
+        if isinstance(d, dict) and not len(d):
+            # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
+            # âˆ€ x, x += {} => x
+            d = Data()
+        else:
+            d = dict_to_data({"$": self})
+        d += dict_to_data({"$": other})
+        d["."] = d["$"]
+        return d
 
     def __or__(self, other):
         """
@@ -471,17 +483,9 @@ def _iadd(self, other):
     if is_missing(other):
         return self
     if not is_data(other):
-        # HAPPENS WHEN _iadd WITH ['.'] SELF REFERENCE
-        d = _get(self, SLOT)
-        if isinstance(d, dict) and not len(d):
-            # LOOKS LIKE A FRESH Data OBJECT (AN IDENTITY ELEMENT)
-            # âˆ€ x, x += {} => x
-            d = Data()
-        else:
-            d = dict_to_data({"$": self})
-        d += dict_to_data({"$": other})
-        d["."] = d["$"]
-        return d
+        get_logger().error(
+            "can not add {stype} with {otype}", stype=_get(self, CLASS).__name__, otype=_get(other, CLASS).__name__
+        )
 
     d = from_data(self)
     for ok, ov in other.items():

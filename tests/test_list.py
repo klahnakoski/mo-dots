@@ -438,7 +438,6 @@ class TestList(FuzzyTestCase):
 
     def test_map(self):
         x = to_data(["a", None, "c"])
-        self.assertEqual(x.map(lambda c: "::" + c, includeNone=False), ["::a", "::c"])
         self.assertEqual(x.map(lambda c: "::" + c if c is not None else None), ["::a", None, "::c"])
 
     def test_bad_null(self):

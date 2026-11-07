@@ -1433,6 +1433,18 @@ class TestDot(FuzzyTestCase):
         self.assertIsInstance(result, Data)
         self.assertTrue(from_data(result) == {"a": 1, "b": 2})
 
+    def test_add_non_data_raises(self):
+        data = to_data({"a": 1})
+        for add in [lambda: data + 5, lambda: 5 + data, lambda: data + [1], lambda: [1] + data]:
+            with self.assertRaises("can not add"):
+                add()
+
+    def test_add_copies_deeply(self):
+        data = to_data({"a": {"b": [1]}})
+        result = data + {"c": 2}
+        result.a.b.append(2)
+        self.assertEqual(from_data(data), {"a": {"b": [1]}})
+
 
 class _TestMapping(object):
     def __init__(self):

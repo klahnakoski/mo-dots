@@ -98,7 +98,7 @@ def startswith_field(field, prefix):
 
     if field.startswith(prefix):
         lp = len(prefix)
-        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp + 1] not in (".", "\b"):
+        if len(field) == len(prefix) or field[lp] in (".", "\b") and field[lp + 1 : lp + 2] not in (".", "\b"):
             return True
     return False
 
@@ -114,7 +114,7 @@ def endswith_field(field, suffix):
 
     if field.endswith(suffix):
         ls = len(suffix)
-        if len(field) == ls or field[-ls - 1] in (".", "\b") and field[-ls - 2] not in (".", "\b"):
+        if len(field) == ls or field[-ls - 1] in (".", "\b") and field[-ls - 2 : -ls - 1] not in (".", "\b"):
             return True
     return False
 

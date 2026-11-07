@@ -99,21 +99,11 @@
 
 ## Open
 
-- Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
-- FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code continuously, 5 at a time on disjoint files, until the user stops it; ledger reset (now: fc-a __init__.py, fc-b datas.py, fc-c nones.py, fc-d lists.py, fc-e fields.py; queued: utils.py, objects.py, logging.py, packaging/).
-- Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`; also `wrap_leaves` and `DEBUG`, exported from datas.py by `import *` (no `__all__`). Delete, or keep as public API?
-- `del d["."]` now raises IndexError (was KeyError) since datas.py shares nones._split_field; fine, or should `"."` be a KeyError?
+- Run /fix-code in rounds of 5 parallel runs on disjoint files; the ledger (docs/CODE_SWEEP.md) holds content hashes.
 - Swept-file leftovers (files are at their ledger sha, so fix-code will not revisit them): nones `__setitem__` repeats an `if o is None: return` that cannot fire.
 - PoorLogger (the fallback when mo-logs is missing) never fills message templates.
-- A Null chain over a list with a string digit key (`'0'`) now maps over the list instead of indexing it (`_getdefault` checks is_sequence first); untested. Intended?
-- Move the `'.' not in key and '\b' not in key` shortcut into `split_field` itself, so its five call sites in datas.py/nones.py become plain `split_field(key)` (about 60ns of call against 500ns saved in pure mode). Do it?
-- build_wheels.py `main`'s finally deletes setup.py even when gen_setup() skipped writing it because it already existed.
-- `lists.map(oper, includeNone=True)` is a boolean parameter (two functions) on public API; split or keep?
 - mo-logs: `Except.__contains__` has the same `in`-on-a-plain-exception bug get_attr had; fix at ~/code/mo-logs.
-- `d["..a"]` now builds `{"..": {"a": 1}}` (split_field gives `["..", "a"]`, as get_attr already did); before it was the literal key ".a". Should Data refuse relative paths instead?
-- Branch `items-generator` (not merged): `Data.items()` as a generator over `exists(v)` (pure and C). The whole suite passes except `test_items`, which asserts `a.items()` equals a list. Keep a list, or change the test?
-- `Data.iteritems()` is used only by its own test (no caller in ~/code mo-*/jx-* repos); delete both?
-- `concat_field("a", "..")` now answers `"."` (was `""`) after fix-code made `join_field` one pass; a path that cancels out is the root.
 - fix-code leftovers: `startswith_field("a.", "a")` and `endswith_field(".b", "b")` raise IndexError; `startswith_field` uses `== None` where `endswith_field` uses `is_null`; `__init__._builtin_zip` is dead; `_set_default`'s `seen=None` is never passed; `_DeferManyTypes.__iter__` lacks the deprecation warning `_DeferDataTypes` gives; a failed `_iadd` only logs.
-- After fc-b merges: drop the `"." in key or "" in key` guard in `Data.pop`; plain keys go through split_field, and `d.pop("")` raises "can not pop the root" (user decision). Test first.
+- User decisions to apply (agent decisions): `_assign_to_null` makes a None-rooted chain a no-op for both `__setitem__` and `__setattr__`; move the `"." not in key and "" not in key` shortcut into `split_field` and make its call sites plain `split_field(key)`; delete `Data.iteritems` and its test (Python 3 retired it); FlatList `+` treats a missing value as the identity; `Data.pop` drops its dot guard and an empty path (`pop("")`, `pop(".")`) returns Null.
+- `Data.items()` stays a list (user asked for a suggestion: a list keeps `len()` and re-iteration, like dict views; a generator is single-use). Branch `items-generator` is to be deleted unless the user says otherwise.
+- On the next /svn-sync, make sure `mo_dots/_speedups.c` is in SVN (it is new since the last sync).
