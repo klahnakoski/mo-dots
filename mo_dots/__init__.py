@@ -232,7 +232,7 @@ def set_attr(obj, path, value):
         return _set_attr(obj, split_field(path), value)
     except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in cause:
+        if PATH_NOT_FOUND in str(cause):
             Log.warning(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
             Log.error("Problem setting value", cause=cause)
@@ -246,10 +246,10 @@ def get_attr(obj, path):
         return _get_attr(obj, split_field(path))
     except Exception as cause:
         Log = get_logger()
-        if PATH_NOT_FOUND in cause:
+        if PATH_NOT_FOUND in str(cause):
             Log.error(PATH_NOT_FOUND + ": {path}", path=path, cause=cause)
         else:
-            Log.error("Problem setting value", cause=cause)
+            Log.error("Problem getting value", cause=cause)
 
 
 def _get_attr(obj, path):
