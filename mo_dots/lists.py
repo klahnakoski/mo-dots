@@ -165,8 +165,7 @@ class FlatList:
     def copy(self):
         return FlatList(list(_get(self, SLOT)))
 
-    def __copy__(self):
-        return FlatList(list(_get(self, SLOT)))
+    __copy__ = copy
 
     def __deepcopy__(self, memo):
         d = _get(self, SLOT)
@@ -276,9 +275,7 @@ class FlatList:
         """
         WITH SLICES BEING FLAT, WE NEED A SIMPLE WAY TO SLICE FROM THE LEFT [:-num:]
         """
-        if not num:
-            return self
-        if num < 0:
+        if not num or num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[:-num:])
@@ -287,9 +284,7 @@ class FlatList:
         """
         NOT REQUIRED, EXISTS AS OPPOSITE OF not_right()
         """
-        if not num:
-            return self
-        if num < 0:
+        if not num or num < 0:
             return self
 
         return FlatList(_get(self, SLOT)[num::])
