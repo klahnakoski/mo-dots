@@ -11,7 +11,6 @@ _get = object.__getattribute__
 ESCAPE_DOTS1 = re.compile(r"(^\.|\.$)")  # DOTS AT START/END
 ESCAPE_DOTS2 = re.compile(r"(?<!^)\.(?!$)")  # INTERNAL DOTS
 ILLEGAL_DOTS = re.compile(r"[^.]\.(?:\.\.)+(?!\.)")  # ODD DOTS ARE NOT ALLOWED
-SPLIT_DOTS = re.compile(r"(?<!\.)\.(?!\.)")  # SINGLE DOTS
 UNESCAPE_DOTS = re.compile(r"\x08|(?:\.\.)")  # ENCODED DOTS
 
 
@@ -60,14 +59,13 @@ def split_field(field):
     """
     if field == "." or is_missing(field):
         return []
-    if ILLEGAL_DOTS.search(field):
+    if "..." in field and ILLEGAL_DOTS.search(field):
         get_logger().error("Odd number of dots is not allowed")
     if field.startswith(".."):
         remainder = field.lstrip(".")
         back = len(field) - len(remainder) - 1
-        return [".."] * back + [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(remainder) if k]
-    else:
-        return [UNESCAPE_DOTS.sub(".", k) for k in SPLIT_DOTS.split(field) if k]
+        return [".."] * back + [k.replace("\b", ".") for k in remainder.replace("..", "\b").split(".") if k]
+    return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".") if k]
 
 
 def join_field(path):
