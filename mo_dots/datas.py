@@ -203,11 +203,13 @@ class Data:
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not is_data(other):
+        if not is_data(other) and not is_null(other):
             get_logger().error("Expecting Data")
 
         d = _get(self, SLOT)
         output = Data(**d)  # COPY
+        if is_null(other):
+            return output
         output.__ior__(other)
         return output
 
@@ -215,7 +217,7 @@ class Data:
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not is_data(other):
+        if not is_data(other) and not is_null(other):
             get_logger().error("Expecting Data")
 
         return to_data(other).__or__(self)

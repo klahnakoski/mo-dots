@@ -958,6 +958,15 @@ class TestDot(FuzzyTestCase):
         b = to_data({"a": 42})
         self.assertEqual(list(iter(b)), [("a", 42)])
 
+    def test_data_or_null_is_data(self):
+        self.assertEqual(from_data(to_data({"a": 1}) | Null), {"a": 1})
+        self.assertEqual(from_data(to_data({"a": 1}) | None), {"a": 1})
+        self.assertEqual(from_data(Null | to_data({"a": 1})), {"a": 1})
+        self.assertEqual(from_data(to_data({"a": 1}) | Null | Null), {"a": 1})
+        self.assertEqual(from_data(to_data([1]) | Null), [1])
+        with self.assertRaises(Exception):
+            to_data({"a": 1}) | 3
+
     def test_null2(self):
         with self.assertRaises(Exception):
             int(Null)
