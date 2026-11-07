@@ -99,7 +99,7 @@ def coalesce(*args):
     # pick the first not null value
     # http://en.wikipedia.org/wiki/Null_coalescing_operator
     for a in args:
-        if exists(a):
+        if not is_missing(a):
             return to_data(a)
     return Null
 
@@ -388,47 +388,6 @@ def to_data(v=None) -> object:
 wrap = to_data
 
 
-SCRUB_DEPTH = 64
-
-
-def scrub_nan(v, path=None):
-    """
-    NaN BECOMES None IN A list AND IS DROPPED FROM A dict;
-    RETURNS v ITSELF WHEN THERE IS NOTHING TO CHANGE.
-    path HOLDS THE CONTAINERS BEING WALKED: A LOOP OR EXCESSIVE DEPTH IS LEFT AS IS
-    """
-    _type = v.__class__
-    if _type is float:
-        return None if v != v else v
-    if _type is not dict and _type is not list:
-        return v
-    path = [] if path is None else path
-    if len(path) >= SCRUB_DEPTH or any(v is p for p in path):
-        return v
-    path.append(v)
-    try:
-        if _type is dict:
-            output = None
-            for k, x in v.items():
-                if x.__class__ is float and x != x:
-                    if output is None:
-                        output = dict(v)
-                    del output[k]
-                    continue
-                y = scrub_nan(x, path)
-                if y is not x:
-                    if output is None:
-                        output = dict(v)
-                    output[k] = y
-            return v if output is None else output
-        scrubbed = [scrub_nan(x, path) for x in v]
-        if any(a is not b for a, b in _dict_zip(scrubbed, v)):
-            return scrubbed
-        return v
-    finally:
-        path.pop()
-
-
 def from_data(v):
     if v is None:
         return None
@@ -436,12 +395,14 @@ def from_data(v):
     if _type is NullType:
         return None
     elif _type is Data or _type is FlatList:
-        return scrub_nan(_get(v, SLOT))
+        return _get(v, SLOT)
     elif _type is DataObject:
         return _get(v, SLOT)
     elif _type in generator_types:
         return (from_data(vv) for vv in v)
-    return scrub_nan(v)
+    if _type is float and v != v:
+        return None
+    return v
 
 
 unwrap = from_data

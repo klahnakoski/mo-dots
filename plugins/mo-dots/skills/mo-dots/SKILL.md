@@ -47,8 +47,7 @@ miss. These rules restate ordinary Python in the shape mo-dots makes short.
 - `"a" in data` is `exists(data.a)`: True for `0` and `False`, False for `""` and `[]`.
   `Data` equality and hash ignore missing-valued keys.
 - `coalesce(a, b, c)` for the first non-missing of several: `coalesce("", 2)` is `2`.
-- `NaN` is missing: `data.a` reads `Null`, and `from_data` drops it from dicts and makes it
-  `None` in lists.
+- `NaN` is missing: `data.a` reads `Null`, and `from_data` turns a top-level `NaN` into `None`.
 
 ## Merge
 

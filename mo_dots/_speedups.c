@@ -337,118 +337,6 @@ speedups_from_data(PyObject *self, PyObject *v)
 }
 
 
-/* NaN BECOMES None IN A list, IS DROPPED FROM A dict; RETURNS v ITSELF IF UNCHANGED */
-#define SCRUB_DEPTH 64
-
-static PyObject *scrub_walk(PyObject *v, PyObject **path, int depth);
-
-static PyObject *
-scrub_nan(PyObject *v)
-{
-    PyObject *path[SCRUB_DEPTH];
-    return scrub_walk(v, path, 0);
-}
-
-
-/* path HOLDS THE CONTAINERS BEING WALKED: A LOOP OR EXCESSIVE DEPTH IS LEFT AS IS */
-static PyObject *
-scrub_walk(PyObject *v, PyObject **path, int depth)
-{
-    int i;
-    if (PyFloat_CheckExact(v)) {
-        if (isnan(PyFloat_AS_DOUBLE(v)))
-            Py_RETURN_NONE;
-    } else if (PyDict_CheckExact(v) || PyList_CheckExact(v)) {
-        if (depth >= SCRUB_DEPTH) {
-            Py_INCREF(v);
-            return v;
-        }
-        for (i = 0; i < depth; i++) {
-            if (path[i] == v) {
-                Py_INCREF(v);
-                return v;
-            }
-        }
-        path[depth] = v;
-    }
-    if (PyDict_CheckExact(v)) {
-        PyObject *key, *val, *out = NULL;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(v, &pos, &key, &val)) {
-            PyObject *y = NULL;
-            int drop = PyFloat_CheckExact(val) && isnan(PyFloat_AS_DOUBLE(val));
-            if (!drop) {
-                y = scrub_walk(val, path, depth + 1);
-                if (y == NULL) {
-                    Py_XDECREF(out);
-                    return NULL;
-                }
-                if (y == val) {
-                    Py_DECREF(y);
-                    continue;
-                }
-            }
-            if (out == NULL && (out = PyDict_Copy(v)) == NULL) {
-                Py_XDECREF(y);
-                return NULL;
-            }
-            if (drop ? PyDict_DelItem(out, key) : PyDict_SetItem(out, key, y)) {
-                Py_XDECREF(y);
-                Py_DECREF(out);
-                return NULL;
-            }
-            Py_XDECREF(y);
-        }
-        if (out != NULL)
-            return out;
-    }
-    if (PyList_CheckExact(v)) {
-        PyObject *out = NULL;
-        Py_ssize_t i, n = PyList_GET_SIZE(v);
-        for (i = 0; i < n; i++) {
-            PyObject *item = PyList_GET_ITEM(v, i);
-            PyObject *y = scrub_walk(item, path, depth + 1);
-            if (y == NULL) {
-                Py_XDECREF(out);
-                return NULL;
-            }
-            if (out == NULL && y != item) {
-                out = PyList_GetSlice(v, 0, i);
-                if (out == NULL) {
-                    Py_DECREF(y);
-                    return NULL;
-                }
-            }
-            if (out != NULL && PyList_Append(out, y) < 0) {
-                Py_DECREF(y);
-                Py_DECREF(out);
-                return NULL;
-            }
-            Py_DECREF(y);
-        }
-        if (out != NULL)
-            return out;
-    }
-    Py_INCREF(v);
-    return v;
-}
-
-
-/* PUBLIC from_data: THE UNWRAP, THEN scrub_nan AT EVERY DEPTH */
-static PyObject *
-speedups_from_data_deep(PyObject *self, PyObject *v)
-{
-    PyObject *raw = speedups_from_data(NULL, v);
-    PyObject *out;
-    if (raw == NULL || (PyObject *)Py_TYPE(v) == DataObjectClass
-        || type_in_tuple(Py_TYPE(v), generator_types))
-        return raw;
-    out = scrub_nan(raw);
-    Py_DECREF(raw);
-    return out;
-}
-
-
 static PyObject *
 speedups_dict_to_data(PyObject *self, PyObject *d)
 {
@@ -1800,7 +1688,7 @@ static PyMethodDef speedups_methods[] = {
     {"is_not_null", speedups_is_not_null, METH_O, "False if value is an instance of a registered null type"},
     {"is_missing", speedups_is_missing, METH_O, "True if value is effectively nothing"},
     {"to_data", speedups_to_data, METH_VARARGS, "wrap value for null-safe navigation"},
-    {"from_data", speedups_from_data_deep, METH_O, "unwrap to the underlying python value"},
+    {"from_data", speedups_from_data, METH_O, "unwrap to the underlying python value"},
     {"dict_to_data", speedups_dict_to_data, METH_O, "wrap dict as Data, no checks"},
     {"list_to_data", speedups_list_to_data, METH_O, "wrap list as FlatList, no checks"},
     {"_sync", speedups_sync, METH_VARARGS,
