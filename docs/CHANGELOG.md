@@ -3,6 +3,19 @@
 #### Changes in version 11.x.x
 
 * Ships with binary wheels for Windows, MacOS and Linux.  No C compiler needed.
+* `is_missing` is the one rule for "missing": `None`, `Null`, `""`, `b""`, empty lists, and `NaN`.  `{}` and `0` are real values.
+  * `FlatList() == None` works again (reverses the 10.x change), and an empty `FlatList` equals exactly what `is_missing` accepts.  `to_data(["a", "b"]) == "ab"` and `to_data([1]) == {1: 2}` are now `False`.
+  * `Null == x` is `is_missing(x)`, so `Null == ""` is `True` and `Null == {}` is `False`.
+  * `"a" in to_data({"a": 0})` is `True`; `in` tests `exists`, not truthiness.
+  * `Data` equality and hashing ignore keys whose value is missing, and hashing no longer depends on key order.
+  * `NaN` is missing at every depth: `coalesce`, `from_data`, and dot access treat it as `None`.
+* `|` is coalesce (left side wins) everywhere:
+  * `Data | Null` and `Data | None` answer the `Data`.
+  * A nested `Data` meeting a scalar keeps the left side instead of raising.
+  * `FlatList | x` coalesces instead of concatenating; use `+` to concatenate.
+* `Data + Null` answers the `Data`, and `Null + Data` no longer drops it.
+* A `FlatList` built from a tuple supports `in`, `append`, `extend` and `+=`.
+* `listwrap("")` is `[]`.
 
 
 #### Changes in version 10.x.x
