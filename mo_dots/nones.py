@@ -310,11 +310,10 @@ if _speedups:
     _speedups._set_null(Null)
 
 
-def _assign_to_null(obj, path, value, force=True):
+def _assign_to_null(obj, path, value):
     """
     value IS ASSIGNED TO obj[self.path][key]
     path IS AN ARRAY OF PROPERTY NAMES
-    force=False IF YOU PREFER TO use setDefault()
     """
     try:
         if obj is Null:
@@ -328,10 +327,7 @@ def _assign_to_null(obj, path, value, force=True):
         path0 = path[0]
 
         if len(path) == 1:
-            if force:
-                obj[path0] = value
-            else:
-                _setdefault(obj, path0, value)
+            obj[path0] = value
             return
 
         old_value = get_attr(obj, path0)
@@ -354,14 +350,3 @@ def _split_field(field):
         return []
     else:
         return [k.replace("\b", ".") for k in field.replace("..", "\b").split(".")]
-
-
-def _setdefault(obj, key, value):
-    """
-    DO NOT USE __dict__.setdefault(obj, key, value), IT DOES NOT CHECK FOR obj[key] == None
-    """
-    v = obj.get(key)
-    if is_null(v):
-        obj[key] = value
-        return value
-    return v

@@ -96,7 +96,3 @@
 ## Release
 
 - Release the `register_data` change so mo-json can drop `dict_to_data`.
-
-## Coverage
-
-- `nones._setdefault` (via `_assign_to_null(force=False)`) has no caller in the library and tests `is_null`, not `is_missing`; delete it or switch it to the one rule.
