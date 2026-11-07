@@ -122,5 +122,4 @@
 
 ## Consumer skill
 
-- Distill: replace the mo-dots rules in the other *.md files (coding-guidelines skill, other repos' CLAUDE.md, memory) with a one-line pointer to plugins/mo-dots/skills/mo-dots/SKILL.md; this repo is done (agent skill-pointer, one worktree per repo).
 - Fix: `Data | Null` raises "Expecting Data"; it must answer the Data unchanged, like `Null | x` and `dict | Null` (agent or-null); push dev once merged green.
