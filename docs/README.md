@@ -31,7 +31,7 @@ Focusing on just *data* objects; We want a succinct way of transforming data. We
    ```
    missing property names are common when dealing with JSON, which is often almost anything.
     Unfortunately, you do loose the ability to perform `a is None`
-    checks: **You must always use <code>a == Null</code> instead**.
+    checks: **Test absence with <code>a == None</code> instead** (`Null == None` is `True`).
  3. Accessing missing properties does not change the data; unlike `defaultdict`
  4. Remove an attribute by assigning `None` (eg `a.b = None`)
  5. Dot-separated path access: `a["b.c"] == a.b.c`.

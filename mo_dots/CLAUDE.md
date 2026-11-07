@@ -7,10 +7,9 @@ Foundation for everything above it. Two things matter when working in this repo:
 - `Null` (NullType) is a null-safe None: attribute/index access on it returns `Null`, so
   chained access never raises. `Null == None` is **True** — code all over this repo tests
   `x == None` deliberately (do NOT "fix" it to `is None`; that breaks NullType/Data slots).
-- **Against any other value, `Null == x` and `Null != x` are BOTH falsy** (each returns `Null`).
-  So `if query.format != "cube"` is False when no format was set — a negated comparison on a
-  possibly-missing field silently takes the wrong branch (this shipped as a bug in
-  `jx_sqlite/query.py`). Test the positive form: `not (query.format == "cube")`.
+- Against any other value, `Null == x` and `Null != x` are both falsy; the consumer
+  rules, this trap among them, are the skill in
+  [plugins/mo-dots/skills/mo-dots/SKILL.md](../plugins/mo-dots/skills/mo-dots/SKILL.md).
 - `Data` is a dict with dot-path access; missing paths yield `Null`, and assigning to a deep
   path auto-creates intermediates. `to_data`/`from_data` convert at API boundaries.
 - Empty containers and `Null` are falsey; `is_missing(x)` is the sanctioned test.

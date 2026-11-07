@@ -82,14 +82,28 @@ Use `+=` with a list (`[]`) to append to a list; default empty list (`[]`)
 
 ## Serializing to JSON
 
-The standard Python JSON library does not recognize `Data` as serializable.  You may overcome this by providing `default=from_data`; which converts the data structures in this module into Python primitives of the same. 
+Use [mo-json](https://pypi.org/project/mo-json/): `value2json` converts `Data`, `FlatList` and many more structures to JSON, and `json2value` answers `Data`.
 
-    from mo_dots import from_data, to_data
+    from mo_dots import to_data
+    from mo_json import value2json
     
-    s = to_data({"a": ["b", 1]})
-    result = json.dumps(s, default=from_data)  
+    result = value2json(to_data({"a": ["b", 1]}))
 
-Alternatively, you may consider [mo-json](https://pypi.org/project/mo-json/) which has a function `value2json` that converts a larger number of data structures into JSON.
+Where mo-json is not a dependency, the standard library works with `default=from_data`, which converts the data structures in this module into Python primitives of the same:
+
+    result = json.dumps(s, default=from_data)
+
+
+## Using with Claude Code
+
+This repo is a Claude Code plugin marketplace. Its `mo-dots` skill teaches an agent to write code with this library:
+
+    /plugin marketplace add klahnakoski/mo-dots
+    /plugin install mo-dots@mo-dots
+
+Without the plugin, add this line to your project's `CLAUDE.md`:
+
+    Code using mo-dots follows https://github.com/klahnakoski/mo-dots/blob/dev/plugins/mo-dots/skills/mo-dots/SKILL.md
 
 
 ## Summary
