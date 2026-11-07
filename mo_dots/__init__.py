@@ -294,7 +294,7 @@ def _get_attr(obj, path):
                 possible_error = Except.wrap(e)
 
         # TRY A CASE-INSENSITIVE MATCH
-        matched_attr_name = lower_match(attr_name, dir(obj))
+        matched_attr_name = [v for v in dir(obj) if v.lower() == attr_name.lower()]
         if not matched_attr_name:
             get_logger().warning(
                 PATH_NOT_FOUND + "({{name|quote}}) Returning None.", name=attr_name, cause=possible_error
@@ -355,10 +355,6 @@ def _set_attr(obj_, path, value):
             return old_value
         except Exception as f:
             get_logger().error(PATH_NOT_FOUND, cause=f)
-
-
-def lower_match(value, candidates):
-    return [v for v in candidates if v.lower() == value.lower()]
 
 
 def to_data(v=None) -> object:
