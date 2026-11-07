@@ -101,3 +101,4 @@
 
 - Apply /simplify findings on the session diff (agent simplify-fixes).
 - `from_data` now deep-walks every structure to scrub NaN (O(tree) where it was O(1)); decide: keep, or scrub NaN where it enters (to_data/setitem) and drop scrub_nan + its C twin.
+- Run /fix-code once (agent fix-code-1).
