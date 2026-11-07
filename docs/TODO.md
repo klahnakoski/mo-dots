@@ -101,5 +101,5 @@
 
 - Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
 - FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code in parallel runs (parallel, disjoint files: fix-code-4 nones.py+datas.py, fix-code-5 fields.py, fix-code-6 lists.py, fix-code-7 __init__.py+utils.py).
+- Run /fix-code continuously, 5 at a time on disjoint files, until the user stops it (now: fix-code-4 nones.py+datas.py, fix-code-5 fields.py, fix-code-6 lists.py, fix-code-7 __init__.py+utils.py, fix-code-8 packaging/ minus gen_setup.py).
 - Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`; also `wrap_leaves` and `DEBUG`, exported from datas.py by `import *` (no `__all__`). Delete, or keep as public API?
