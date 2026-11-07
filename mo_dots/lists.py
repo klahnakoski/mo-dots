@@ -43,6 +43,8 @@ class FlatList:
             _set(self, SLOT, [])
         elif _get(vals, CLASS) is FlatList:
             _set(self, SLOT, vals.list)
+        elif _get(vals, CLASS) is tuple:
+            _set(self, SLOT, list(vals))
         else:
             _set(self, SLOT, vals)
 
@@ -217,7 +219,16 @@ class FlatList:
             output.append(other)
         return FlatList(vals=output)
 
-    __or__ = __add__
+    def __or__(self, other):
+        """COALESCE: LEFT WINS, A MISSING LEFT TAKES THE RIGHT"""
+        if len(_get(self, SLOT)) or is_null(other):
+            return self
+        return to_data(other)
+
+    def __ror__(self, other):
+        if is_missing(other):
+            return self
+        return to_data(other)
 
     def __radd__(self, other):
         output = list(_get(self, SLOT))

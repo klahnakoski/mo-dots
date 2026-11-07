@@ -419,8 +419,9 @@ class TestList(FuzzyTestCase):
     def test_append(self):
         x = to_data(["a", "b"])
 
-        xx = x | x
+        xx = x + x
         self.assertEqual(xx, ["a", "b", "a", "b"])
+        self.assertEqual(x | ["q"], ["a", "b"])
 
         zx = "z" + x
         self.assertEqual(zx, ["z", "a", "b"])

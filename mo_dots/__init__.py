@@ -374,7 +374,7 @@ def to_data(v=None) -> object:
     elif type_ is none_type:
         return Null
     elif type_ is tuple:
-        return list_to_data(v)
+        return list_to_data(list(v))
     elif type_ is list:
         return list_to_data(v)
     elif type_ in generator_types:
@@ -475,7 +475,7 @@ def listwrap(value):
             # do something
 
     """
-    if is_null(value):
+    if is_missing(value):
         return FlatList()
     elif is_list(value):
         if isinstance(value, list):
