@@ -78,7 +78,6 @@ __all__ = [
 
 
 _module_type = type(sys.modules[__name__])
-_builtin_zip = zip
 _get = object.__getattribute__
 from mo_dots.datas import _set  # hackcheck-SAFE FOR C-BACKED Data
 
@@ -142,7 +141,7 @@ def set_default(d, *dicts):
     return to_data(agg)
 
 
-def _set_default(d, default, seen=None):
+def _set_default(d, default, seen):
     """
     ANY VALUE NOT SET WILL BE SET BY THE default
     THIS IS RECURSIVE
