@@ -200,12 +200,12 @@ class Data:
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not is_data(other) and not is_null(other):
+        if not is_data(other) and not is_missing(other):
             get_logger().error("Expecting Data")
 
         d = _get(self, SLOT)
         output = Data(**d)  # COPY
-        if is_null(other):
+        if is_missing(other):
             return output
         output.__ior__(other)
         return output
@@ -214,7 +214,9 @@ class Data:
         """
         RECURSIVE COALESCE OF DATA PROPERTIES
         """
-        if not is_data(other) and not is_null(other):
+        if is_missing(other):
+            return self | Null
+        if not is_data(other):
             get_logger().error("Expecting Data")
 
         return to_data(other).__or__(self)
@@ -266,10 +268,10 @@ class Data:
         # ASK `==`, NOT `!=`: A MISSING KEY ANSWERS Null, AND `Null != value` IS Null - FALSY -
         # SO EVERY EXTRA KEY WAS READ AS A MATCH, AND {"a": 1, "b": 2} == {"a": 1}
         for k, v in d.items():
-            if not is_missing(v) and not (e.get(k) == v):
+            if not (e.get(k) == v) and not is_missing(v):
                 return False
         for k, v in e.items():
-            if not is_missing(v) and not (d.get(k) == v):
+            if not (d.get(k) == v) and not is_missing(v):
                 return False
         return True
 

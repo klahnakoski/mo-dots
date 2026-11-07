@@ -634,22 +634,13 @@ class TestDot(FuzzyTestCase):
     def test_nan_reads_as_null(self):
         self.assertTrue(to_data({"a": float("nan")}).a == None)
 
-    def test_nan_dropped_by_from_data(self):
-        def has_nan(v):
-            if isinstance(v, float):
-                return v != v
-            if isinstance(v, dict):
-                return any(has_nan(x) for x in v.values())
-            if isinstance(v, list):
-                return any(has_nan(x) for x in v)
-            return False
-
+    def test_from_data_nan_is_none_at_top_level_only(self):
         nan = float("nan")
-        self.assertEqual(from_data([nan]), [None])
-        self.assertNotIn("a", from_data({"a": nan}))
-        self.assertFalse(has_nan(from_data({"a": [{"b": nan}, [nan, 1]]})))
-        self.assertFalse(has_nan(from_data(to_data({"a": {"b": [nan]}}))))
-
+        self.assertEqual(from_data(nan), None)
+        slot = {"a": nan}
+        self.assertIs(from_data(to_data(slot)), slot)
+        items = [nan]
+        self.assertIs(from_data(to_data(items)), items)
     def test_escape_dot(self):
         self.assertAlmostEqual(literal_field("."), "\b")
         self.assertAlmostEqual(literal_field(".."), "\b\b")
@@ -1016,6 +1007,12 @@ class TestDot(FuzzyTestCase):
         self.assertEqual(from_data(to_data([1]) | Null), [1])
         with self.assertRaises(Exception):
             to_data({"a": 1}) | 3
+
+    def test_data_or_missing_is_data(self):
+        for missing in ["", [], float("nan")]:
+            with self.subTest(missing=repr(missing)):
+                self.assertEqual(from_data(to_data({"a": 1}) | missing), {"a": 1})
+                self.assertEqual(from_data(missing | to_data({"a": 1})), {"a": 1})
 
     def test_null2(self):
         with self.assertRaises(Exception):

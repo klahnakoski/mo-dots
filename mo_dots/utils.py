@@ -35,17 +35,23 @@ _null_type_set = frozenset(_null_types)
 _null_type_listeners = []
 
 
+def refresh_types():
+    # REBUILD DERIVED TUPLE, THEN HAND ALL REGISTRIES TO THE C SIDE
+    global _missing_types
+    _missing_types = (str, bytes, *_null_types, *_many_types)
+    if _speedups:
+        _speedups._sync(_null_types, _missing_types, _data_types, _wrapped_data_types, _many_types)
+
+
 def on_null_type_change(callback):
     _null_type_listeners.append(callback)
 
 
 def register_null_type(_type):
-    global _null_types, _null_type_set, _missing_types
+    global _null_types, _null_type_set
     _null_types = tuple(set(_null_types + (_type,)))
     _null_type_set = frozenset(_null_types)
-    _missing_types = (str, bytes, *_null_types, *_many_types)
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
     for callback in _null_type_listeners:
         callback()
 
@@ -63,7 +69,7 @@ def is_missing(t) -> bool:
     # RETURN True IF EFFECTIVELY NOTHING
     if isinstance(t, _missing_types):
         return not t
-    return isinstance(t, float) and t != t
+    return t.__class__ is float and t != t
 
 
 def exists(value) -> bool:
@@ -109,8 +115,7 @@ def on_data_type_change(callback):
 def add_data_type(type_):
     global _data_types
     _data_types = tuple(set(_data_types + (type_,)))
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
     for callback in _data_type_listeners:
         callback()
 
@@ -172,25 +177,21 @@ _missing_types = (str, bytes, *_null_types, *_many_types)
 
 def register_list(_type):
     # lists belong to all categories
-    global list_types, container_types, finite_types, sequence_types, _many_types, _missing_types
+    global list_types, container_types, finite_types, sequence_types, _many_types
     list_types = tuple(set(list_types + (_type,)))
     container_types = tuple(set(container_types + (_type,)))
     finite_types = tuple(set(finite_types + (_type,)))
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
-    _missing_types = (str, bytes, *_null_types, *_many_types)
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
 
 
 def register_sequence(_type):
     # ORDERED, BUT MAY BE INFINITE, SO NOT finite_types NOR container_types
-    global sequence_types, _many_types, _missing_types
+    global sequence_types, _many_types
     sequence_types = tuple(set(sequence_types + (_type,)))
     _many_types = tuple(set(_many_types + (_type,)))
-    _missing_types = (str, bytes, *_null_types, *_many_types)
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
 
 
 # ITERATORS THAT ARE CONSIDERED PRIMITIVE
@@ -236,11 +237,9 @@ def is_many(value):
 
 
 def register_many(_type):
-    global _many_types, _missing_types
+    global _many_types
     _many_types = _many_types + (_type,)
-    _missing_types = (str, bytes, *_null_types, *_many_types)
-    if _speedups:
-        _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
 
 
 # OPTIONAL C ACCELERATOR; MO_DOTS_PURE=1 FORCES THE PYTHON IMPLEMENTATIONS
@@ -253,7 +252,7 @@ except ImportError:
     _speedups = None
 
 if _speedups:
-    _speedups._sync(_null_types, _missing_types, sequence_types, _data_types, _wrapped_data_types, _many_types)
+    refresh_types()
     is_null = _speedups.is_null
     is_not_null = _speedups.is_not_null
     is_missing = _speedups.is_missing

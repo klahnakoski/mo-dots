@@ -221,7 +221,7 @@ class FlatList:
 
     def __or__(self, other):
         """COALESCE: LEFT WINS, A MISSING LEFT TAKES THE RIGHT"""
-        if len(_get(self, SLOT)) or is_null(other):
+        if len(_get(self, SLOT)) or is_missing(other):
             return self
         return to_data(other)
 

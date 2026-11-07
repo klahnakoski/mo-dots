@@ -283,7 +283,7 @@ behave as expected with [three-valued logic](https://en.wikipedia.org/wiki/Three
  * `"a" in data` is `exists(data.a)`: true for `0` and `False`, false for `""` and `[]`
  * `Data` equality and hash ignore keys whose value is missing; the hash does not depend on key order
  * `coalesce(a, b, c)` answers the first value that is not missing: `coalesce("", 2) == 2`
- * `data.a` reads `Null` for a `NaN`; `from_data` drops `NaN` from dicts and turns it into `None` in lists
+ * `data.a` reads `Null` for a `NaN`; a top-level `NaN` passed to `from_data` becomes `None`
 
 ### Merging with `|`
 
