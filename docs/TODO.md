@@ -101,4 +101,5 @@
 
 - Reading `data.a` turns NaN into Null (`_getattr_dispatch[float]`, C `wrap_attr_value`); by the "scrubbing belongs to mo-json" rule it may go, leaving `is_missing(nan)` the only NaN rule. Decide.
 - FlatList `+`/`+=` still gate on `is_null`, so `flatlist + ""` appends `""`; decide whether missing is the identity for FlatList `+` too.
-- Run /fix-code up to 5 times, one after another, each from merged dev (run 2 of 5: agent fix-code-2).
+- Run /fix-code up to 5 times, one after another, each from merged dev (run 3 of 5: agent fix-code-3).
+- Exported in `__all__` but unused anywhere in ~/code: `register_sequence`, `register_many`, `register_primitive`, `is_container`, `is_finite`, `unwraplist`, `unwrap`. Delete, or keep as public API?
