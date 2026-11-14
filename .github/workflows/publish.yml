@@ -1,9 +1,10 @@
 # BUILD EVERYTHING A RELEASE UPLOADS AND PUBLISH IT TO pypi, SO THE RELEASE
 # CARRIES ATTESTATIONS ("Full provenance"). NO TESTS: mo-deploy HAS ALREADY
 # RUN THE SUITE, AND wheels.yml / packaging/build_wheels.py TEST THE WHEELS.
-# THE VERSION IS WHAT packaging/setuptools.json SAYS ON THE DISPATCHED REF.
+# THE VERSION IS WHAT packaging/setuptools.json SAYS ON THE DISPATCHED TAG,
+# WHICH MUST BE ON master; ANY OTHER REF IS REFUSED BEFORE A BUILD STARTS.
 #
-#     gh workflow run publish.yml --ref dev
+#     gh workflow run publish.yml --ref 11.5.26311
 #
 # pypi TRUSTS THIS FILE BY NAME: REGISTER publish.yml, ENVIRONMENT pypi, AS A
 # TRUSTED PUBLISHER (pypi.org > mo-dots > Manage > Publishing). EVERY FILE IN
@@ -16,7 +17,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Refuse anything but a tag on master
+        run: |
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            echo "::error::publish runs on a tag (--ref <tag>), not $GITHUB_REF"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::tag $GITHUB_REF_NAME is not on master"
+            exit 1
+          fi
+
   sdist:
+    needs: guard
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -40,6 +60,7 @@ jobs:
           path: dist/*
 
   wheels:
+    needs: guard
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
