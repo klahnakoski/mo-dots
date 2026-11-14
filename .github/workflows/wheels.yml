@@ -28,6 +28,8 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_ARCHS_MACOS: "arm64 x86_64"
+          # NO FREE-THREADED: _speedups.c TURNS THE GIL BACK ON
+          CIBW_SKIP: "cp3??t-*"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_SOURCES: tests
           # FULL SUITE AGAINST EACH INSTALLED WHEEL. THE REQUIREMENTS COME

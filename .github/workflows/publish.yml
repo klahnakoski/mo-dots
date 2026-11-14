@@ -79,8 +79,10 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_ARCHS_MACOS: "arm64 x86_64"
-          # NO musllinux: ALPINE INSTALLS FALL BACK TO THE SDIST
-          CIBW_SKIP: "*musllinux*"
+          CIBW_ARCHS_WINDOWS: "AMD64"
+          # NO musllinux, NO FREE-THREADED (_speedups.c TURNS THE GIL BACK
+          # ON); THOSE INSTALL THE PURE WHEEL
+          CIBW_SKIP: "*musllinux* cp3??t-*"
           CIBW_BUILD_VERBOSITY: 1
 
       - uses: actions/upload-artifact@v5

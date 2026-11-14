@@ -29,6 +29,7 @@ file exists.
     python packaging/build_wheels.py --skip-linux       # no docker
     python packaging/build_wheels.py --jobs 2           # narrower matrix
 """
+
 import argparse
 import json
 import os
@@ -66,8 +67,11 @@ SMOKE = (
 CIBUILDWHEEL_PLATFORM = {"win32": "windows", "darwin": "macos", "linux": "linux"}
 
 CIBW_ENV = {
-    # NO musllinux: ONE IMAGE PER ARCH; ALPINE INSTALLS FALL BACK TO THE SDIST
-    "CIBW_SKIP": "pp* *musllinux*",
+    # NO musllinux: ONE IMAGE PER ARCH; ALPINE INSTALLS FALL BACK TO THE SDIST.
+    # NO FREE-THREADED (_speedups.c TURNS THE GIL BACK ON) AND NO win32:
+    # THOSE INSTALL THE PURE WHEEL
+    "CIBW_SKIP": "pp* *musllinux* cp3??t-*",
+    "CIBW_ARCHS_WINDOWS": "AMD64",
     "CIBW_TEST_COMMAND": SMOKE,
     "CIBW_BUILD_VERBOSITY": "1",
     # KEEP OUTPUT LINE-Y: mo-deploy KILLS A COMMAND SILENT FOR TOO LONG
@@ -104,7 +108,9 @@ def suite_env():
 def run(*args, add_env=None):
     print("+ " + " ".join(str(a) for a in args), flush=True)
     done = subprocess.run(
-        [str(a) for a in args], cwd=ROOT, env={**os.environ, **(add_env or {})},
+        [str(a) for a in args],
+        cwd=ROOT,
+        env={**os.environ, **(add_env or {})},
     )
     return done.returncode
 
@@ -112,7 +118,10 @@ def run(*args, add_env=None):
 def said(*args, failed, add_env=None):
     """RUN CAPTURED; ANSWER stdout, OR EXIT WITH failed ON ERROR OR SILENCE"""
     done = subprocess.run(
-        [str(a) for a in args], cwd=ROOT, capture_output=True, text=True,
+        [str(a) for a in args],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
         env={**os.environ, **(add_env or {})},
     )
     out = done.stdout.strip()
@@ -133,8 +142,13 @@ def run_tagged(tag, *args, add_env=None, cwd=None):
     with SAY:
         print(f"+ [{tag}] " + " ".join(str(a) for a in args), flush=True)
     proc = subprocess.Popen(
-        [str(a) for a in args], cwd=cwd or ROOT, env={**os.environ, **(add_env or {})},
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+        [str(a) for a in args],
+        cwd=cwd or ROOT,
+        env={**os.environ, **(add_env or {})},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
     )
     for line in proc.stdout:
         with SAY:
@@ -144,8 +158,17 @@ def run_tagged(tag, *args, add_env=None, cwd=None):
 
 def newest_github_run(ref):
     out = said(
-        "gh", "run", "list", "--workflow", "wheels.yml", "--branch", ref,
-        "--limit", "1", "--json", "databaseId,status,conclusion",
+        "gh",
+        "run",
+        "list",
+        "--workflow",
+        "wheels.yml",
+        "--branch",
+        ref,
+        "--limit",
+        "1",
+        "--json",
+        "databaseId,status,conclusion",
         failed="gh run list failed; is gh authenticated?",
     )
     runs = json.loads(out)
@@ -172,7 +195,12 @@ def collect_github(run_id, deadline_minutes=30):
     deadline = time.monotonic() + deadline_minutes * 60
     while True:
         out = said(
-            "gh", "run", "view", run_id, "--json", "status,conclusion",
+            "gh",
+            "run",
+            "view",
+            run_id,
+            "--json",
+            "status,conclusion",
             failed=f"gh run view {run_id} failed",
         )
         state = json.loads(out)
@@ -190,14 +218,11 @@ def collect_github(run_id, deadline_minutes=30):
     if run("gh", "run", "download", str(run_id), "--pattern", "wheels-macos-*", "--dir", scratch):
         sys.exit("gh run download failed")
     [sdist] = DIST.glob("*.tar.gz")
-    version = sdist.name[len("mo_dots-"):-len(".tar.gz")]
+    version = sdist.name[len("mo_dots-") : -len(".tar.gz")]
     wheels = sorted(scratch.rglob("*.whl"))
     strangers = [w.name for w in wheels if not w.name.startswith(f"mo_dots-{version}-")]
     if strangers:
-        sys.exit(
-            f"github built {' '.join(strangers)}, not {version}: "
-            "push the version commit before --github"
-        )
+        sys.exit(f"github built {' '.join(strangers)}, not {version}: " "push the version commit before --github")
     for wheel in wheels:
         shutil.copy2(wheel, DIST)
     File(str(scratch)).delete()
@@ -228,8 +253,14 @@ def buildable_platforms(skip_linux):
 def build_identifiers(platform, env):
     """CIBUILDWHEEL'S OWN ANSWER TO WHAT IT WOULD BUILD HERE"""
     out = said(
-        sys.executable, "-m", "cibuildwheel", ".", "--platform", platform,
-        "--print-build-identifiers", add_env=env,
+        sys.executable,
+        "-m",
+        "cibuildwheel",
+        ".",
+        "--platform",
+        platform,
+        "--print-build-identifiers",
+        add_env=env,
         failed=f"cibuildwheel has no build identifiers for {platform}",
     )
     return out.split()
@@ -276,18 +307,23 @@ def build_matrix(jobs, width):
 
     def one(identifier, env, source):
         return run_tagged(
-            identifier, sys.executable, "-m", "cibuildwheel", source,
-            f"--only={identifier}", "--output-dir", DIST, add_env=env, cwd=source,
+            identifier,
+            sys.executable,
+            "-m",
+            "cibuildwheel",
+            source,
+            f"--only={identifier}",
+            "--output-dir",
+            DIST,
+            add_env=env,
+            cwd=source,
         )
 
     print(f"{len(jobs)} wheels, {width} at a time", flush=True)
     failed = []
     # EXITING THE TempDirectory HANDS THE TREE TO A PATIENT DELETE THREAD
     with ExitStack() as temps:
-        sources = [
-            source_copy(temps.enter_context(TempDirectory()))
-            for _ in range(min(width, len(jobs)))
-        ]
+        sources = [source_copy(temps.enter_context(TempDirectory())) for _ in range(min(width, len(jobs)))]
         # THE FIRST ALONE: THE cibuildwheel CACHES (nuget pythons, virtualenv
         # pyz) ARE SHARED, AND A COLD DOWNLOAD RACES
         identifier, env = jobs[0]
@@ -323,7 +359,11 @@ def main():
     parse.add_argument("--skip-linux", action="store_true", help="build no linux wheels; docker not needed")
     parse.add_argument("--jobs", type=int, default=8, metavar="N", help="how many wheels to build at once")
     parse.add_argument(
-        "--github", nargs="?", const="", default=None, metavar="REF",
+        "--github",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="REF",
         help="also build macos on github: dispatch wheels.yml on REF (default: current branch), wait, download",
     )
     args = parse.parse_args()
@@ -339,7 +379,10 @@ def main():
         github_ref = args.github
         if not github_ref:
             github_ref = said(
-                "git", "rev-parse", "--abbrev-ref", "HEAD",
+                "git",
+                "rev-parse",
+                "--abbrev-ref",
+                "HEAD",
                 failed="cannot name the current branch for --github",
             )
 
