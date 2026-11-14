@@ -1,0 +1,105 @@
+# BUILD EVERYTHING A RELEASE UPLOADS AND PUBLISH IT TO pypi, SO THE RELEASE
+# CARRIES ATTESTATIONS ("Full provenance"). NO TESTS: mo-deploy HAS ALREADY
+# RUN THE SUITE, AND wheels.yml / packaging/build_wheels.py TEST THE WHEELS.
+# THE VERSION IS WHAT packaging/setuptools.json SAYS ON THE DISPATCHED TAG,
+# WHICH MUST BE ON master; ANY OTHER REF IS REFUSED BEFORE A BUILD STARTS.
+#
+#     gh workflow run publish.yml --ref 11.5.26311
+#
+# pypi TRUSTS THIS FILE BY NAME: REGISTER publish.yml, ENVIRONMENT pypi, AS A
+# TRUSTED PUBLISHER (pypi.org > mo-dots > Manage > Publishing). EVERY FILE IN
+# A RELEASE MUST COME FROM HERE; A MIX WITH twine UPLOADS IS "Incomplete
+# Provenance"
+
+name: publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Refuse anything but a tag on master
+        run: |
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            echo "::error::publish runs on a tag (--ref <tag>), not $GITHUB_REF"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::tag $GITHUB_REF_NAME is not on master"
+            exit 1
+          fi
+
+  sdist:
+    needs: guard
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Generate setup.py
+        run: python packaging/gen_setup.py .
+
+      - name: Build sdist and pure wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build --sdist
+          MO_DOTS_NO_EXTENSIONS=1 python -m build --wheel
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: dist-sdist
+          path: dist/*
+
+  wheels:
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # aarch64 BUILDS NATIVELY ON THE ARM RUNNER, NOT UNDER qemu; macos-15
+        # IS arm64 AND CROSS-COMPILES x86_64
+        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-2025, macos-15]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate setup.py
+        shell: bash
+        run: python packaging/gen_setup.py .
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          CIBW_ARCHS_MACOS: "arm64 x86_64"
+          # NO musllinux: ALPINE INSTALLS FALL BACK TO THE SDIST
+          CIBW_SKIP: "*musllinux*"
+          CIBW_BUILD_VERBOSITY: 1
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: dist-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  publish:
+    needs: [sdist, wheels]
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
